@@ -33,9 +33,9 @@ contract MainTicketSystem {
         require(playerRegistry.registerPlayer(msg.sender), "Registration failed");
     }
 
-    // function isPlayerRegistered(address _player) external view returns (bool) {
-    //     return playerRegistry.isPlayerRegistered(_player);
-    // }
+    function isPlayerRegistered(address _player) external view returns (bool) {
+        return playerRegistry.isPlayerRegistered(_player);
+    }
 
     // Ticket Purchase Functions
     function purchaseTicket() external onlyRegister payable returns (uint256) {        

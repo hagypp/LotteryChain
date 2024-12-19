@@ -1,0 +1,19 @@
+# Brownie configuration file
+dependencies:
+  - OpenZeppelin/openzeppelin-contracts@4.8.0
+
+compiler:
+  solc:
+    version: 0.8.0
+    remappings:
+      - "@openzeppelin=OpenZeppelin/openzeppelin-contracts@4.8.0"
+
+networks:
+  default: development
+  development:
+    gas_limit: 6721975
+    gas_price: 'auto'
+
+# Pytest configuration
+pytest:
+  addopts: -v --disable-pytest-warnings
