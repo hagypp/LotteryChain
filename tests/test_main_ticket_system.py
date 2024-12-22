@@ -27,6 +27,7 @@ def test_player_registration_twice(main_ticket_system):
     tx = main_ticket_system.registerPlayer({'from': accounts[1], 'gas_price': 'auto'})
     tx.wait(1)
     
+    assert main_ticket_system.isPlayerRegistered(accounts[1].address) == True
     # Verify registration prevents duplicate registrations
     try:
         main_ticket_system.registerPlayer({'from': accounts[1], 'gas_price': 'auto'})
@@ -39,7 +40,8 @@ def test_ticket_purchase(main_ticket_system):
     """Test ticket purchase process"""
     # First, register player
     main_ticket_system.registerPlayer({'from': accounts[1], 'gas_price': 'auto'})
-
+    assert main_ticket_system.isPlayerRegistered(accounts[1].address) == True
+    
     # Get ticket price
     ticket_price = main_ticket_system.getTicketPrice()
 
@@ -56,7 +58,8 @@ def test_ticket_purchase_insufficient_funds(main_ticket_system):
     """Test ticket purchase with insufficient funds"""
     # Register player
     main_ticket_system.registerPlayer({'from': accounts[1], 'gas_price': 'auto'})
-    
+    assert main_ticket_system.isPlayerRegistered(accounts[1].address) == True
+
     # Get the ticket price from the contract
     ticket_price = main_ticket_system.getTicketPrice()
     

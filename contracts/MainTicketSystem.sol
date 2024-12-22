@@ -20,6 +20,10 @@ contract MainTicketSystem {
         lotteryManager = new LotteryManager();
     }
 
+    function getOwner() external view returns (address) {
+        return i_owner;
+    }
+
     modifier onlyOwner() {
         require(msg.sender == i_owner, "Only the contract owner can call this function");_;
     }
