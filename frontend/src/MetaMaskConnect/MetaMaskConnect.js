@@ -1,53 +1,43 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import contractService from "../services/contractService"; // Make sure the path is correct
+import contractService from "../services/contractService";
+import "./MetaMaskConnect.css";
 
 const MetaMaskConnect = ({ onConnect }) => {
   const [status, setStatus] = useState("");
-  const [isConnected, setIsConnected] = useState(false);
+  const [isConnecting, setIsConnecting] = useState(false);
   const navigate = useNavigate();
 
-  const connectMetaMask = async () => {
+  const connectToMetaMask = async () => {
+    if (isConnecting) return;
+
+    setIsConnecting(true);
+    setStatus("Connecting to MetaMask...");
+
     try {
-      if (!window.ethereum) {
-        throw new Error("MetaMask is not installed!");
-      }
-      
       await contractService.init();
-      setIsConnected(true);
-      setStatus(`Connected: ${contractService.account.substring(0, 6)}...${contractService.account.slice(-4)}`);
+      setStatus("Connected to MetaMask!");
+
+      // Pass the account to the parent component and navigate to the dashboard
       onConnect(contractService.account);
       navigate('/dashboard');
     } catch (error) {
-      console.error(error);
-      setStatus(error.message);
-      setIsConnected(false);
+      setStatus(`Error: ${error.message}`);
+    } finally {
+      setIsConnecting(false);
     }
   };
 
   return (
-    <div style={{ textAlign: "center" }}>
+    <div className="metamask-container">
       <button
-        onClick={connectMetaMask}
-        style={{
-          background: "linear-gradient(45deg, #3498DB, #2980B9)",
-          color: "white",
-          padding: "12px 30px",
-          border: "none",
-          borderRadius: "12px",
-          cursor: "pointer",
-          fontFamily: "'Poppins', sans-serif",
-          fontSize: "1.2rem",
-          fontWeight: "500",
-          width: "300px",
-          margin: "20px auto",
-          display: "block",
-          transition: "all 0.3s ease",
-        }}
+        onClick={connectToMetaMask}
+        disabled={isConnecting}
+        className="connect-button"
       >
-        {isConnected ? "Connected" : "Connect MetaMask"}
+        {isConnecting ? "Connecting..." : "Connect to MetaMask"}
       </button>
-      <p>{status}</p>
+      <p className="status-message">{status}</p>
     </div>
   );
 };

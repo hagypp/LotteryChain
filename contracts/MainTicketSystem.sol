@@ -6,11 +6,11 @@ import "./TicketManager.sol";
 import "./LotteryManager.sol";
 
 contract MainTicketSystem {
-    PlayerRegistry private  playerRegistry;
+    PlayerRegistry private playerRegistry;
     TicketManager private ticketManager;
     LotteryManager private lotteryManager;
     address private immutable i_owner;
-
+    
     constructor() {
         i_owner = msg.sender;
         
@@ -25,38 +25,39 @@ contract MainTicketSystem {
     }
 
     modifier onlyOwner() {
-        require(msg.sender == i_owner, "Only the contract owner can call this function");_;
+        require(msg.sender == i_owner, "Only the contract owner can call this function"); _;
     }
 
-    modifier onlyRegister(){
-        require(playerRegistry.isPlayerRegistered(msg.sender),"Not a registered player");_;
+    modifier onlyRegister() {
+        require(playerRegistry.isPlayerRegistered(msg.sender),"Not a registered player"); _;
     }
 
     // Player Registration Functions
     function registerPlayer() external {
-        require(playerRegistry.registerPlayer(), "Registration failed");
+        require(playerRegistry.registerPlayer(msg.sender), "Registration failed");
     }
 
     function isPlayerRegistered(address _player) external view returns (bool) {
         return playerRegistry.isPlayerRegistered(_player);
     }
 
+    // Add the function to get all registered players
+    function getAllRegisteredPlayers() external view returns (address[] memory) {
+        return playerRegistry.getAllRegisteredPlayers();
+    }
+
     // Ticket Purchase Functions
     function purchaseTicket() external onlyRegister payable returns (uint256) {        
-        // Ensure the full ticket price is sent to the contract
         uint256 ticketPrice = ticketManager.getTicketPrice();
         require(msg.value >= ticketPrice, "Insufficient payment for ticket");
 
-        // Purchase ticket and keep the ticket price in the contract
         uint256 ticketId = ticketManager.purchaseTicket(msg.sender);
         
-        // Refund any excess payment
         if (msg.value > ticketPrice) {
             payable(msg.sender).transfer(msg.value - ticketPrice);
         }
-        // payable(0xAb8483F64d9C6d1EcF9b849Ae677dD3315835cb2).transfer(msg.value);
+        
         return ticketId;
-        // return 1;
     }
 
     function getActiveTickets() external onlyRegister view returns (uint256[] memory) {
@@ -78,31 +79,20 @@ contract MainTicketSystem {
         }
     }
 
-     function drawLotteryWinner() external onlyOwner returns (address) {
-        // Get current lottery round details
-        LotteryRound memory currentRound = lotteryManager.getLotteryRound(
-            lotteryManager.getCurrentRound()
-        );
-
-        // Validate lottery round conditions
+    function drawLotteryWinner() external onlyOwner returns (address) {
+        LotteryRound memory currentRound = lotteryManager.getLotteryRound(lotteryManager.getCurrentRound());
         require(currentRound.participants.length > 0, "No participants in this round");
         require(!currentRound.isFinalized, "Lottery round already finalized");
 
-        // Ensure contract has sufficient balance
         uint256 prizePool = currentRound.totalPrizePool;
         require(address(this).balance >= prizePool,"Insufficient contract balance to pay prize.");
 
-        // Draw the winner
         address winner = lotteryManager.drawLotteryWinner();
-
-        // Transfer prize pool to the winner
         (bool success, ) = payable(winner).call{value: prizePool}("");
         require(success, "Prize transfer failed");
         return winner;
     }
 
-
-    // Additional Utility Functions
     function getTicketPrice() external view returns (uint256) {
         return ticketManager.getTicketPrice();
     }
@@ -118,11 +108,10 @@ contract MainTicketSystem {
     function getTotalRegisteredPlayers() external view returns (uint256) {
         return playerRegistry.getTotalRegisteredPlayers();
     }
-        // Add a function to check contract balance
+
     function getContractBalance() external view returns (uint256) {
         return address(this).balance;
     }
 
-    // Fallback function to receive Ether
     receive() external payable {}
 }

@@ -1,35 +1,29 @@
-// src/services/contractService.js
+// Updated contractService.js
 import Web3 from 'web3';
 
-// Import the contract details from your existing app.js
 const CONTRACT_ADDRESS = "0x5FbDB2315678afecb367f032d93F642f64180aa3";
 const CONTRACT_ABI = [
     {
         "inputs": [],
-        "stateMutability": "nonpayable",
-        "type": "constructor"
-    },
-    {
-        "inputs": [],
-        "name": "drawLotteryWinner",
-        "outputs": [
-            {
-                "internalType": "address",
-                "name": "",
-                "type": "address"
-            }
-        ],
+        "name": "registerPlayer",
+        "outputs": [],
         "stateMutability": "nonpayable",
         "type": "function"
     },
     {
-        "inputs": [],
-        "name": "getActiveTickets",
+        "inputs": [
+            {
+                "internalType": "address",
+                "name": "_player",
+                "type": "address"
+            }
+        ],
+        "name": "isPlayerRegistered",
         "outputs": [
             {
-                "internalType": "uint256[]",
+                "internalType": "bool",
                 "name": "",
-                "type": "uint256[]"
+                "type": "bool"
             }
         ],
         "stateMutability": "view",
@@ -37,7 +31,7 @@ const CONTRACT_ABI = [
     },
     {
         "inputs": [],
-        "name": "getContractBalance",
+        "name": "purchaseTicket",
         "outputs": [
             {
                 "internalType": "uint256",
@@ -45,7 +39,7 @@ const CONTRACT_ABI = [
                 "type": "uint256"
             }
         ],
-        "stateMutability": "view",
+        "stateMutability": "payable",
         "type": "function"
     },
     {
@@ -76,42 +70,15 @@ const CONTRACT_ABI = [
     },
     {
         "inputs": [],
-        "name": "getTotalTicketsSold",
+        "name": "getAllRegisteredPlayers",
         "outputs": [
             {
-                "internalType": "uint256",
+                "internalType": "address[]",
                 "name": "",
-                "type": "uint256"
+                "type": "address[]"
             }
         ],
         "stateMutability": "view",
-        "type": "function"
-    },
-    {
-        "inputs": [],
-        "name": "purchaseTicket",
-        "outputs": [
-            {
-                "internalType": "uint256",
-                "name": "",
-                "type": "uint256"
-            }
-        ],
-        "stateMutability": "payable",
-        "type": "function"
-    },
-    {
-        "inputs": [],
-        "name": "registerPlayer",
-        "outputs": [],
-        "stateMutability": "nonpayable",
-        "type": "function"
-    },
-    {
-        "inputs": [],
-        "name": "startNewLotteryRound",
-        "outputs": [],
-        "stateMutability": "nonpayable",
         "type": "function"
     }
 ];
@@ -129,104 +96,93 @@ class ContractService {
                 this.web3 = new Web3(window.ethereum);
                 const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
                 this.account = accounts[0];
+
                 this.contract = new this.web3.eth.Contract(CONTRACT_ABI, CONTRACT_ADDRESS);
+                
+                window.ethereum.on('accountsChanged', (accounts) => {
+                    this.account = accounts[0];
+                    window.location.reload();
+                });
+
                 return true;
             } catch (error) {
-                console.error("Failed to initialize contract service:", error);
-                throw error;
+                throw new Error(`Initialization failed: ${error.message}`);
             }
         } else {
             throw new Error("MetaMask is not installed");
         }
     }
 
+    async getContractBalance() {
+        try {
+            const balance = await this.web3.eth.getBalance(CONTRACT_ADDRESS);
+            return this.web3.utils.fromWei(balance, 'ether');
+        } catch (error) {
+            throw new Error(`Error fetching contract balance: ${error.message}`);
+        }
+    }
+
     async getTicketPrice() {
         try {
             const price = await this.contract.methods.getTicketPrice().call();
-            return this.web3.utils.fromWei(price, 'ether');
+            return this.web3.utils.fromWei(price.toString(), 'ether');
         } catch (error) {
-            console.error("Failed to get ticket price:", error);
-            throw error;
+            throw new Error(`Error fetching ticket price: ${error.message}`);
         }
     }
 
-    async purchaseTicket() {
+    async getTotalRegisteredPlayers() {
         try {
-            const price = await this.contract.methods.getTicketPrice().call();
-            const result = await this.contract.methods.purchaseTicket().send({
-                from: this.account,
-                value: price
-            });
-            return result;
+            const totalPlayers = await this.contract.methods.getTotalRegisteredPlayers().call();
+            return totalPlayers;
         } catch (error) {
-            console.error("Failed to purchase ticket:", error);
-            throw error;
+            throw new Error(`Error fetching total registered players: ${error.message}`);
         }
     }
 
-    async getActiveTickets() {
+    async getAllRegisteredPlayers() {
         try {
-            const tickets = await this.contract.methods.getActiveTickets().call({
-                from: this.account
-            });
-            return tickets;
+            const players = await this.contract.methods.getAllRegisteredPlayers().call();
+            return players;
         } catch (error) {
-            console.error("Failed to get active tickets:", error);
-            throw error;
-        }
-    }
-
-    async getContractBalance() {
-        try {
-            const balance = await this.contract.methods.getContractBalance().call();
-            return this.web3.utils.fromWei(balance, 'ether');
-        } catch (error) {
-            console.error("Failed to get contract balance:", error);
-            throw error;
+            throw new Error(`Error fetching all registered players: ${error.message}`);
         }
     }
 
     async registerPlayer() {
         try {
-            const result = await this.contract.methods.registerPlayer().send({
-                from: this.account
+            await this.contract.methods.registerPlayer().send({ from: this.account });
+            return { success: true };
+        } catch (error) {
+            throw new Error(`Error registering player: ${error.message}`);
+        }
+    }
+
+    async isPlayerRegistered(playerAddress) {
+        try {
+            const isRegistered = await this.contract.methods.isPlayerRegistered(playerAddress).call();
+            return isRegistered;
+        } catch (error) {
+            throw new Error(`Error checking player registration: ${error.message}`);
+        }
+    }
+
+    async purchaseTicket() {
+        try {
+            const isRegistered = await this.isPlayerRegistered(this.account);
+            if (!isRegistered) {
+                throw new Error("Player is not registered. Please register first.");
+            }
+    
+            const ticketPrice = await this.contract.methods.getTicketPrice().call();
+            await this.contract.methods.purchaseTicket().send({
+                from: this.account,
+                value: ticketPrice
             });
-            return result;
+    
+            return { success: true };
         } catch (error) {
-            console.error("Failed to register player:", error);
-            throw error;
-        }
-    }
-
-    async getTotalPlayers() {
-        try {
-            const total = await this.contract.methods.getTotalRegisteredPlayers().call();
-            return total;
-        } catch (error) {
-            console.error("Failed to get total players:", error);
-            throw error;
-        }
-    }
-
-    async getTotalTickets() {
-        try {
-            const total = await this.contract.methods.getTotalTicketsSold().call();
-            return total;
-        } catch (error) {
-            console.error("Failed to get total tickets:", error);
-            throw error;
-        }
-    }
-
-    async drawWinner() {
-        try {
-            const result = await this.contract.methods.drawLotteryWinner().send({
-                from: this.account
-            });
-            return result;
-        } catch (error) {
-            console.error("Failed to draw winner:", error);
-            throw error;
+            throw new Error(`Ticket purchase failed: ${error.message}`);
         }
     }
 }
