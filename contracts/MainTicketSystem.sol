@@ -60,7 +60,7 @@ contract MainTicketSystem {
         return ticketId;
     }
 
-    function getActiveTickets() external onlyRegister view returns (uint256[] memory) {
+    function getActiveTickets() external view returns (uint256[] memory) {
         return ticketManager.getActiveTickets(msg.sender);
     }
 

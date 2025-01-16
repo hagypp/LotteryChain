@@ -80,6 +80,104 @@ const CONTRACT_ABI = [
         ],
         "stateMutability": "view",
         "type": "function"
+    },
+    {
+        "inputs": [],
+        "name": "getOwner",
+        "outputs": [
+            {
+                "internalType": "address",
+                "name": "",
+                "type": "address"
+            }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+    },
+    {
+        "inputs": [],
+        "name": "getActiveTickets",
+        "outputs": [
+            {
+                "internalType": "uint256[]",
+                "name": "",
+                "type": "uint256[]"
+            }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+    },
+    {
+        "inputs": [],
+        "name": "getContractBalance",
+        "outputs": [
+            {
+                "internalType": "uint256",
+                "name": "",
+                "type": "uint256"
+            }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+    },
+    {
+        "inputs": [],
+        "name": "getTotalTicketsSold",
+        "outputs": [
+            {
+                "internalType": "uint256",
+                "name": "",
+                "type": "uint256"
+            }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+    },
+    {
+        "inputs": [],
+        "name": "startNewLotteryRound",
+        "outputs": [],
+        "stateMutability": "nonpayable",
+        "type": "function"
+    },
+    {
+        "inputs": [
+            {
+                "internalType": "uint256[]",
+                "name": "_ticketIds",
+                "type": "uint256[]"
+            }
+        ],
+        "name": "selectTicketsForLottery",
+        "outputs": [],
+        "stateMutability": "nonpayable",
+        "type": "function"
+    },
+    {
+        "inputs": [],
+        "name": "drawLotteryWinner",
+        "outputs": [
+            {
+                "internalType": "address",
+                "name": "",
+                "type": "address"
+            }
+        ],
+        "stateMutability": "nonpayable",
+        "type": "function"
+    },
+    {
+        "inputs": [
+            {
+                "internalType": "uint256",
+                "name": "_newPrice",
+                "type": "uint256"
+            }
+        ],
+        "name": "setTicketPrice",
+        "outputs": [],
+        "stateMutability": "nonpayable",
+        "type": "function"
     }
 ];
 
@@ -185,6 +283,71 @@ class ContractService {
             throw new Error(`Ticket purchase failed: ${error.message}`);
         }
     }
+
+    async getOwner() {
+        try {
+            const owner = await this.contract.methods.getOwner().call();
+            return owner;
+        } catch (error) {
+            throw new Error(`Error fetching contract owner: ${error.message}`);
+        }
+    }
+
+    async getActiveTickets() {
+        try {
+            const tickets = await this.contract.methods.getActiveTickets().call({ from: this.account });
+            return tickets;
+        } catch (error) {
+            throw new Error(`Error fetching active tickets: ${error.message}`);
+        }
+    }
+
+    async getTotalTicketsSold() {
+        try {
+            const totalTickets = await this.contract.methods.getTotalTicketsSold().call();
+            return totalTickets;
+        } catch (error) {
+            throw new Error(`Error fetching total tickets sold: ${error.message}`);
+        }
+    }
+
+    async startNewLotteryRound() {
+        try {
+            await this.contract.methods.startNewLotteryRound().send({ from: this.account });
+            return { success: true };
+        } catch (error) {
+            throw new Error(`Error starting a new lottery round: ${error.message}`);
+        }
+    }
+
+    async selectTicketsForLottery(ticketIds) {
+        try {
+            await this.contract.methods.selectTicketsForLottery(ticketIds).send({ from: this.account });
+            return { success: true };
+        } catch (error) {
+            throw new Error(`Error selecting tickets for lottery: ${error.message}`);
+        }
+    }
+
+    async drawLotteryWinner() {
+        try {
+            const result = await this.contract.methods.drawLotteryWinner().send({ from: this.account });
+            return { success: true, result };
+        } catch (error) {
+            throw new Error(`Error drawing lottery winner: ${error.message}`);
+        }
+    }
+
+    async setTicketPrice(newPrice) {
+        try {
+            const weiPrice = this.web3.utils.toWei(newPrice.toString(), 'ether');
+            await this.contract.methods.setTicketPrice(weiPrice).send({ from: this.account });
+            return { success: true };
+        } catch (error) {
+            throw new Error(`Error setting ticket price: ${error.message}`);
+        }
+    }
+
 }
 
 const contractService = new ContractService();

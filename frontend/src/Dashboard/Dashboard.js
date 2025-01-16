@@ -7,23 +7,33 @@ const Dashboard = ({ account }) => {
     const [totalPlayers, setTotalPlayers] = useState('0');
     const [registeredPlayers, setRegisteredPlayers] = useState([]);
     const [status, setStatus] = useState('');
-    const [isContractReady, setIsContractReady] = useState(false); // Add a state for contract readiness
+    const [isContractReady, setIsContractReady] = useState(false);
+    const [isLoading, setIsLoading] = useState(false);
+    const [newTicketPrice, setNewTicketPrice] = useState('');
+    const [totalTicketsSold, setTotalTicketsSold] = useState('0');
+    const [activeTickets, setActiveTickets] = useState([]);
 
     useEffect(() => {
         const loadData = async () => {
             try {
-                await contractService.init(); // Initialize the contract
-                setIsContractReady(true); // Set contract as ready once initialized
+                await contractService.init();
+                setIsContractReady(true);
+
                 const balance = await contractService.getContractBalance();
                 const price = await contractService.getTicketPrice();
                 const players = await contractService.getTotalRegisteredPlayers();
                 const allPlayers = await contractService.getAllRegisteredPlayers();
+                const tickets = await contractService.getActiveTickets();
+                const soldTickets = await contractService.getTotalTicketsSold();
+
                 setContractBalance(balance);
                 setTicketPrice(price);
                 setTotalPlayers(players);
                 setRegisteredPlayers(allPlayers);
+                setActiveTickets(tickets);
+                setTotalTicketsSold(soldTickets);
             } catch (error) {
-                setStatus(`Error loading data: ${error.message}`);
+                setStatus(`Error initializing contract: ${error.message}`);
             }
         };
         loadData();
@@ -35,18 +45,23 @@ const Dashboard = ({ account }) => {
             return;
         }
         try {
+            setIsLoading(true);
             setStatus('Purchasing ticket...');
             const purchaseResult = await contractService.purchaseTicket();
 
             if (purchaseResult.success) {
                 const balance = await contractService.getContractBalance();
                 const players = await contractService.getTotalRegisteredPlayers();
+                const soldTickets = await contractService.getTotalTicketsSold();
                 setContractBalance(balance);
                 setTotalPlayers(players);
+                setTotalTicketsSold(soldTickets);
                 setStatus('Ticket purchased successfully!');
             }
         } catch (error) {
             setStatus(`Purchase failed: ${error.message}`);
+        } finally {
+            setIsLoading(false);
         }
     };
 
@@ -56,6 +71,7 @@ const Dashboard = ({ account }) => {
             return;
         }
         try {
+            setIsLoading(true);
             setStatus('Registering player...');
             const registerResult = await contractService.registerPlayer();
 
@@ -66,31 +82,159 @@ const Dashboard = ({ account }) => {
             }
         } catch (error) {
             setStatus(`Registration failed: ${error.message}`);
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
+    const handleStartLottery = async () => {
+        if (!isContractReady) {
+            setStatus('Contract not initialized yet. Please try again later.');
+            return;
+        }
+        try {
+            setIsLoading(true);
+            setStatus('Starting lottery...');
+            const result = await contractService.drawLotteryWinner();
+            if (result.success) {
+                setStatus('Lottery started successfully!');
+            }
+        } catch (error) {
+            setStatus(`Failed to start lottery: ${error.message}`);
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
+    const handleOpenLottery = async () => {
+        if (!isContractReady) {
+            setStatus('Contract not initialized yet. Please try again later.');
+            return;
+        }
+        try {
+            setIsLoading(true);
+            setStatus('Opening lottery...');
+            const result = await contractService.startNewLotteryRound();
+            if (result.success) {
+                setStatus('Lottery opened successfully!');
+            }
+        } catch (error) {
+            setStatus(`Failed to open lottery: ${error.message}`);
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
+    const handleSetTicketPrice = async () => {
+        if (!isContractReady) {
+            setStatus('Contract not initialized yet. Please try again later.');
+            return;
+        }
+        try {
+            setIsLoading(true);
+            setStatus('Updating ticket price...');
+            const result = await contractService.setTicketPrice(newTicketPrice);
+            if (result.success) {
+                const price = await contractService.getTicketPrice();
+                setTicketPrice(price);
+                setStatus('Ticket price updated successfully!');
+            }
+        } catch (error) {
+            setStatus(`Failed to update ticket price: ${error.message}`);
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
+    const handleSelectForLottery = async (ticketId) => {
+        if (!isContractReady) {
+            setStatus('Contract not initialized yet. Please try again later.');
+            return;
+        }
+        try {
+            setIsLoading(true);
+            setStatus('Entering ticket into lottery...');
+            const result = await contractService.selectTicketsForLottery([ticketId]);
+            if (result.success) {
+                setStatus('Ticket entered into lottery successfully!');
+            }
+        } catch (error) {
+            setStatus(`Failed to enter ticket into lottery: ${error.message}`);
+        } finally {
+            setIsLoading(false);
         }
     };
 
     return (
         <div>
             <h2>Lottery Dashboard</h2>
-            <p>Contract Balance: {contractBalance} ETH</p>
-            <p>Ticket Price: {ticketPrice} ETH</p>
-            <p>Total Registered Players: {totalPlayers}</p>
+            <div>
+                <p><strong>Contract Balance:</strong> {contractBalance} ETH</p>
+                <p><strong>Ticket Price:</strong> {ticketPrice} ETH</p>
+                <p><strong>Total Registered Players:</strong> {totalPlayers}</p>
+                <p><strong>Total Tickets Sold:</strong> {totalTicketsSold}</p>
+            </div>
 
-            {/* Displaying the list of registered players */}
-            <h3>Registered Players:</h3>
-            <ul>
-                {registeredPlayers.length > 0 ? (
-                    registeredPlayers.map((player, index) => (
-                        <li key={index}>{player}</li>
-                    ))
-                ) : (
-                    <p>No registered players</p>
-                )}
-            </ul>
+            <div>
+                <h3>Registered Players:</h3>
+                <ul>
+                    {registeredPlayers.length > 0 ? (
+                        registeredPlayers.map((player, index) => (
+                            <li key={index}>{player}</li>
+                        ))
+                    ) : (
+                        <p>No registered players yet</p>
+                    )}
+                </ul>
+            </div>
 
-            <button onClick={handlePurchase}>Buy Ticket</button>
-            <button onClick={handleRegister}>Register</button> 
-            {status && <p>{status}</p>}
+            <div>
+                <button onClick={handlePurchase} disabled={isLoading}>
+                    {isLoading ? 'Processing...' : 'Buy Ticket'}
+                </button>
+                <button onClick={handleRegister} disabled={isLoading}>
+                    {isLoading ? 'Processing...' : 'Register'}
+                </button>
+                <button onClick={handleStartLottery} disabled={isLoading}>
+                    {isLoading ? 'Processing...' : 'Start Lottery'}
+                </button>
+                <button onClick={handleOpenLottery} disabled={isLoading}>
+                    {isLoading ? 'Processing...' : 'Open Lottery'}
+                </button>
+            </div>
+
+            <div>
+                <h3>Set New Ticket Price</h3>
+                <input
+                    type="number"
+                    value={newTicketPrice}
+                    onChange={(e) => setNewTicketPrice(e.target.value)}
+                    placeholder="Enter new ticket price"
+                />
+                <button onClick={handleSetTicketPrice} disabled={isLoading || !newTicketPrice}>
+                    {isLoading ? 'Processing...' : 'Set Price'}
+                </button>
+            </div>
+
+            <div>
+                <h3>Active Tickets:</h3>
+                <ul>
+                    {activeTickets.length > 0 ? (
+                        activeTickets.map((ticket, index) => (
+                            <li key={index}>
+                                {ticket} 
+                                <button onClick={() => handleSelectForLottery(ticket)} disabled={isLoading}>
+                                    {isLoading ? 'Processing...' : 'Enter into Lottery'}
+                                </button>
+                            </li>
+                        ))
+                    ) : (
+                        <p>No active tickets found</p>
+                    )}
+                </ul>
+            </div>
+
+            {status && <p style={{ color: 'red' }}>{status}</p>}
         </div>
     );
 };
