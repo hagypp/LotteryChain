@@ -1,35 +1,76 @@
 .metamask-container {
-    text-align: center;
-  }
-  
-  .connect-button {
-    background: linear-gradient(45deg, #3498DB, #2980B9);
-    color: white;
-    padding: 12px 30px;
-    border: none;
-    border-radius: 12px;
-    cursor: pointer;
-    font-family: 'Poppins', sans-serif;
-    font-size: 1.2rem;
-    font-weight: 500;
-    width: 300px;
-    margin: 20px auto;
-    display: block;
-    transition: all 0.3s ease;
-  }
-  
-  .connect-button:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-  }
-  
-  .connect-button:disabled {
-    background: #cccccc;
-    cursor: not-allowed;
-  }
-  
-  .status-message {
-    color: #666;
-    margin-top: 10px;
-    font-size: 0.9rem;
-  }
+  background: rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(10px);
+  border-radius: 16px;
+  padding: 2rem;
+  box-shadow: 0 8px 32px rgba(31, 38, 135, 0.15);
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  text-align: center;
+  max-width: 400px;
+  margin: 2rem auto;
+  transition: transform 0.3s ease;
+}
+
+.metamask-container:hover {
+  transform: translateY(-5px);
+}
+
+.connect-button {
+  background: linear-gradient(45deg, #FF6B6B, #FF8E53);
+  border: none;
+  border-radius: 50px;
+  padding: 1rem 2rem;
+  color: white;
+  font-size: 1.1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  position: relative;
+  overflow: hidden;
+}
+
+.connect-button:before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(
+    120deg,
+    transparent,
+    rgba(255, 255, 255, 0.2),
+    transparent
+  );
+  transition: 0.5s;
+}
+
+.connect-button:hover:before {
+  left: 100%;
+}
+
+.connect-button:hover {
+  transform: scale(1.05);
+  box-shadow: 0 0 20px rgba(255, 107, 107, 0.4);
+}
+
+.connect-button:disabled {
+  background: #ccc;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.status-message {
+  margin-top: 1rem;
+  color: #4a5568;
+  font-size: 0.9rem;
+  min-height: 20px;
+  animation: fadeIn 0.3s ease;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(-10px); }
+  to { opacity: 1; transform: translateY(0); }
+}

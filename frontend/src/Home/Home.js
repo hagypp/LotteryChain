@@ -3,6 +3,29 @@ import MetaMaskConnect from "../MetaMaskConnect/MetaMaskConnect";
 import "./Home.css"; 
 
 const Home = ({ onConnect }) => {  
+  const features = [
+    {
+      icon: "🔒",
+      title: "Transparent & Secure",
+      description: "Every transaction is recorded on the blockchain, ensuring complete fairness and security."
+    },
+    {
+      icon: "💎",
+      title: "Easy to Play",
+      description: "Connect your MetaMask wallet and start purchasing tickets instantly using Ethereum (ETH)."
+    },
+    {
+      icon: "🎯",
+      title: "Better Odds",
+      description: "Increase your winning chances by purchasing multiple tickets."
+    },
+    {
+      icon: "🤖",
+      title: "Smart Contract Powered",
+      description: "Automated and tamper-proof lottery draws guarantee fair results for all players."
+    }
+  ];
+
   return (
     <div className="main">
       <h1 className="title">🎰 Lottery Ticket Game</h1>
@@ -12,32 +35,23 @@ const Home = ({ onConnect }) => {
         <p>
           Welcome to a revolutionary gaming experience powered by{" "}
           <span className="highlight">blockchain technology</span> and secured
-          by <span className="highlight">smart contracts</span>. Our platform
-          offers:
+          by <span className="highlight">smart contracts</span>.
         </p>
-        <div className="feature-item">
-          🔒 <span className="highlight">Transparent & Secure:</span> Every
-          transaction is recorded on the blockchain, ensuring complete fairness
-          and security.
+        
+        <div className="features-grid">
+          {features.map((feature, index) => (
+            <div key={index} className="feature-item">
+              <div className="feature-icon">{feature.icon}</div>
+              <h3 className="feature-title">{feature.title}</h3>
+              <p className="feature-description">{feature.description}</p>
+            </div>
+          ))}
         </div>
-        <div className="feature-item">
-          💎 <span className="highlight">Easy to Play:</span> Connect your
-          MetaMask wallet and start purchasing tickets instantly using Ethereum
-          (ETH).
-        </div>
-        <div className="feature-item">
-          🎯 <span className="highlight">Better Odds:</span> Increase your
-          winning chances by purchasing multiple tickets, with all odds clearly
-          displayed.
-        </div>
-        <div className="feature-item">
-          🤖 <span className="highlight">Smart Contract Powered:</span> Automated
-          and tamper-proof lottery draws guarantee fair results for all players.
-        </div>
+
         <p className="ready-text">Ready to Try Your Luck? 🍀</p>
       </div>
 
-      <MetaMaskConnect onConnect={onConnect} />  {/* העברנו את ה-prop הלאה */}
+      <MetaMaskConnect onConnect={onConnect} />
 
       <footer className="footer">
         <p>Powered by Blockchain Technology 🌐</p>

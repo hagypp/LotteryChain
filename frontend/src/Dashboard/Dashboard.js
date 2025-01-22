@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import contractService from '../services/contractService';
+import "./Dashboard.css"; 
 
 const Dashboard = ({ account }) => {
     const [contractBalance, setContractBalance] = useState('0');
@@ -13,25 +14,41 @@ const Dashboard = ({ account }) => {
     const [totalTicketsSold, setTotalTicketsSold] = useState('0');
     const [activeTickets, setActiveTickets] = useState([]);
 
+    const refreshDashboardData = async () => {
+        try {
+            const [
+                balance,
+                price,
+                players,
+                allPlayers,
+                tickets,
+                soldTickets
+            ] = await Promise.all([
+                contractService.getContractBalance(),
+                contractService.getTicketPrice(),
+                contractService.getTotalRegisteredPlayers(),
+                contractService.getAllRegisteredPlayers(),
+                contractService.getActiveTickets(),
+                contractService.getTotalTicketsSold()
+            ]);
+
+            setContractBalance(balance);
+            setTicketPrice(price);
+            setTotalPlayers(players);
+            setRegisteredPlayers(allPlayers);
+            setActiveTickets(tickets);
+            setTotalTicketsSold(soldTickets);
+        } catch (error) {
+            setStatus(`Error refreshing dashboard data: ${error.message}`);
+        }
+    };
+
     useEffect(() => {
         const loadData = async () => {
             try {
                 await contractService.init();
                 setIsContractReady(true);
-
-                const balance = await contractService.getContractBalance();
-                const price = await contractService.getTicketPrice();
-                const players = await contractService.getTotalRegisteredPlayers();
-                const allPlayers = await contractService.getAllRegisteredPlayers();
-                const tickets = await contractService.getActiveTickets();
-                const soldTickets = await contractService.getTotalTicketsSold();
-
-                setContractBalance(balance);
-                setTicketPrice(price);
-                setTotalPlayers(players);
-                setRegisteredPlayers(allPlayers);
-                setActiveTickets(tickets);
-                setTotalTicketsSold(soldTickets);
+                await refreshDashboardData();
             } catch (error) {
                 setStatus(`Error initializing contract: ${error.message}`);
             }
@@ -50,12 +67,7 @@ const Dashboard = ({ account }) => {
             const purchaseResult = await contractService.purchaseTicket();
 
             if (purchaseResult.success) {
-                const balance = await contractService.getContractBalance();
-                const players = await contractService.getTotalRegisteredPlayers();
-                const soldTickets = await contractService.getTotalTicketsSold();
-                setContractBalance(balance);
-                setTotalPlayers(players);
-                setTotalTicketsSold(soldTickets);
+                await refreshDashboardData();
                 setStatus('Ticket purchased successfully!');
             }
         } catch (error) {
@@ -76,8 +88,7 @@ const Dashboard = ({ account }) => {
             const registerResult = await contractService.registerPlayer();
 
             if (registerResult.success) {
-                const players = await contractService.getTotalRegisteredPlayers();
-                setTotalPlayers(players);
+                await refreshDashboardData();
                 setStatus('Player registered successfully!');
             }
         } catch (error) {
@@ -97,6 +108,7 @@ const Dashboard = ({ account }) => {
             setStatus('Starting lottery...');
             const result = await contractService.drawLotteryWinner();
             if (result.success) {
+                await refreshDashboardData();
                 setStatus('Lottery started successfully!');
             }
         } catch (error) {
@@ -116,6 +128,7 @@ const Dashboard = ({ account }) => {
             setStatus('Opening lottery...');
             const result = await contractService.startNewLotteryRound();
             if (result.success) {
+                await refreshDashboardData();
                 setStatus('Lottery opened successfully!');
             }
         } catch (error) {
@@ -135,8 +148,8 @@ const Dashboard = ({ account }) => {
             setStatus('Updating ticket price...');
             const result = await contractService.setTicketPrice(newTicketPrice);
             if (result.success) {
-                const price = await contractService.getTicketPrice();
-                setTicketPrice(price);
+                await refreshDashboardData();
+                setNewTicketPrice(''); // Clear input after successful update
                 setStatus('Ticket price updated successfully!');
             }
         } catch (error) {
@@ -156,6 +169,7 @@ const Dashboard = ({ account }) => {
             setStatus('Entering ticket into lottery...');
             const result = await contractService.selectTicketsForLottery([ticketId]);
             if (result.success) {
+                await refreshDashboardData();
                 setStatus('Ticket entered into lottery successfully!');
             }
         } catch (error) {
@@ -164,79 +178,100 @@ const Dashboard = ({ account }) => {
             setIsLoading(false);
         }
     };
-
     return (
-        <div>
-            <h2>Lottery Dashboard</h2>
-            <div>
-                <p><strong>Contract Balance:</strong> {contractBalance} ETH</p>
-                <p><strong>Ticket Price:</strong> {ticketPrice} ETH</p>
-                <p><strong>Total Registered Players:</strong> {totalPlayers}</p>
-                <p><strong>Total Tickets Sold:</strong> {totalTicketsSold}</p>
-            </div>
-
-            <div>
-                <h3>Registered Players:</h3>
-                <ul>
-                    {registeredPlayers.length > 0 ? (
-                        registeredPlayers.map((player, index) => (
-                            <li key={index}>{player}</li>
-                        ))
-                    ) : (
-                        <p>No registered players yet</p>
-                    )}
-                </ul>
-            </div>
-
-            <div>
-                <button onClick={handlePurchase} disabled={isLoading}>
-                    {isLoading ? 'Processing...' : 'Buy Ticket'}
-                </button>
-                <button onClick={handleRegister} disabled={isLoading}>
-                    {isLoading ? 'Processing...' : 'Register'}
-                </button>
-                <button onClick={handleStartLottery} disabled={isLoading}>
-                    {isLoading ? 'Processing...' : 'Start Lottery'}
-                </button>
-                <button onClick={handleOpenLottery} disabled={isLoading}>
-                    {isLoading ? 'Processing...' : 'Open Lottery'}
-                </button>
-            </div>
-
-            <div>
-                <h3>Set New Ticket Price</h3>
-                <input
-                    type="number"
-                    value={newTicketPrice}
-                    onChange={(e) => setNewTicketPrice(e.target.value)}
-                    placeholder="Enter new ticket price"
-                />
-                <button onClick={handleSetTicketPrice} disabled={isLoading || !newTicketPrice}>
-                    {isLoading ? 'Processing...' : 'Set Price'}
-                </button>
-            </div>
-
-            <div>
-                <h3>Active Tickets:</h3>
-                <ul>
-                    {activeTickets.length > 0 ? (
-                        activeTickets.map((ticket, index) => (
-                            <li key={index}>
-                                {ticket} 
-                                <button onClick={() => handleSelectForLottery(ticket)} disabled={isLoading}>
-                                    {isLoading ? 'Processing...' : 'Enter into Lottery'}
-                                </button>
-                            </li>
-                        ))
-                    ) : (
-                        <p>No active tickets found</p>
-                    )}
-                </ul>
-            </div>
-
-            {status && <p style={{ color: 'red' }}>{status}</p>}
-        </div>
-    );
+      <div className="dashboard">
+          <h2>Lottery Dashboard</h2>
+          
+          <div className="stats-grid">
+              <div className="stat-card">
+                  <strong>Contract Balance</strong>
+                  <p>{contractBalance} ETH</p>
+              </div>
+              <div className="stat-card">
+                  <strong>Ticket Price</strong>
+                  <p>{ticketPrice} ETH</p>
+              </div>
+              <div className="stat-card">
+                  <strong>Total Players</strong>
+                  <p>{totalPlayers}</p>
+              </div>
+              <div className="stat-card">
+                  <strong>Tickets Sold</strong>
+                  <p>{totalTicketsSold}</p>
+              </div>
+          </div>
+  
+          <div className="dashboard-grid">
+              <div className="dashboard-main">
+                  <div className="section-card">
+                      <h3 className="section-title">Active Tickets</h3>
+                      <ul className="tickets-list">
+                          {activeTickets.length > 0 ? (
+                              activeTickets.map((ticket, index) => (
+                                  <li key={index}>
+                                      {ticket}
+                                      <button onClick={() => handleSelectForLottery(ticket)} disabled={isLoading}>
+                                          {isLoading ? 'Processing...' : 'Enter into Lottery'}
+                                      </button>
+                                  </li>
+                              ))
+                          ) : (
+                              <p>No active tickets found</p>
+                          )}
+                      </ul>
+                  </div>
+  
+                  <div className="section-card">
+                      <h3 className="section-title">Set New Ticket Price</h3>
+                      <input
+                          type="number"
+                          value={newTicketPrice}
+                          onChange={(e) => setNewTicketPrice(e.target.value)}
+                          placeholder="Enter new ticket price"
+                      />
+                      <button onClick={handleSetTicketPrice} disabled={isLoading || !newTicketPrice}>
+                          {isLoading ? 'Processing...' : 'Set Price'}
+                      </button>
+                  </div>
+              </div>
+  
+              <div className="dashboard-sidebar">
+                  <div className="section-card">
+                      <h3 className="section-title">Quick Actions</h3>
+                      <div className="action-buttons">
+                          <button onClick={handlePurchase} disabled={isLoading}>
+                              {isLoading ? 'Processing...' : 'Buy Ticket'}
+                          </button>
+                          <button onClick={handleRegister} disabled={isLoading}>
+                              {isLoading ? 'Processing...' : 'Register'}
+                          </button>
+                          <button onClick={handleStartLottery} disabled={isLoading}>
+                              {isLoading ? 'Processing...' : 'Start Lottery'}
+                          </button>
+                          <button onClick={handleOpenLottery} disabled={isLoading}>
+                              {isLoading ? 'Processing...' : 'Open Lottery'}
+                          </button>
+                      </div>
+                  </div>
+  
+                  <div className="section-card">
+                      <h3 className="section-title">Registered Players</h3>
+                      <ul className="players-list">
+                          {registeredPlayers.length > 0 ? (
+                              registeredPlayers.map((player, index) => (
+                                  <li key={index}>{player}</li>
+                              ))
+                          ) : (
+                              <p>No registered players yet</p>
+                          )}
+                      </ul>
+                  </div>
+              </div>
+          </div>
+  
+          {status && <div className="status-message">{status}</div>}
+      </div>
+  );
 };
 
 export default Dashboard;
