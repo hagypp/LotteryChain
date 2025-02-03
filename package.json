@@ -1,9 +1,13 @@
 {
   "devDependencies": {
     "@nomicfoundation/hardhat-toolbox": "^5.0.0",
-    "hardhat": "^2.22.17"
+    "hardhat": "^2.22.18"
   },
   "dependencies": {
     "ethers": "^6.13.4"
+  },
+  "scripts": {
+    "start": "cd frontend && npm start",
+    "test": "npx hardhat test"
   }
 }
