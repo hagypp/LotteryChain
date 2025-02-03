@@ -4,42 +4,73 @@ import contractService from "../services/contractService";
 import "./MetaMaskConnect.css";
 
 const MetaMaskConnect = ({ onConnect }) => {
-  const [status, setStatus] = useState("");
-  const [isConnecting, setIsConnecting] = useState(false);
-  const navigate = useNavigate();
+    const [status, setStatus] = useState("");
+    const [isConnecting, setIsConnecting] = useState(false);
+    const navigate = useNavigate();
 
-  const connectToMetaMask = async () => {
-    if (isConnecting) return;
+    const connectToMetaMask = async () => {
+        if (isConnecting) return;
+        setIsConnecting(true);
+        setStatus("Connecting to MetaMask...");
 
-    setIsConnecting(true);
-    setStatus("Connecting to MetaMask...");
+        try {
+            await contractService.init();
+            setStatus("Connected to MetaMask!");
+            setStatus("Registering player...");
+            const registerResult = await contractService.registerPlayer();
+            if (registerResult.success) {
+                setStatus("Player registered successfully!");
+                onConnect(contractService.account);
+                navigate('/dashboard');
+            }
+        } catch (error) {
+            setStatus(`Error: ${error.message}`);
+        } finally {
+            setIsConnecting(false);
+        }
+    };
 
-    try {
-      await contractService.init();
-      setStatus("Connected to MetaMask!");
+    const loginToMetaMask = async () => {
+        if (isConnecting) return;
+        setIsConnecting(true);
+        setStatus("Checking registration status...");
 
-      // Pass the account to the parent component and navigate to the dashboard
-      onConnect(contractService.account);
-      navigate('/dashboard');
-    } catch (error) {
-      setStatus(`Error: ${error.message}`);
-    } finally {
-      setIsConnecting(false);
-    }
-  };
+        try {
+            await contractService.init();
+            const isRegistered = await contractService.isPlayerRegistered(contractService.account);
+            if (isRegistered) {
+                setStatus("Login successful!");
+                onConnect(contractService.account);
+                navigate('/dashboard');
+            } else {
+                setStatus("Player not registered. Please sign up first.");
+            }
+        } catch (error) {
+            setStatus(`Error: ${error.message}`);
+        } finally {
+            setIsConnecting(false);
+        }
+    };
 
-  return (
-    <div className="metamask-container">
-      <button
-        onClick={connectToMetaMask}
-        disabled={isConnecting}
-        className="connect-button"
-      >
-        {isConnecting ? "Connecting..." : "Connect to MetaMask"}
-      </button>
-      <p className="status-message">{status}</p>
-    </div>
-  );
+    return (
+        <div className="auth-nav">
+            <button
+                onClick={loginToMetaMask}
+                disabled={isConnecting}
+                className="nav-button login"
+            >
+                {isConnecting ? "Connecting..." : "Login"}
+            </button>
+            <button
+                onClick={connectToMetaMask}
+                disabled={isConnecting}
+                className="nav-button register"
+            >
+                {isConnecting ? "Connecting..." : "Sign Up"}
+            </button>
+            {status && <div className="status-tooltip">{status}</div>}
+        </div>
+    );
 };
 
 export default MetaMaskConnect;

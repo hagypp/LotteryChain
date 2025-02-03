@@ -7,7 +7,7 @@ contract PlayerRegistry {
     uint256 private totalPlayersRegister;
 
     function registerPlayer(address _player) external returns (bool) {
-       // require(!registeredPlayers[msg.sender], "Player already registered");
+        require(!registeredPlayers[_player], "Player already registered");
         registeredPlayers[_player] = true;
         registeredAddresses.push(_player); // Add to the list of registered addresses
         totalPlayersRegister++;

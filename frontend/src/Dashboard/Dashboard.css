@@ -134,7 +134,6 @@
   background-color: #dc3545; /* Red for error */
 }
 
-
 /* Responsive Design */
 @media (max-width: 1200px) {
   .dashboard-grid {

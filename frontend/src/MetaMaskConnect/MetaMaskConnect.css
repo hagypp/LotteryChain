@@ -1,76 +1,85 @@
-.metamask-container {
-  background: rgba(255, 255, 255, 0.1);
-  backdrop-filter: blur(10px);
-  border-radius: 16px;
-  padding: 2rem;
-  box-shadow: 0 8px 32px rgba(31, 38, 135, 0.15);
-  border: 1px solid rgba(255, 255, 255, 0.18);
-  text-align: center;
-  max-width: 400px;
-  margin: 2rem auto;
-  transition: transform 0.3s ease;
+.auth-nav {
+  position: absolute;
+  top: 2rem;
+  right: 2rem;
+  display: flex;
+  gap: 1rem;
+  z-index: 10;
 }
 
-.metamask-container:hover {
-  transform: translateY(-5px);
-}
-
-.connect-button {
-  background: linear-gradient(45deg, #FF6B6B, #FF8E53);
+.nav-button {
+  padding: 0.75rem 1.5rem;
   border: none;
-  border-radius: 50px;
-  padding: 1rem 2rem;
-  color: white;
-  font-size: 1.1rem;
+  border-radius: 25px;
   font-weight: 600;
   cursor: pointer;
   transition: all 0.3s ease;
+  font-size: 1rem;
   text-transform: uppercase;
   letter-spacing: 1px;
-  position: relative;
-  overflow: hidden;
 }
 
-.connect-button:before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: -100%;
-  width: 100%;
-  height: 100%;
-  background: linear-gradient(
-    120deg,
-    transparent,
-    rgba(255, 255, 255, 0.2),
-    transparent
-  );
-  transition: 0.5s;
-}
-
-.connect-button:hover:before {
-  left: 100%;
-}
-
-.connect-button:hover {
-  transform: scale(1.05);
-  box-shadow: 0 0 20px rgba(255, 107, 107, 0.4);
-}
-
-.connect-button:disabled {
-  background: #ccc;
+.nav-button:disabled {
+  opacity: 0.7;
   cursor: not-allowed;
   transform: none;
 }
 
-.status-message {
-  margin-top: 1rem;
-  color: #4a5568;
+.nav-button.login {
+  background: transparent;
+  border: 2px solid #FF8E53;
+  color: #FF8E53;
+}
+
+.nav-button.login:hover:not(:disabled) {
+  background: rgba(255, 142, 83, 0.1);
+  transform: translateY(-2px);
+}
+
+.nav-button.register {
+  background: linear-gradient(45deg, #FF6B6B, #FF8E53);
+  color: white;
+}
+
+.nav-button.register:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 15px rgba(255, 107, 107, 0.3);
+}
+
+.status-tooltip {
+  position: absolute;
+  top: 100%;
+  right: 0;
+  margin-top: 0.5rem;
+  background: rgba(0, 0, 0, 0.8);
+  color: white;
+  padding: 0.5rem 1rem;
+  border-radius: 6px;
   font-size: 0.9rem;
-  min-height: 20px;
   animation: fadeIn 0.3s ease;
 }
 
 @keyframes fadeIn {
   from { opacity: 0; transform: translateY(-10px); }
   to { opacity: 1; transform: translateY(0); }
+}
+
+@media (max-width: 768px) {
+  .auth-nav {
+    position: relative;
+    top: 0;
+    right: 0;
+    justify-content: center;
+    margin-bottom: 2rem;
+  }
+  
+  .status-tooltip {
+    position: fixed;
+    top: auto;
+    bottom: 2rem;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 90%;
+    text-align: center;
+  }
 }
