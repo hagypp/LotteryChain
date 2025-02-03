@@ -1,14 +1,17 @@
-__pycache__
+node_modules
 .env
-.history
-.hypothesis/
-build/
-reports/
-.pytest_cache/
-.vscode/
-artifacts/
-build/
-cache/
-interfaces/
-node_modules/
-reports/
+
+# Hardhat files
+/cache
+/artifacts
+
+# TypeChain files
+/typechain
+/typechain-types
+
+# solidity-coverage files
+/coverage
+/coverage.json
+
+# Hardhat Ignition default folder for deployments against a local node
+ignition/deployments/chain-31337
