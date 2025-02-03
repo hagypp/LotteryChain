@@ -6,18 +6,22 @@ import "./TicketManager.sol";
 import "./LotteryManager.sol";
 
 contract MainTicketSystem {
-    PlayerRegistry private  playerRegistry;
+    PlayerRegistry private playerRegistry;
     TicketManager private ticketManager;
     LotteryManager private lotteryManager;
     address private immutable i_owner;
-
+    
+    event TicketsPurchased(address indexed player, uint256 indexed ticketId);
+    event TicketsEnteredLottery(address indexed player, uint256[] ticketIds, uint256 indexed roundNumber);
+    event WinnerPaid(address indexed winner, uint256 amount, uint256 indexed roundNumber);
+    
     constructor() {
         i_owner = msg.sender;
         
         // Deploy sub-contracts
         playerRegistry = new PlayerRegistry();
         ticketManager = new TicketManager(1 ether);
-        lotteryManager = new LotteryManager();
+        lotteryManager = new LotteryManager(address(ticketManager));
     }
 
     function getOwner() external view returns (address) {
@@ -25,11 +29,13 @@ contract MainTicketSystem {
     }
 
     modifier onlyOwner() {
-        require(msg.sender == i_owner, "Only the contract owner can call this function");_;
+        require(msg.sender == i_owner, "Only the contract owner can call this function"); 
+        _;
     }
 
-    modifier onlyRegister(){
-        require(playerRegistry.isPlayerRegistered(msg.sender),"Not a registered player");_;
+    modifier onlyRegister() {
+        require(playerRegistry.isPlayerRegistered(msg.sender), "Not a registered player"); 
+        _;
     }
 
     // Player Registration Functions
@@ -41,26 +47,31 @@ contract MainTicketSystem {
         return playerRegistry.isPlayerRegistered(_player);
     }
 
+    function getAllRegisteredPlayers() external view returns (address[] memory) {
+        return playerRegistry.getAllRegisteredPlayers();
+    }
+
     // Ticket Purchase Functions
     function purchaseTicket() external onlyRegister payable returns (uint256) {        
-        // Ensure the full ticket price is sent to the contract
         uint256 ticketPrice = ticketManager.getTicketPrice();
         require(msg.value >= ticketPrice, "Insufficient payment for ticket");
 
-        // Purchase ticket and keep the ticket price in the contract
         uint256 ticketId = ticketManager.purchaseTicket(msg.sender);
         
-        // Refund any excess payment
         if (msg.value > ticketPrice) {
             payable(msg.sender).transfer(msg.value - ticketPrice);
         }
-        // payable(0xAb8483F64d9C6d1EcF9b849Ae677dD3315835cb2).transfer(msg.value);
+        
+        emit TicketsPurchased(msg.sender, ticketId);
         return ticketId;
-        // return 1;
     }
 
-    function getActiveTickets() external onlyRegister view returns (uint256[] memory) {
-        return ticketManager.getActiveTickets(msg.sender);
+    function getActiveTickets() external view returns (uint256[] memory) {
+        return ticketManager.getTicketsByStatus(msg.sender, TicketManager.TicketStatus.ACTIVE);
+    }
+
+    function getTicketsByStatus(TicketManager.TicketStatus _status) external view returns (uint256[] memory) {
+        return ticketManager.getTicketsByStatus(msg.sender, _status);
     }
 
     // Lottery Functions
@@ -68,41 +79,52 @@ contract MainTicketSystem {
         lotteryManager.startNewLotteryRound();
     }
 
-    function selectTicketsForLottery(uint256[] calldata _ticketIds) external onlyRegister {
-        uint256 validTicketCount = ticketManager.deactivateTickets(msg.sender, _ticketIds);
-        require(validTicketCount > 0, "No valid tickets selected");
-        
+    function enterLotteryWithTickets(uint256[] calldata _ticketIds) external onlyRegister {
+        uint256 currentRound = lotteryManager.getCurrentRound();
         uint256 ticketPrice = ticketManager.getTicketPrice();
-        for (uint256 i = 0; i < validTicketCount; i++) {
-            lotteryManager.addParticipantAndPrizePool(msg.sender, ticketPrice);
+        
+        for (uint256 i = 0; i < _ticketIds.length; i++) {
+            // Verify ticket status is ACTIVE before entering lottery
+            require(
+                ticketManager.getTicketData(msg.sender, _ticketIds[i]).status == TicketManager.TicketStatus.ACTIVE,
+                "Invalid ticket status"
+            );
+            
+            // Add ticket to lottery round
+            lotteryManager.addParticipantAndPrizePool(
+                msg.sender,
+                _ticketIds[i],
+                ticketPrice
+            );
         }
+        
+        emit TicketsEnteredLottery(msg.sender, _ticketIds, currentRound);
     }
 
-     function drawLotteryWinner() external onlyOwner returns (address) {
-        // Get current lottery round details
-        LotteryRound memory currentRound = lotteryManager.getLotteryRound(
-            lotteryManager.getCurrentRound()
-        );
+    function drawLotteryWinner() external onlyOwner returns (address) {
+        (
+            uint256 roundNumber,
+            uint256 prizePool,
+            address[] memory participants,
+            address winner,
+            bool isFinalized
+        ) = lotteryManager.getLotteryRoundInfo(lotteryManager.getCurrentRound());
 
-        // Validate lottery round conditions
-        require(currentRound.participants.length > 0, "No participants in this round");
-        require(!currentRound.isFinalized, "Lottery round already finalized");
+        require(participants.length > 0, "No participants in this round");
+        require(!isFinalized, "Lottery round already finalized");
+        require(address(this).balance >= prizePool, "Insufficient contract balance to pay prize");
 
-        // Ensure contract has sufficient balance
-        uint256 prizePool = currentRound.totalPrizePool;
-        require(address(this).balance >= prizePool,"Insufficient contract balance to pay prize.");
-
-        // Draw the winner
-        address winner = lotteryManager.drawLotteryWinner();
-
-        // Transfer prize pool to the winner
+        winner = lotteryManager.drawLotteryWinner();
+        
+        // Transfer prize to winner
         (bool success, ) = payable(winner).call{value: prizePool}("");
         require(success, "Prize transfer failed");
+        
+        emit WinnerPaid(winner, prizePool, roundNumber);
         return winner;
     }
 
-
-    // Additional Utility Functions
+    // Getter Functions
     function getTicketPrice() external view returns (uint256) {
         return ticketManager.getTicketPrice();
     }
@@ -118,11 +140,20 @@ contract MainTicketSystem {
     function getTotalRegisteredPlayers() external view returns (uint256) {
         return playerRegistry.getTotalRegisteredPlayers();
     }
-        // Add a function to check contract balance
+
     function getContractBalance() external view returns (uint256) {
         return address(this).balance;
     }
 
-    // Fallback function to receive Ether
+    function getCurrentLotteryRound() external view returns (
+        uint256 roundNumber,
+        uint256 prizePool,
+        address[] memory participants,
+        address winner,
+        bool isFinalized
+    ) {
+        return lotteryManager.getLotteryRoundInfo(lotteryManager.getCurrentRound());
+    }
+
     receive() external payable {}
 }

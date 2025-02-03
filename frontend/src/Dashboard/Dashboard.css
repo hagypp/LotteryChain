@@ -1,0 +1,160 @@
+.dashboard {
+  /* Remove max-width and margin to allow full background coverage */
+  padding: 2rem;
+  background: linear-gradient(135deg, #1a1a2e, #16213e);
+  min-height: 100vh;
+  color: white;
+  display: grid;
+  gap: 2rem;
+}
+
+/* Rest of the styles remain the same */
+.dashboard h2 {
+  font-size: 2.5rem;
+  text-align: center;
+  margin-bottom: 2rem;
+  background: linear-gradient(45deg, #FF6B6B, #FFE66D);
+  background-clip: text;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+/* Keep other styles as they were */
+
+/* Stats Grid */
+.dashboard .stats-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 1.5rem;
+  margin-bottom: 2rem;
+}
+
+.dashboard .stat-card {
+  background: rgba(255, 255, 255, 0.05);
+  padding: 1.5rem;
+  border-radius: 16px;
+  box-shadow: 0 8px 32px rgba(31, 38, 135, 0.1);
+  backdrop-filter: blur(4px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  transition: transform 0.3s ease;
+}
+
+/* Main Layout Grid */
+.dashboard-grid {
+  display: grid;
+  grid-template-columns: 2fr 1fr;
+  gap: 2rem;
+}
+
+/* Left Column */
+.dashboard-main {
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+}
+
+/* Right Column */
+.dashboard-sidebar {
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+}
+
+/* Action Buttons */
+.dashboard .action-buttons {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 1rem;
+  margin: 2rem 0;
+}
+
+.dashboard button {
+  background: linear-gradient(45deg, #FF6B6B, #FF8E53);
+  border: none;
+  border-radius: 50px;
+  padding: 1rem 2rem;
+  color: white;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+/* Section Styling */
+.dashboard .section-card {
+  background: rgba(255, 255, 255, 0.05);
+  padding: 2rem;
+  border-radius: 16px;
+  margin-bottom: 2rem;
+}
+
+.dashboard .section-title {
+  color: #FFE66D;
+  margin-bottom: 1.5rem;
+  font-size: 1.5rem;
+}
+
+/* Players List */
+.dashboard .players-list {
+  list-style: none;
+  padding: 0;
+  background: rgba(255, 255, 255, 0.02);
+  border-radius: 8px;
+}
+
+.dashboard .players-list li {
+  padding: 1rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+
+/* Toast Notification */
+.toast {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  background-color: rgba(0, 0, 0, 0.8);
+  color: white;
+  padding: 1rem 2rem;
+  border-radius: 8px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+  z-index: 1000;
+  transition: opacity 0.3s ease-in-out;
+  opacity: 0; /* Default hidden */
+}
+
+.toast.show {
+  opacity: 1; /* Show when active */
+}
+
+.toast.success {
+  background-color: #28a745; /* Green for success */
+}
+
+.toast.error {
+  background-color: #dc3545; /* Red for error */
+}
+
+/* Responsive Design */
+@media (max-width: 1200px) {
+  .dashboard-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .dashboard .stats-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 768px) {
+  .dashboard {
+    padding: 1rem;
+  }
+  
+  .dashboard .stats-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .dashboard .action-buttons {
+    grid-template-columns: 1fr;
+  }
+}
