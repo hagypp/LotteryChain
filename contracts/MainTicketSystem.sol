@@ -79,7 +79,7 @@ contract MainTicketSystem {
         lotteryManager.startNewLotteryRound();
     }
 
-    function enterLotteryWithTickets(uint256[] calldata _ticketIds) external onlyRegister {
+    function selectTicketsForLottery(uint256[] calldata _ticketIds) external onlyRegister {
         uint256 currentRound = lotteryManager.getCurrentRound();
         uint256 ticketPrice = ticketManager.getTicketPrice();
         
