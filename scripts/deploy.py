@@ -1,4 +1,3 @@
-# deploy.py
 from web3 import Web3
 from solcx import compile_standard, install_solc
 import json
@@ -6,7 +5,7 @@ import os
 
 def compile_and_deploy():
     # Install specific solc version
-    install_solc('0.8.0')
+    install_solc('0.8.19')
     
     # Read contract files
     with open('contracts/MainTicketSystem.sol', 'r') as file:
@@ -39,7 +38,7 @@ def compile_and_deploy():
                 }
             },
         },
-        solc_version="0.8.0"
+        solc_version="0.8.19"
     )
 
     # Connect to local Hardhat node
