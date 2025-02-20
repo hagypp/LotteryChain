@@ -32,10 +32,6 @@ contract LotteryManager {
     ITicketManager private ticketManager;
     uint256 private constant SCALE_FACTOR = 1e18;
 
-    event RoundStarted(uint256 indexed roundNumber);
-    event ParticipantAdded(uint256 indexed roundNumber, address indexed participant, uint256 indexed ticketId);
-    event WinnerDrawn(uint256 indexed roundNumber, address indexed winner);
-
     constructor(address _ticketManagerAddress) {
         i_owner = msg.sender;
         activeRound = false;
@@ -57,7 +53,6 @@ contract LotteryManager {
         newRound.isFinalized = false;
         
         activeRound = true;
-        emit RoundStarted(currentLotteryRound);
         return currentLotteryRound;
     }
 
@@ -78,8 +73,6 @@ contract LotteryManager {
         
         round.participantTickets[_participant].push(_ticketId);
         round.totalPrizePool += _ticketPrice;
-
-        emit ParticipantAdded(currentLotteryRound, _participant, _ticketId);
         return true;
     }
 
@@ -159,7 +152,6 @@ contract LotteryManager {
         activeRound = false;
         currentLotteryRound++;
         
-        emit WinnerDrawn(currentRound.roundNumber, winner);
         return winner;
     }
 
@@ -195,4 +187,9 @@ contract LotteryManager {
     function getCurrentRound() external view returns (uint256) {
         return currentLotteryRound;
     }
+
+    function isLotteryActive() external view returns (bool) {
+    return activeRound;
+    }
+
 }

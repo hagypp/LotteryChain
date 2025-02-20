@@ -4,48 +4,67 @@ import AdminDashboard from './AdminDashboard';
 import "./Dashboard.css";
 
 const Dashboard = ({ account }) => {
-    const [contractBalance, setContractBalance] = useState('0');
     const [ticketPrice, setTicketPrice] = useState('0');
-    const [totalPlayers, setTotalPlayers] = useState('0');
-    const [registeredPlayers, setRegisteredPlayers] = useState([]);
     const [status, setStatus] = useState('');
     const [isContractReady, setIsContractReady] = useState(false);
-    const [isLoading, setIsLoading] = useState(false);
-    const [totalTicketsSold, setTotalTicketsSold] = useState('0');
+    const [isLoading, setIsLoading] = useState({});
     const [activeTickets, setActiveTickets] = useState([]);
     const [isOwner, setIsOwner] = useState(false);
+    const [ticketStatuses, setTicketStatuses] = useState({});
+    const [ticketPurchaseTimes, setTicketPurchaseTimes] = useState({});
+    const [isLotteryActive, setIsLotteryActive] = useState(false);
 
-    const refreshDashboardData = async () => {
+
+const refreshDashboardData = async () => {
+    try {
+        // Get all data except isLotteryActive first
+        const [
+            price,
+            tickets,
+            owner
+        ] = await Promise.all([
+            contractService.getTicketPrice(),
+            contractService.getActiveTickets(account),  // Pass account here
+            contractService.getOwner()
+        ]);
+
+        // Set states from first batch of queries
+        setTicketPrice(price.toString());
+        setActiveTickets(tickets);
+        setIsOwner(owner.toLowerCase() === account.toLowerCase());
+
+        // Try to get isLotteryActive separately with error handling
         try {
-            const [
-                balance,
-                price,
-                players,
-                allPlayers,
-                tickets,
-                soldTickets,
-                owner
-            ] = await Promise.all([
-                contractService.getContractBalance(),
-                contractService.getTicketPrice(),
-                contractService.getTotalRegisteredPlayers(),
-                contractService.getAllRegisteredPlayers(),
-                contractService.getActiveTickets(),
-                contractService.getTotalTicketsSold(),
-                contractService.getOwner()
-            ]);
-
-            setContractBalance(balance);
-            setTicketPrice(price);
-            setTotalPlayers(players);
-            setRegisteredPlayers(allPlayers);
-            setActiveTickets(tickets);
-            setTotalTicketsSold(soldTickets);
-            setIsOwner(owner.toLowerCase() === account.toLowerCase());
-        } catch (error) {
-            setStatus(`Error refreshing dashboard data: ${error.message}`);
+            const lotteryActiveStatus = await contractService.isLotteryActive();
+            setIsLotteryActive(lotteryActiveStatus);
+        } catch (lotteryError) {
+            console.warn("Could not determine lottery status:", lotteryError.message);
+            setIsLotteryActive(false);
         }
-    };
+
+        // Get ticket purchase times - make sure to pass the account
+        const purchaseTimes = {};
+        for (const ticket of tickets) {
+            try {
+                const purchaseTime = await contractService.getTicketPurchaseTime(ticket, account);  // Pass account here
+                purchaseTimes[ticket] = new Date(Number(purchaseTime) * 1000).toLocaleString();
+            } catch (timeError) {
+                console.warn(`Could not get purchase time for ticket ${ticket}:`, timeError.message);
+                purchaseTimes[ticket] = 'Unknown';
+            }
+        }
+        setTicketPurchaseTimes(purchaseTimes);
+
+        // Initialize ticket statuses
+        const statuses = {};
+        tickets.forEach(ticket => {
+            statuses[ticket] = 'Active';
+        });
+        setTicketStatuses(statuses);
+    } catch (error) {
+        setStatus(`Error refreshing dashboard data: ${error.message}`);
+    }
+};  
 
     useEffect(() => {
         const loadData = async () => {
@@ -66,7 +85,7 @@ const Dashboard = ({ account }) => {
             return;
         }
         try {
-            setIsLoading(true);
+            setIsLoading(prev => ({ ...prev, purchase: true }));
             setStatus('Purchasing ticket...');
             const purchaseResult = await contractService.purchaseTicket();
 
@@ -77,28 +96,7 @@ const Dashboard = ({ account }) => {
         } catch (error) {
             setStatus(`Purchase failed: ${error.message}`);
         } finally {
-            setIsLoading(false);
-        }
-    };
-
-    const handleRegister = async () => {
-        if (!isContractReady) {
-            setStatus('Contract not initialized yet. Please try again later.');
-            return;
-        }
-        try {
-            setIsLoading(true);
-            setStatus('Registering player...');
-            const registerResult = await contractService.registerPlayer();
-
-            if (registerResult.success) {
-                await refreshDashboardData();
-                setStatus('Player registered successfully!');
-            }
-        } catch (error) {
-            setStatus(`Registration failed: ${error.message}`);
-        } finally {
-            setIsLoading(false);
+            setIsLoading(prev => ({ ...prev, purchase: false }));
         }
     };
 
@@ -108,97 +106,119 @@ const Dashboard = ({ account }) => {
             return;
         }
         try {
-            setIsLoading(true);
+            setIsLoading(prev => ({ ...prev, [ticketId]: true }));
             setStatus('Entering ticket into lottery...');
             const result = await contractService.selectTicketsForLottery([ticketId]);
             if (result.success) {
+                setTicketStatuses(prev => ({
+                    ...prev,
+                    [ticketId]: 'In Lottery'
+                }));
                 await refreshDashboardData();
                 setStatus('Ticket entered into lottery successfully!');
             }
         } catch (error) {
             setStatus(`Failed to enter ticket into lottery: ${error.message}`);
         } finally {
-            setIsLoading(false);
+            setIsLoading(prev => ({ ...prev, [ticketId]: false }));
         }
     };
 
     return (
-        <div className="dashboard">
-            <h2>Lottery Dashboard</h2>
-            
+        <div className="dashboard-container">
+
+            {/* Admin Panel */}
             {isOwner && (
-                <AdminDashboard onActionComplete={refreshDashboardData} />
+                <div className="dashboard-section admin-section">
+                    <AdminDashboard onActionComplete={refreshDashboardData} />
+                </div>
             )}
-            
-            <div className="stats-grid">
-                <div className="stat-card">
-                    <strong>Contract Balance</strong>
-                    <p>{contractBalance} ETH</p>
-                </div>
-                <div className="stat-card">
-                    <strong>Ticket Price</strong>
-                    <p>{ticketPrice} ETH</p>
-                </div>
-                <div className="stat-card">
-                    <strong>Total Players</strong>
-                    <p>{totalPlayers}</p>
-                </div>
-                <div className="stat-card">
-                    <strong>Tickets Sold</strong>
-                    <p>{totalTicketsSold}</p>
+
+            {/* Statistics Section */}
+            <div className="dashboard-section">
+                <div className="stats-grid">
+                    <div className="stat-card">
+                        <h3 className="stat-title">Current Ticket Price</h3>
+                        <p className="stat-value">{ticketPrice} ETH</p>
+                    </div>
+                    <div className="stat-card">
+                        <h3 className="stat-title">Active Tickets</h3>
+                        <p className="stat-value">{activeTickets.length}</p>
+                    </div>
+                    <div className="stat-card">
+                        <p className="stat-value">{isLotteryActive ? 'Lottery Round Active' : 'No Active Lottery'}</p>
+                    </div>
+
                 </div>
             </div>
 
-            <div className="dashboard-grid">
-                <div className="dashboard-main">
-                    <div className="section-card">
-                        <h3 className="section-title">Active Tickets</h3>
-                        <ul className="tickets-list">
-                            {activeTickets.length > 0 ? (
-                                activeTickets.map((ticket, index) => (
-                                    <li key={index}>
-                                        {ticket}
-                                        <button onClick={() => handleSelectForLottery(ticket)} disabled={isLoading}>
-                                            {isLoading ? 'Processing...' : 'Enter into Lottery'}
-                                        </button>
-                                    </li>
-                                ))
-                            ) : (
-                                <p>No active tickets found</p>
-                            )}
-                        </ul>
-                    </div>
-                </div>
+            {/* Tickets List */}
+            <div className="dashboard-section">
+                <div className="tickets-container">
+                    <h3 className="tickets-header">
+                        <span className="flex items-center gap-2">
 
-                <div className="dashboard-sidebar">
-                    <div className="section-card">
-                        <h3 className="section-title">Quick Actions</h3>
-                        <div className="action-buttons">
-                            <button onClick={handlePurchase} disabled={isLoading}>
-                                {isLoading ? 'Processing...' : 'Buy Ticket'}
-                            </button>
-                            <button onClick={handleRegister} disabled={isLoading}>
-                                {isLoading ? 'Processing...' : 'Register'}
-                            </button>
-                        </div>
-                    </div>
-
-                    <div className="section-card">
-                        <h3 className="section-title">Registered Players</h3>
-                        <ul className="players-list">
-                            {registeredPlayers.length > 0 ? (
-                                registeredPlayers.map((player, index) => (
-                                    <li key={index}>{player}</li>
-                                ))
+                            Your Tickets
+                        </span>
+                        <button 
+                            onClick={handlePurchase}
+                            disabled={isLoading.purchase}
+                            className="purchase-button flex items-center gap-2 justify-center"
+                        >
+                            {isLoading.purchase ? (
+                                <>
+                                    <span className="loading-indicator"></span>
+                                    Processing...
+                                </>
                             ) : (
-                                <p>No registered players yet</p>
+                                <>
+                                    Buy New Ticket
+                                </>
                             )}
-                        </ul>
+                        </button>
+                    </h3>
+                    <div className="tickets-list">
+                        {activeTickets.length > 0 ? (
+                            activeTickets.map((ticket, index) => (
+                                <div key={index} className="ticket-item">
+                                    <div className="ticket-info">
+                                        <span className="ticket-number">Ticket {ticket}</span>
+                                        <span className="ticket-time">Purchased: {ticketPurchaseTimes[ticket] || 'Loading...'}</span>
+                                        <span className={`ticket-status ${
+                                            ticketStatuses[ticket]?.toLowerCase().replace(' ', '-')
+                                        }`}>
+                                            {ticketStatuses[ticket]}
+                                        </span>
+                                    </div>
+                                    <button 
+                                        onClick={() => handleSelectForLottery(ticket)}
+                                        disabled={isLoading[ticket] || ticketStatuses[ticket] === 'In Lottery' || !isLotteryActive}
+                                        className="lottery-button"
+                                    >
+                                        {isLoading[ticket] ? (
+                                            <>
+                                                <span className="loading-indicator"></span>
+                                                Processing...
+                                            </>
+                                        ) : !isLotteryActive ? 'No Active Lottery' : 'Enter into Lottery'}
+                                    </button>
+                                </div>
+                            ))
+                        ) : (
+                            <div className="empty-state">
+                                No active tickets found. Purchase a ticket to get started!
+                            </div>
+                        )}
                     </div>
                 </div>
             </div>
 
-            {status && <div className="status-message">{status}</div>}
+            {/* Status Message */}
+            {status && (
+                <div className="status-message">
+                    {status}
+                </div>
+            )}
         </div>
     );
 };

@@ -1,185 +1,7 @@
 // Updated contractService.js
 import Web3 from 'web3';
-
-const CONTRACT_ADDRESS = "0x5FbDB2315678afecb367f032d93F642f64180aa3";
-const CONTRACT_ABI = [
-    {
-        "inputs": [],
-        "name": "registerPlayer",
-        "outputs": [],
-        "stateMutability": "nonpayable",
-        "type": "function"
-    },
-    {
-        "inputs": [
-            {
-                "internalType": "address",
-                "name": "_player",
-                "type": "address"
-            }
-        ],
-        "name": "isPlayerRegistered",
-        "outputs": [
-            {
-                "internalType": "bool",
-                "name": "",
-                "type": "bool"
-            }
-        ],
-        "stateMutability": "view",
-        "type": "function"
-    },
-    {
-        "inputs": [],
-        "name": "purchaseTicket",
-        "outputs": [
-            {
-                "internalType": "uint256",
-                "name": "",
-                "type": "uint256"
-            }
-        ],
-        "stateMutability": "payable",
-        "type": "function"
-    },
-    {
-        "inputs": [],
-        "name": "getTicketPrice",
-        "outputs": [
-            {
-                "internalType": "uint256",
-                "name": "",
-                "type": "uint256"
-            }
-        ],
-        "stateMutability": "view",
-        "type": "function"
-    },
-    {
-        "inputs": [],
-        "name": "getTotalRegisteredPlayers",
-        "outputs": [
-            {
-                "internalType": "uint256",
-                "name": "",
-                "type": "uint256"
-            }
-        ],
-        "stateMutability": "view",
-        "type": "function"
-    },
-    {
-        "inputs": [],
-        "name": "getAllRegisteredPlayers",
-        "outputs": [
-            {
-                "internalType": "address[]",
-                "name": "",
-                "type": "address[]"
-            }
-        ],
-        "stateMutability": "view",
-        "type": "function"
-    },
-    {
-        "inputs": [],
-        "name": "getOwner",
-        "outputs": [
-            {
-                "internalType": "address",
-                "name": "",
-                "type": "address"
-            }
-        ],
-        "stateMutability": "view",
-        "type": "function"
-    },
-    {
-        "inputs": [],
-        "name": "getActiveTickets",
-        "outputs": [
-            {
-                "internalType": "uint256[]",
-                "name": "",
-                "type": "uint256[]"
-            }
-        ],
-        "stateMutability": "view",
-        "type": "function"
-    },
-    {
-        "inputs": [],
-        "name": "getContractBalance",
-        "outputs": [
-            {
-                "internalType": "uint256",
-                "name": "",
-                "type": "uint256"
-            }
-        ],
-        "stateMutability": "view",
-        "type": "function"
-    },
-    {
-        "inputs": [],
-        "name": "getTotalTicketsSold",
-        "outputs": [
-            {
-                "internalType": "uint256",
-                "name": "",
-                "type": "uint256"
-            }
-        ],
-        "stateMutability": "view",
-        "type": "function"
-    },
-    {
-        "inputs": [],
-        "name": "startNewLotteryRound",
-        "outputs": [],
-        "stateMutability": "nonpayable",
-        "type": "function"
-    },
-    {
-        "inputs": [
-            {
-                "internalType": "uint256[]",
-                "name": "_ticketIds",
-                "type": "uint256[]"
-            }
-        ],
-        "name": "selectTicketsForLottery",
-        "outputs": [],
-        "stateMutability": "nonpayable",
-        "type": "function"
-    },
-    {
-        "inputs": [],
-        "name": "drawLotteryWinner",
-        "outputs": [
-            {
-                "internalType": "address",
-                "name": "",
-                "type": "address"
-            }
-        ],
-        "stateMutability": "nonpayable",
-        "type": "function"
-    },
-    {
-        "inputs": [
-            {
-                "internalType": "uint256",
-                "name": "_newPrice",
-                "type": "uint256"
-            }
-        ],
-        "name": "setTicketPrice",
-        "outputs": [],
-        "stateMutability": "nonpayable",
-        "type": "function"
-    }
-];
+import ABI from '../contracts/contractABI.json';
+import CONTRACT_ADDRESS from '../contracts/contractConfig'; 
 
 class ContractService {
     constructor() {
@@ -195,8 +17,8 @@ class ContractService {
                 const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
                 this.account = accounts[0];
 
-                this.contract = new this.web3.eth.Contract(CONTRACT_ABI, CONTRACT_ADDRESS);
-                
+                this.contract = new this.web3.eth.Contract(ABI, CONTRACT_ADDRESS);
+
                 window.ethereum.on('accountsChanged', (accounts) => {
                     this.account = accounts[0];
                     window.location.reload();
@@ -211,12 +33,41 @@ class ContractService {
         }
     }
 
+    async getTicketPurchaseTime(ticketId,_player) {
+        try {
+            const purchaseTime = await this.contract.methods.getTicketPurchaseTime(ticketId,_player).call();
+            return purchaseTime;
+        } catch (error) {
+            throw new Error(`Error fetching ticket purchase time: ${error.message}`);
+        }
+    }
+
+    async isLotteryActive() {
+        try {
+            const isActive = await this.contract.methods.isLotteryActive().call();
+            return isActive;
+        } catch (error) {
+            throw new Error(`Error checking if lottery is active: ${error.message}`);
+        }
+    }
+    
+
     async getContractBalance() {
         try {
             const balance = await this.web3.eth.getBalance(CONTRACT_ADDRESS);
             return this.web3.utils.fromWei(balance, 'ether');
         } catch (error) {
             throw new Error(`Error fetching contract balance: ${error.message}`);
+        }
+    }
+
+
+    async getTicketsByStatus(status) {
+        try {
+            const tickets = await this.contract.methods.getTicketsByStatus(status).call({ from: this.account });
+            return tickets;
+        } catch (error) {
+            throw new Error(`Error fetching tickets by status: ${error.message}`);
         }
     }
 
