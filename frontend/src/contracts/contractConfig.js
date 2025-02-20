@@ -1,0 +1,3 @@
+const CONTRACT_ADDRESS = process.env.REACT_APP_CONTRACT_ADDRESS || "0x0000000000000000000000000000000000000000"; // כתובת ברירת מחדל למניעת קריסות
+
+export default CONTRACT_ADDRESS;

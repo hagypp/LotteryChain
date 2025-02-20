@@ -11,10 +11,6 @@ contract MainTicketSystem {
     LotteryManager private lotteryManager;
     address private immutable i_owner;
     
-    event TicketsPurchased(address indexed player, uint256 indexed ticketId);
-    event TicketsEnteredLottery(address indexed player, uint256[] ticketIds, uint256 indexed roundNumber);
-    event WinnerPaid(address indexed winner, uint256 amount, uint256 indexed roundNumber);
-    
     constructor() {
         i_owner = msg.sender;
         
@@ -62,7 +58,6 @@ contract MainTicketSystem {
             payable(msg.sender).transfer(msg.value - ticketPrice);
         }
         
-        emit TicketsPurchased(msg.sender, ticketId);
         return ticketId;
     }
 
@@ -79,27 +74,28 @@ contract MainTicketSystem {
         lotteryManager.startNewLotteryRound();
     }
 
-    function selectTicketsForLottery(uint256[] calldata _ticketIds) external onlyRegister {
+    function selectTicketsForLottery(uint256 _ticketId) 
+        external 
+        onlyRegister 
+        returns (bool) 
+    {
         uint256 currentRound = lotteryManager.getCurrentRound();
         uint256 ticketPrice = ticketManager.getTicketPrice();
-        
-        for (uint256 i = 0; i < _ticketIds.length; i++) {
-            // Verify ticket status is ACTIVE before entering lottery
-            require(
-                ticketManager.getTicketData(msg.sender, _ticketIds[i]).status == TicketManager.TicketStatus.ACTIVE,
-                "Invalid ticket status"
-            );
-            
-            // Add ticket to lottery round
-            lotteryManager.addParticipantAndPrizePool(
-                msg.sender,
-                _ticketIds[i],
-                ticketPrice
-            );
-        }
-        
-        emit TicketsEnteredLottery(msg.sender, _ticketIds, currentRound);
+
+        // Verify ticket status is ACTIVE before entering lottery
+        require(
+            ticketManager.getTicketData(msg.sender, _ticketId).status == TicketManager.TicketStatus.ACTIVE,
+            "Invalid ticket status"
+        );
+
+        // Add ticket to lottery round
+        return lotteryManager.addParticipantAndPrizePool(
+            msg.sender,
+            _ticketId,
+            ticketPrice
+        ); 
     }
+
 
     function drawLotteryWinner() external onlyOwner returns (address) {
         (
@@ -120,7 +116,6 @@ contract MainTicketSystem {
         (bool success, ) = payable(winner).call{value: prizePool}("");
         require(success, "Prize transfer failed");
         
-        emit WinnerPaid(winner, prizePool, roundNumber);
         return winner;
     }
 
@@ -154,6 +149,16 @@ contract MainTicketSystem {
     ) {
         return lotteryManager.getLotteryRoundInfo(lotteryManager.getCurrentRound());
     }
+
+    function getTicketPurchaseTime(uint256 _ticketId, address _player) public view returns (uint256) {
+        return ticketManager.getTicketPurchaseTime(_player, _ticketId);
+    }
+
+    function isLotteryActive() external view  onlyOwner returns (bool) {
+        return lotteryManager.isLotteryActive();
+    }
+
+    
 
     receive() external payable {}
 }
