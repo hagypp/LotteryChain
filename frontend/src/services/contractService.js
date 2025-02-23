@@ -1,7 +1,9 @@
 // Updated contractService.js
 import Web3 from 'web3';
 import ABI from '../contracts/contractABI.json';
-import CONTRACT_ADDRESS from '../contracts/contractConfig'; 
+//import CONTRACT_ADDRESS from '../contracts/contractConfig'; 
+
+const CONTRACT_ADDRESS = "0x5FbDB2315678afecb367f032d93F642f64180aa3";
 
 class ContractService {
     constructor() {
@@ -173,7 +175,9 @@ class ContractService {
 
     async selectTicketsForLottery(ticketIds) {
         try {
-            await this.contract.methods.selectTicketsForLottery(ticketIds).send({ from: this.account });
+            // Convert the first ticket ID to a string to handle BigInt
+            const ticketId = ticketIds[0].toString();
+            await this.contract.methods.selectTicketsForLottery(ticketId).send({ from: this.account });
             return { success: true };
         } catch (error) {
             throw new Error(`Error selecting tickets for lottery: ${error.message}`);
@@ -198,6 +202,33 @@ class ContractService {
             throw new Error(`Error setting ticket price: ${error.message}`);
         }
     }
+
+    async getAllLotteryRoundsInfo() {
+        try {
+            const result = await this.contract.methods.getAllLotteryRoundsInfo().call();
+    
+            const formattedResult = result.roundNumbers.map((_, i) => ({
+                roundNumber: result.roundNumbers[i],
+                totalPrizePool: result.totalPrizePools[i],
+                participants: result.participantsList[i],
+                winner: result.winners[i],
+                isFinalized: result.finalizedStatuses[i]
+            }));
+    
+            return formattedResult;
+        } catch (error) {
+            throw new Error(`Error fetching lottery rounds: ${error.message}`);
+        }
+    }
+    
+    async getPlayerTickets(playerAddress) {
+        try {
+            const tickets = await this.contract.methods.getPlayerTickets(playerAddress).call();
+            return tickets; 
+        } catch (error) {
+            throw new Error(`Failed to get player tickets: ${error.message}`);
+        }
+    }    
 
 }
 

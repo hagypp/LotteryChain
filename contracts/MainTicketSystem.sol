@@ -65,9 +65,6 @@ contract MainTicketSystem {
         return ticketManager.getTicketsByStatus(msg.sender, TicketManager.TicketStatus.ACTIVE);
     }
 
-    function getTicketsByStatus(TicketManager.TicketStatus _status) external view returns (uint256[] memory) {
-        return ticketManager.getTicketsByStatus(msg.sender, _status);
-    }
 
     // Lottery Functions
     function startNewLotteryRound() external onlyOwner {
@@ -158,7 +155,21 @@ contract MainTicketSystem {
         return lotteryManager.isLotteryActive();
     }
 
-    
+    function getAllLotteryRoundsInfo() external view returns (
+    uint256[] memory roundNumbers,
+    uint256[] memory totalPrizePools,
+    address[][] memory participantsList,
+    address[] memory winners,
+    bool[] memory finalizedStatuses
+    ) {
+        return lotteryManager.getAllLotteryRoundsInfo();
+    }
 
+    // Get all tickets for a player
+    function getPlayerTickets(address _player) external view returns (TicketManager.TicketData[] memory) {
+        return ticketManager.getPlayerTickets(_player);
+    }
+
+    
     receive() external payable {}
 }

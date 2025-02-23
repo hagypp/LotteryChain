@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import contractService from '../services/contractService';
 import AdminDashboard from './AdminDashboard';
+import LotteryRounds from './LotteryRounds';
 import "./Dashboard.css";
 
 const Dashboard = ({ account }) => {
@@ -10,61 +11,48 @@ const Dashboard = ({ account }) => {
     const [isLoading, setIsLoading] = useState({});
     const [activeTickets, setActiveTickets] = useState([]);
     const [isOwner, setIsOwner] = useState(false);
-    const [ticketStatuses, setTicketStatuses] = useState({});
-    const [ticketPurchaseTimes, setTicketPurchaseTimes] = useState({});
+   
+   
     const [isLotteryActive, setIsLotteryActive] = useState(false);
 
+    // Status mapping for ticket states
+    const STATUS_MAP = {
+        0: 'Active',
+        1: 'In Lottery',
+        2: 'Won',
+        3: 'Expired'
+    };
 
-const refreshDashboardData = async () => {
-    try {
-        // Get all data except isLotteryActive first
-        const [
-            price,
-            tickets,
-            owner
-        ] = await Promise.all([
-            contractService.getTicketPrice(),
-            contractService.getActiveTickets(account),  // Pass account here
-            contractService.getOwner()
-        ]);
-
-        // Set states from first batch of queries
-        setTicketPrice(price.toString());
-        setActiveTickets(tickets);
-        setIsOwner(owner.toLowerCase() === account.toLowerCase());
-
-        // Try to get isLotteryActive separately with error handling
+    const refreshDashboardData = async () => {
         try {
-            const lotteryActiveStatus = await contractService.isLotteryActive();
-            setIsLotteryActive(lotteryActiveStatus);
-        } catch (lotteryError) {
-            console.warn("Could not determine lottery status:", lotteryError.message);
-            setIsLotteryActive(false);
-        }
+            // Get all data except isLotteryActive first
+            const [
+                price,
+                tickets,
+                owner
+            ] = await Promise.all([
+                contractService.getTicketPrice(),
+                contractService.getPlayerTickets(account),
+                contractService.getOwner()
+            ]);
 
-        // Get ticket purchase times - make sure to pass the account
-        const purchaseTimes = {};
-        for (const ticket of tickets) {
+            // Set states from first batch of queries
+            setTicketPrice(price.toString());
+            setActiveTickets(tickets);
+            setIsOwner(owner.toLowerCase() === account.toLowerCase());
+
+            // Try to get isLotteryActive separately with error handling
             try {
-                const purchaseTime = await contractService.getTicketPurchaseTime(ticket, account);  // Pass account here
-                purchaseTimes[ticket] = new Date(Number(purchaseTime) * 1000).toLocaleString();
-            } catch (timeError) {
-                console.warn(`Could not get purchase time for ticket ${ticket}:`, timeError.message);
-                purchaseTimes[ticket] = 'Unknown';
+                const lotteryActiveStatus = await contractService.isLotteryActive();
+                setIsLotteryActive(lotteryActiveStatus);
+            } catch (lotteryError) {
+                console.warn("Could not determine lottery status:", lotteryError.message);
+                setIsLotteryActive(false);
             }
+        } catch (error) {
+            setStatus(`Error refreshing dashboard data: ${error.message}`);
         }
-        setTicketPurchaseTimes(purchaseTimes);
-
-        // Initialize ticket statuses
-        const statuses = {};
-        tickets.forEach(ticket => {
-            statuses[ticket] = 'Active';
-        });
-        setTicketStatuses(statuses);
-    } catch (error) {
-        setStatus(`Error refreshing dashboard data: ${error.message}`);
-    }
-};  
+    };
 
     useEffect(() => {
         const loadData = async () => {
@@ -110,10 +98,7 @@ const refreshDashboardData = async () => {
             setStatus('Entering ticket into lottery...');
             const result = await contractService.selectTicketsForLottery([ticketId]);
             if (result.success) {
-                setTicketStatuses(prev => ({
-                    ...prev,
-                    [ticketId]: 'In Lottery'
-                }));
+           
                 await refreshDashboardData();
                 setStatus('Ticket entered into lottery successfully!');
             }
@@ -126,7 +111,6 @@ const refreshDashboardData = async () => {
 
     return (
         <div className="dashboard-container">
-
             {/* Admin Panel */}
             {isOwner && (
                 <div className="dashboard-section admin-section">
@@ -148,7 +132,6 @@ const refreshDashboardData = async () => {
                     <div className="stat-card">
                         <p className="stat-value">{isLotteryActive ? 'Lottery Round Active' : 'No Active Lottery'}</p>
                     </div>
-
                 </div>
             </div>
 
@@ -157,7 +140,6 @@ const refreshDashboardData = async () => {
                 <div className="tickets-container">
                     <h3 className="tickets-header">
                         <span className="flex items-center gap-2">
-
                             Your Tickets
                         </span>
                         <button 
@@ -180,27 +162,44 @@ const refreshDashboardData = async () => {
                     <div className="tickets-list">
                         {activeTickets.length > 0 ? (
                             activeTickets.map((ticket, index) => (
-                                <div key={index} className="ticket-item">
+                                <div key={ticket.id} className="ticket-item">
                                     <div className="ticket-info">
-                                        <span className="ticket-number">Ticket {ticket}</span>
-                                        <span className="ticket-time">Purchased: {ticketPurchaseTimes[ticket] || 'Loading...'}</span>
-                                        <span className={`ticket-status ${
-                                            ticketStatuses[ticket]?.toLowerCase().replace(' ', '-')
-                                        }`}>
-                                            {ticketStatuses[ticket]}
+                                        <span className="ticket-number">Ticket #{ticket.id.toString()}</span>
+                                        <span className="ticket-time">
+                                            Purchased: {new Date(Number(ticket.creationTimestamp) * 1000).toLocaleString() || 'Loading...'}
                                         </span>
+                                        <span className={`ticket-status ${
+                                            STATUS_MAP[ticket.status]?.toLowerCase().replace(' ', '-')
+                                        }`}>
+                                            {STATUS_MAP[ticket.status]}
+                                        </span>
+                                        {Number(ticket.lotteryRound) > 0 && (
+                                            <span className="ticket-round">
+                                                Round: {ticket.lotteryRound.toString()}
+                                            </span>
+                                        )}
                                     </div>
                                     <button 
-                                        onClick={() => handleSelectForLottery(ticket)}
-                                        disabled={isLoading[ticket] || ticketStatuses[ticket] === 'In Lottery' || !isLotteryActive}
+                                        onClick={() => handleSelectForLottery(ticket.id)}
+                                        disabled={
+                                            isLoading[ticket.id] || 
+                                            Number(ticket.status) !== 0 || // Only ACTIVE tickets (status 0) can enter lottery
+                                            !isLotteryActive
+                                        }
                                         className="lottery-button"
                                     >
-                                        {isLoading[ticket] ? (
+                                        {isLoading[ticket.id] ? (
                                             <>
                                                 <span className="loading-indicator"></span>
                                                 Processing...
                                             </>
-                                        ) : !isLotteryActive ? 'No Active Lottery' : 'Enter into Lottery'}
+                                        ) : !isLotteryActive ? (
+                                            'No Active Lottery'
+                                        ) : Number(ticket.status) === 0 ? (
+                                            'Enter into Lottery'  // Changed this condition
+                                        ) : (
+                                            STATUS_MAP[ticket.status]  // Show the actual status
+                                        )}
                                     </button>
                                 </div>
                             ))
@@ -219,8 +218,12 @@ const refreshDashboardData = async () => {
                     {status}
                 </div>
             )}
+             <LotteryRounds />
         </div>
+        
     );
+
+   
 };
 
 export default Dashboard;

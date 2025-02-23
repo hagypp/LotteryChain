@@ -139,16 +139,22 @@
     {
         "inputs": [
             {
-                "internalType": "uint256[]",
-                "name": "_ticketIds",
-                "type": "uint256[]"
+                "internalType": "uint256",
+                "name": "_ticketId",
+                "type": "uint256"
             }
         ],
         "name": "selectTicketsForLottery",
-        "outputs": [],
+        "outputs": [
+            {
+                "internalType": "bool",
+                "name": "",
+                "type": "bool"
+            }
+        ],
         "stateMutability": "nonpayable",
         "type": "function"
-    },
+    },    
     {
         "inputs": [],
         "name": "drawLotteryWinner",
@@ -231,5 +237,45 @@
         "payable": false,
         "stateMutability": "view",
         "type": "function"
-    }      
+    },
+    {
+        "name": "getAllLotteryRoundsInfo",
+        "type": "function",
+        "stateMutability": "view",
+        "inputs": [],
+        "outputs": [
+          { "name": "roundNumbers", "type": "uint256[]" },
+          { "name": "totalPrizePools", "type": "uint256[]" },
+          { "name": "participantsList", "type": "address[][]" },
+          { "name": "winners", "type": "address[]" },
+          { "name": "finalizedStatuses", "type": "bool[]" }
+        ]
+      },
+      {
+        "constant": true,
+        "inputs": [
+          {
+            "name": "_player",
+            "type": "address"
+          }
+        ],
+        "name": "getPlayerTickets",
+        "outputs": [
+          {
+            "name": "",
+            "type": "tuple[]",
+            "components": [
+              { "name": "id", "type": "uint256" },
+              { "name": "owner", "type": "address" },
+              { "name": "creationTimestamp", "type": "uint256" },
+              { "name": "status", "type": "uint8" },
+              { "name": "lotteryRound", "type": "uint256" }
+            ]
+          }
+        ],
+        "payable": false,
+        "stateMutability": "view",
+        "type": "function"
+      }
+                
 ]
