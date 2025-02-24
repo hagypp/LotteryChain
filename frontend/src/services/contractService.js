@@ -100,31 +100,8 @@ class ContractService {
         }
     }
 
-    async registerPlayer() {
-        try {
-            await this.contract.methods.registerPlayer().send({ from: this.account });
-            return { success: true };
-        } catch (error) {
-            throw new Error(`Error registering player: ${error.message}`);
-        }
-    }
-
-    async isPlayerRegistered(playerAddress) {
-        try {
-            const isRegistered = await this.contract.methods.isPlayerRegistered(playerAddress).call();
-            return isRegistered;
-        } catch (error) {
-            throw new Error(`Error checking player registration: ${error.message}`);
-        }
-    }
-
     async purchaseTicket() {
         try {
-            const isRegistered = await this.isPlayerRegistered(this.account);
-            if (!isRegistered) {
-                throw new Error("Player is not registered. Please register first.");
-            }
-    
             const ticketPrice = await this.contract.methods.getTicketPrice().call();
             await this.contract.methods.purchaseTicket().send({
                 from: this.account,

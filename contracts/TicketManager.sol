@@ -17,6 +17,8 @@ contract TicketManager {
         uint256 lotteryRound;  // Track which round the ticket is/was in
     }
 
+    address[] private players; // Store all addresses
+
     mapping(address => TicketData[]) private playerTickets;
     uint256 private totalTicketsSold;
     address private immutable i_owner;
@@ -35,6 +37,10 @@ contract TicketManager {
     // Purchase a ticket and store the time of purchase
     function purchaseTicket(address _buyer) external payable returns (uint256) {
         uint256 ticketId = totalTicketsSold;
+
+        if (playerTickets[_buyer].length == 0)
+            players.push(_buyer); // Store only new addresses
+
         playerTickets[_buyer].push(TicketData({
             id: ticketId,
             owner: _buyer,
@@ -49,46 +55,64 @@ contract TicketManager {
     }
 
     // Set the ticket in a lottery round
-    function setTicketInLottery(address _player, uint256 _ticketId, uint256 _lotteryRound) external returns (bool) {
-        for (uint256 i = 0; i < playerTickets[_player].length; i++) {
-            if (playerTickets[_player][i].id == _ticketId) {
-                require(playerTickets[_player][i].status == TicketStatus.ACTIVE, 
-                    "Ticket must be active to enter lottery");
-                
-                playerTickets[_player][i].status = TicketStatus.IN_LOTTERY;
-                playerTickets[_player][i].lotteryRound = _lotteryRound;
-                
+    function setTicketInLottery(address _player, uint256 _ticketId, uint256 _lotteryRound) 
+        external 
+        returns (bool) 
+    {
+        TicketData[] storage tickets = playerTickets[_player];
+        uint256 length = tickets.length;
+
+        for (uint256 i; i < length; ++i) { // Preload length and use ++i for gas savings
+            if (tickets[i].id == _ticketId) {
+                require(tickets[i].status == TicketStatus.ACTIVE, "Ticket must be active to enter lottery");
+
+                tickets[i].status = TicketStatus.IN_LOTTERY;
+                tickets[i].lotteryRound = _lotteryRound;
+
                 return true;
             }
         }
+
         return false;
     }
 
     // Mark the ticket as used
-    function markTicketAsUsed(address _player, uint256 _ticketId) external returns (bool) {
-        for (uint256 i = 0; i < playerTickets[_player].length; i++) {
-            if (playerTickets[_player][i].id == _ticketId && 
-                playerTickets[_player][i].status == TicketStatus.IN_LOTTERY) {
-                
-                playerTickets[_player][i].status = TicketStatus.USED;
-            
+    function markTicketAsUsed(address _player, uint256 _ticketId) 
+        external 
+        returns (bool) 
+    {
+        TicketData[] storage tickets = playerTickets[_player];
+        uint256 length = tickets.length;
+
+        for (uint256 i; i < length; ++i) { // Use ++i and cache length for gas optimization
+            if (tickets[i].id == _ticketId) {
+                require(tickets[i].status == TicketStatus.IN_LOTTERY, "Ticket is not in the lottery");
+
+                tickets[i].status = TicketStatus.USED;
                 return true;
             }
         }
+
         return false;
     }
 
     // Expire the ticket
-    function expireTicket(address _player, uint256 _ticketId) external returns (bool) {
-        for (uint256 i = 0; i < playerTickets[_player].length; i++) {
-            if (playerTickets[_player][i].id == _ticketId && 
-                playerTickets[_player][i].status == TicketStatus.ACTIVE) {
-                
-                playerTickets[_player][i].status = TicketStatus.EXPIRED;
-                
+    function expireTicket(address _player, uint256 _ticketId) 
+        external 
+        returns (bool) 
+    {
+        TicketData[] storage tickets = playerTickets[_player];
+        uint256 length = tickets.length;
+
+        for (uint256 i; i < length; ++i) { // Preload length for gas optimization
+            if (tickets[i].id == _ticketId) {
+                require(tickets[i].status == TicketStatus.ACTIVE, "Ticket is not active");
+
+                tickets[i].status = TicketStatus.EXPIRED;
                 return true;
             }
         }
+
         return false;
     }
 
@@ -99,19 +123,25 @@ contract TicketManager {
         returns (uint256[] memory) 
     {
         TicketData[] storage tickets = playerTickets[_player];
-        uint256[] memory filteredTickets = new uint256[](tickets.length);
         uint256 count = 0;
 
+        // First, count matching tickets
         for (uint256 i = 0; i < tickets.length; i++) {
             if (tickets[i].status == _status) {
-                filteredTickets[count] = tickets[i].id;
                 count++;
             }
         }
 
-        // Resize array to actual count
-        assembly {
-            mstore(filteredTickets, count)
+        // Create array with the exact size
+        uint256[] memory filteredTickets = new uint256[](count);
+        uint256 index = 0;
+
+        // Populate the array
+        for (uint256 i = 0; i < tickets.length; i++) {
+            if (tickets[i].status == _status) {
+                filteredTickets[index] = tickets[i].id;
+                index++;
+            }
         }
 
         return filteredTickets;
@@ -124,11 +154,14 @@ contract TicketManager {
         returns (TicketData memory) 
     {
         TicketData[] storage tickets = playerTickets[_player];
-        for (uint256 i = 0; i < tickets.length; i++) {
+        uint256 length = tickets.length;
+
+        for (uint256 i; i < length; ++i) { // Use preloaded length and ++i for gas optimization
             if (tickets[i].id == _ticketId) {
                 return tickets[i];
             }
         }
+
         revert("Ticket not found");
     }
 
@@ -159,11 +192,16 @@ contract TicketManager {
     // Get the purchase time for a specific ticket
     function getTicketPurchaseTime(address _player, uint256 _ticketId) external view returns (uint256) {
         TicketData[] storage tickets = playerTickets[_player];
-        for (uint256 i = 0; i < tickets.length; i++) {
+        uint256 length = tickets.length;
+        for (uint256 i = 0; i < length; i++) {
             if (tickets[i].id == _ticketId) {
                 return tickets[i].creationTimestamp;  // Return the timestamp of ticket purchase
             }
         }
         revert("Ticket not found");
+    }
+
+    function getTotalPlayers() external view returns (address[] memory) {
+    return players; // Number of unique addresses in the mapping
     }
 }

@@ -172,6 +172,13 @@ contract LotteryManager {
         );
     }
 
+    function getParticipantTicketsInRound(uint256 _roundNumber, address _participant) 
+        external 
+        view 
+        returns (uint256[] memory) 
+    {
+        return lotteryRounds[_roundNumber].participantTickets[_participant];
+    }
 
     function getTotalPrizePool() external view returns (uint256) {
         return lotteryRounds[currentLotteryRound].totalPrizePool;
@@ -182,9 +189,8 @@ contract LotteryManager {
     }
 
     function isLotteryActive() external view returns (bool) {
-        return activeRound;
+    return activeRound;
     }
-
     function getAllLotteryRoundsInfo() external view returns (
         uint256[] memory roundNumbers,
         uint256[] memory totalPrizePools,
@@ -211,6 +217,4 @@ contract LotteryManager {
 
         return (roundNumbers, totalPrizePools, participantsList, winners, finalizedStatuses);
     }
-
-
 }
