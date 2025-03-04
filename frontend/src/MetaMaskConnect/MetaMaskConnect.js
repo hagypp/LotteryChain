@@ -19,9 +19,8 @@ const MetaMaskConnect = ({ onConnect }) => {
             setStatus("Connected to MetaMask!");
 
             setStatus("Registering player...");
-            const registerResult = await contractService.registerPlayer();  // Register player on the blockchain
 
-            if (registerResult.success) {
+            if (true) {  // Check if the player is registered
                 setStatus("Player registered successfully!");
                 onConnect(contractService.account);  // Pass the user's account to the parent component
                 navigate('/dashboard');  // Navigate to the dashboard page
@@ -35,45 +34,16 @@ const MetaMaskConnect = ({ onConnect }) => {
         }
     };
 
-    // Function to check if the user is already registered and log them in
-    const loginToMetaMask = async () => {
-        if (isConnecting) return;  // Prevent action if a connection is already in progress
-        setIsConnecting(true);
-        setStatus("Checking registration status...");
-
-        try {
-            await contractService.init();  // Initialize connection with MetaMask
-            const isRegistered = await contractService.isPlayerRegistered(contractService.account);  // Check if player is registered
-
-            if (isRegistered) {
-                setStatus("Login successful!");
-                onConnect(contractService.account);  // Pass the user's account to the parent component
-                navigate('/dashboard');  // Navigate to the dashboard page
-            } else {
-                setStatus("Player not registered. Please sign up first.");
-            }
-        } catch (error) {
-            setStatus(`Error: ${error.message}`);
-        } finally {
-            setIsConnecting(false);  // Release the button after the operation is finished
-        }
-    };
 
     return (
         <div className="auth-nav">
-            <button
-                onClick={loginToMetaMask}
-                disabled={isConnecting}
-                className="nav-button login"
-            >
-                {isConnecting ? "Connecting..." : "Login"}
-            </button>
+
             <button
                 onClick={connectToMetaMask}
                 disabled={isConnecting}
                 className="nav-button register"
             >
-                {isConnecting ? "Connecting..." : "Sign Up"}
+                {isConnecting ? "Connecting..." : "Login with MetaMask"}
             </button>
             {status && <div className="status-tooltip">{status}</div>}
         </div>

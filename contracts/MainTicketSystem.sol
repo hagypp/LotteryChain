@@ -1,12 +1,10 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-import "./PlayerRegistry.sol";
 import "./TicketManager.sol";
 import "./LotteryManager.sol";
 
 contract MainTicketSystem {
-    PlayerRegistry private playerRegistry;
     TicketManager private ticketManager;
     LotteryManager private lotteryManager;
     address private immutable i_owner;
@@ -15,7 +13,6 @@ contract MainTicketSystem {
         i_owner = msg.sender;
         
         // Deploy sub-contracts
-        playerRegistry = new PlayerRegistry();
         ticketManager = new TicketManager(1 ether);
         lotteryManager = new LotteryManager(address(ticketManager));
     }
@@ -28,27 +25,12 @@ contract MainTicketSystem {
         require(msg.sender == i_owner, "Only the contract owner can call this function"); 
         _;
     }
-
-    modifier onlyRegister() {
-        require(playerRegistry.isPlayerRegistered(msg.sender), "Not a registered player"); 
-        _;
-    }
-
-    // Player Registration Functions
-    function registerPlayer() external {
-        require(playerRegistry.registerPlayer(msg.sender), "Registration failed");
-    }
-
-    function isPlayerRegistered(address _player) external view returns (bool) {
-        return playerRegistry.isPlayerRegistered(_player);
-    }
-
     function getAllRegisteredPlayers() external view returns (address[] memory) {
-        return playerRegistry.getAllRegisteredPlayers();
+        return ticketManager.getTotalPlayers();
     }
 
     // Ticket Purchase Functions
-    function purchaseTicket() external onlyRegister payable returns (uint256) {        
+    function purchaseTicket() external payable returns (uint256) {        
         uint256 ticketPrice = ticketManager.getTicketPrice();
         require(msg.value >= ticketPrice, "Insufficient payment for ticket");
 
@@ -72,8 +54,7 @@ contract MainTicketSystem {
     }
 
     function selectTicketsForLottery(uint256 _ticketId) 
-        external 
-        onlyRegister 
+        external  
         returns (bool) 
     {
         uint256 currentRound = lotteryManager.getCurrentRound();
@@ -130,7 +111,7 @@ contract MainTicketSystem {
     }
 
     function getTotalRegisteredPlayers() external view returns (uint256) {
-        return playerRegistry.getTotalRegisteredPlayers();
+        return ticketManager.getTotalPlayers().length;
     }
 
     function getContractBalance() external view returns (uint256) {
