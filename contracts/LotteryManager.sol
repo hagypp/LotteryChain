@@ -4,7 +4,7 @@ pragma solidity ^0.8.0;
 interface ITicketManager
  {
     enum TicketStatus { ACTIVE, IN_LOTTERY, USED, EXPIRED }
-    function setTicketInLottery(address _player, uint256 _ticketId, bytes32 _ticketHash, uint256 _lotteryRound) external returns (bool);
+    function setTicketInLottery(address _player, uint256 _ticketId, bytes32 _ticketHash,  bytes32 _ticketHashWithStrong , uint256 _lotteryRound) external returns (bool);
     function markTicketAsUsed(address _player, uint256 _ticketId) external returns (bool);
     function getTicketData(address _player, uint256 _ticketId) external view returns (
         uint256 id,
@@ -14,6 +14,7 @@ interface ITicketManager
         uint256 lotteryRound
     );
 }
+enum lotteryStatus { OPEN, CLOSED, FINALIZED }
 
 struct LotteryRound {
     uint256 roundNumber;
@@ -21,16 +22,28 @@ struct LotteryRound {
     address[] participants;
     mapping(address => uint256[]) participantTickets; // Store ticket IDs for each participant
     address winner;
-    bool isFinalized;
+
+    lotteryStatus status;
+
+    uint256 openBlock;
+    uint256 closeBlock;
 }
 
 contract LotteryManager {
+
+
     mapping(uint256 => LotteryRound) private lotteryRounds;
     uint256 private currentLotteryRound = 1;
     address private immutable i_owner;
     bool private activeRound;
     ITicketManager private ticketManager;
+
     uint256 private constant SCALE_FACTOR = 1e18;
+
+
+    uint256 private BLOCKS_TO_WAIT_fOR_CLOSE = 10;
+    uint256 private BLOCKS_TO_WAIT_fOR_DRAW = 10;
+
 
     constructor(address _ticketManagerAddress) {
         i_owner = msg.sender;
@@ -44,27 +57,48 @@ contract LotteryManager {
         _;
     }
 
-    function startNewLotteryRound() external onlyOwner returns (uint256) {
+    function getLotteryStatus() external view returns (lotteryStatus) {
+        return lotteryRounds[currentLotteryRound].status;
+    }
+    
+    function isLotteryOpen() external view returns (bool) {
+        LotteryRound storage round = lotteryRounds[currentLotteryRound];
+        return round.openBlock + BLOCKS_TO_WAIT_fOR_CLOSE <= block.number;
+    }
+
+    function closeLotteryRound() external {
+        LotteryRound storage round = lotteryRounds[currentLotteryRound];
+        require(round.status == lotteryStatus.OPEN, "Current lottery round is not open");
+        require(round.openBlock + BLOCKS_TO_WAIT_fOR_CLOSE > block.number, "Wait for some time to close the lottery round");
+        round.status = lotteryStatus.CLOSED;
+        round.closeBlock = block.number;
+    }
+
+    function startNewLotteryRound() external returns (uint256) {
         require(!activeRound, "There is a lottery active");
         
         LotteryRound storage newRound = lotteryRounds[currentLotteryRound];
         newRound.roundNumber = currentLotteryRound;
         newRound.totalPrizePool = 0;
         newRound.winner = address(0);
-        newRound.isFinalized = false;
-        
+        newRound.status = lotteryStatus.OPEN;
+
         activeRound = true;
+
+        newRound.openBlock = block.number;
+        newRound.closeBlock = 0 ;
+
         return currentLotteryRound;
     }
 
-    function addParticipantAndPrizePool(address _participant, uint256 _ticketId, bytes32 _ticketHash ,uint256 _ticketPrice) external returns (bool) {
+    function addParticipantAndPrizePool(address _participant, uint256 _ticketId, bytes32 _ticketHash, bytes32 _ticketHashWithStrong ,uint256 _ticketPrice) external returns (bool) {
         require(activeRound, "Current lottery round is closed");
-        require(!lotteryRounds[currentLotteryRound].isFinalized, "Current lottery round is closed");
+        require(lotteryRounds[currentLotteryRound].status == lotteryStatus.OPEN, "Current lottery round is closed");
         
         LotteryRound storage round = lotteryRounds[currentLotteryRound];
-        
+
         // Set ticket status to IN_LOTTERY
-        require(ticketManager.setTicketInLottery(_participant, _ticketId, _ticketHash,currentLotteryRound), 
+        require(ticketManager.setTicketInLottery(_participant, _ticketId, _ticketHash, _ticketHashWithStrong ,currentLotteryRound), 
                 "Failed to set ticket status");
 
         // Add participant if first ticket
@@ -115,14 +149,17 @@ contract LotteryManager {
         return weights;
     }
 
-
-    function drawLotteryWinner() external onlyOwner returns (address) {
+    function drawLotteryWinner() external returns (address) {
         require(activeRound, "Current lottery round is closed");
         LotteryRound storage currentRound = lotteryRounds[currentLotteryRound];
         
-        require(!currentRound.isFinalized, "Lottery round already finalized");
+        require(currentRound.status == lotteryStatus.CLOSED, "Lottery round already finalized");
         require(currentRound.participants.length > 0, "No participants in this round");
 
+        if(currentRound.closeBlock + BLOCKS_TO_WAIT_fOR_DRAW < block.number)
+        {
+            revert("Wait for some time to draw the winner");
+        }
         // Calculate weights based on holding time
         uint256[] memory weights = calculateSoftmaxWeights();
 
@@ -149,7 +186,7 @@ contract LotteryManager {
         }
 
         currentRound.winner = winner;
-        currentRound.isFinalized = true;
+        currentRound.status = lotteryStatus.FINALIZED;
         activeRound = false;
         currentLotteryRound++;
         
@@ -161,7 +198,7 @@ contract LotteryManager {
         uint256 totalPrizePool,
         address[] memory participants,
         address winner,
-        bool isFinalized
+        lotteryStatus status
     ) {
         LotteryRound storage round = lotteryRounds[_index];
         return (
@@ -169,7 +206,7 @@ contract LotteryManager {
             round.totalPrizePool,
             round.participants,
             round.winner,
-            round.isFinalized
+            round.status
         );
     }
 
@@ -197,14 +234,15 @@ contract LotteryManager {
         uint256[] memory totalPrizePools,
         address[][] memory participantsList,
         address[] memory winners,
-        bool[] memory finalizedStatuses
-    ) {
+        lotteryStatus[] memory Statuses
+    )
+    {
         uint256 totalRounds = currentLotteryRound; 
         roundNumbers = new uint256[](totalRounds);
         totalPrizePools = new uint256[](totalRounds);
         participantsList = new address[][](totalRounds);
         winners = new address[](totalRounds);
-        finalizedStatuses = new bool[](totalRounds);
+        Statuses = new lotteryStatus[](totalRounds);
 
         for (uint256 i = 0; i < currentLotteryRound; i++) {
             LotteryRound storage round = lotteryRounds[i];
@@ -213,9 +251,10 @@ contract LotteryManager {
             totalPrizePools[i] = round.totalPrizePool;
             participantsList[i] = round.participants;
             winners[i] = round.winner;
-            finalizedStatuses[i] = round.isFinalized;
+            Statuses[i] = round.status;
         }
 
-        return (roundNumbers, totalPrizePools, participantsList, winners, finalizedStatuses);
+        return (roundNumbers, totalPrizePools, participantsList, winners, Statuses);
     }
+
 }
