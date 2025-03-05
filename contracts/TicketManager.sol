@@ -5,8 +5,7 @@ contract TicketManager {
     enum TicketStatus {
         ACTIVE,         // Ticket is purchased but not in any lottery round 0 
         IN_LOTTERY,     // Ticket is currently in an active lottery round   1
-        USED,           // Ticket was used in a past lottery round           2
-        EXPIRED         // Ticket is no longer valid                         3
+        USED          // Ticket was used in a past lottery round           2
     }
 
     struct TicketData {
@@ -16,6 +15,7 @@ contract TicketManager {
         TicketStatus status;
         uint256 lotteryRound;  // Track which round the ticket is/was in
         bytes32 ticketHash; // Hash of the ticket data
+        bytes32 ticketHashWithStrong; // Hash of the ticket data with strong
     }
 
     address[] private players; // Store all addresses
@@ -48,7 +48,8 @@ contract TicketManager {
             creationTimestamp: block.timestamp,  // Store the timestamp of ticket purchase
             status: TicketStatus.ACTIVE,
             lotteryRound: 0,
-            ticketHash: 0
+            ticketHash: 0,
+            ticketHashWithStrong: 0
         }));
 
         totalTicketsSold++;
@@ -57,7 +58,7 @@ contract TicketManager {
     }
 
     // Set the ticket in a lottery round
-    function setTicketInLottery(address _player, uint256 _ticketId, bytes32 _ticketHash, uint256 _lotteryRound) 
+    function setTicketInLottery(address _player, uint256 _ticketId, bytes32 _ticketHash, bytes32 _ticketHashWithStrong, uint256 _lotteryRound) 
         external 
         returns (bool) 
     {
@@ -71,6 +72,8 @@ contract TicketManager {
                 tickets[i].status = TicketStatus.IN_LOTTERY;
                 tickets[i].lotteryRound = _lotteryRound;
                 tickets[i].ticketHash = _ticketHash;
+                tickets[i].ticketHash = _ticketHash;
+                tickets[i].ticketHashWithStrong = _ticketHashWithStrong;
 
                 return true;
             }
@@ -92,26 +95,6 @@ contract TicketManager {
                 require(tickets[i].status == TicketStatus.IN_LOTTERY, "Ticket is not in the lottery");
 
                 tickets[i].status = TicketStatus.USED;
-                return true;
-            }
-        }
-
-        return false;
-    }
-
-    // Expire the ticket
-    function expireTicket(address _player, uint256 _ticketId) 
-        external 
-        returns (bool) 
-    {
-        TicketData[] storage tickets = playerTickets[_player];
-        uint256 length = tickets.length;
-
-        for (uint256 i; i < length; ++i) { // Preload length for gas optimization
-            if (tickets[i].id == _ticketId) {
-                require(tickets[i].status == TicketStatus.ACTIVE, "Ticket is not active");
-
-                tickets[i].status = TicketStatus.EXPIRED;
                 return true;
             }
         }
