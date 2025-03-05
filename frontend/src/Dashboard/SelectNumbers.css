@@ -1,0 +1,365 @@
+/* Modal Overlay */
+.select-numbers-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.8);
+    backdrop-filter: blur(5px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+  }
+  
+  /* Modal Container */
+  .select-numbers-modal {
+    width: 95%;
+    max-width: 900px; /* Increased from 700px */
+    max-height: 90vh;
+    overflow-y: auto;
+    background: linear-gradient(135deg, #1a1a2e, #16213e);
+    border-radius: 1rem;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+    color: white;
+    animation: modalFadeIn 0.3s ease;
+  }
+  
+  /* Modal Header */
+  .select-numbers-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1.5rem;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  }
+  
+  .select-numbers-header h2 {
+    font-size: 1.5rem;
+    font-weight: bold;
+    background: linear-gradient(45deg, #FF6B6B, #FFE66D);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+    margin: 0;
+  }
+  
+  .close-button {
+    background: none;
+    border: none;
+    color: #cbd5e1;
+    font-size: 1.5rem;
+    cursor: pointer;
+    padding: 0.25rem 0.5rem;
+    border-radius: 0.25rem;
+    line-height: 1;
+    transition: all 0.2s ease;
+  }
+  
+  .close-button:hover {
+    color: white;
+    background: rgba(255, 255, 255, 0.1);
+  }
+  
+  /* Modal Content */
+  .select-numbers-content {
+    padding: 1.5rem;
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+  }
+  
+  /* Selection Info */
+  .selection-info {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 1rem;
+  }
+  
+  .selection-info p {
+    margin: 0;
+    color: #cbd5e1;
+  }
+  
+  .selected-count {
+    padding: 0.5rem 1rem;
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 9999px;
+    font-weight: 500;
+  }
+  
+  /* Numbers Grid */
+  .numbers-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+  
+  .numbers-row {
+    display: flex;
+    justify-content: center;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+  }
+  
+  .number-button {
+    width: 3rem; /* Slightly reduced size to fit more */
+    height: 3rem;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.05);
+    border: 2px solid transparent;
+    color: white;
+    font-size: 1.25rem;
+    font-weight: 500;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.2s ease;
+  }
+  
+  .number-button:hover:not(:disabled) {
+    background: rgba(255, 255, 255, 0.1);
+    transform: translateY(-2px);
+  }
+  
+  .number-button.selected {
+    background: linear-gradient(45deg, #FF6B6B, #FF8E53);
+    border-color: rgba(255, 255, 255, 0.5);
+    box-shadow: 0 0 15px rgba(255, 107, 107, 0.5);
+    transform: scale(1.05);
+  }
+  
+  .number-button:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+  
+  /* Strongest Number Section */
+  .strongest-number-section {
+    background: rgba(255, 255, 255, 0.05);
+    padding: 1rem;
+    border-radius: 0.75rem;
+  }
+  
+  .strongest-number-section h3 {
+    font-size: 1.1rem;
+    color: #FFE66D;
+    margin-top: 0;
+    margin-bottom: 0.75rem;
+    text-align: center;
+  }
+  
+  .strongest-numbers-row {
+    display: flex;
+    justify-content: center;
+    gap: 0.75rem;
+    flex-wrap: wrap;
+  }
+  
+  .strongest-number-button {
+    width: 3.5rem;
+    height: 3.5rem;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.08);
+    border: 2px solid transparent;
+    color: white;
+    font-size: 1.25rem;
+    font-weight: 500;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.2s ease;
+  }
+  
+  .strongest-number-button:hover:not(:disabled) {
+    background: rgba(255, 255, 255, 0.12);
+    transform: translateY(-2px);
+  }
+  
+  .strongest-number-button.selected {
+    background: linear-gradient(45deg, #4FD1C5, #38B2AC);
+    border-color: rgba(255, 255, 255, 0.5);
+    box-shadow: 0 0 15px rgba(79, 209, 197, 0.5);
+    transform: scale(1.05);
+  }
+  
+  .strongest-number-button:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+  
+  /* Selected Numbers Display */
+  .selected-numbers {
+    background: rgba(255, 255, 255, 0.05);
+    padding: 1rem;
+    border-radius: 0.75rem;
+  }
+  
+  .selected-numbers h3 {
+    font-size: 1.1rem;
+    color: #FFE66D;
+    margin-top: 0;
+    margin-bottom: 0.75rem;
+  }
+  
+  .selected-numbers-display {
+    display: flex;
+    justify-content: center;
+    gap: 0.75rem;
+    flex-wrap: wrap;
+    position: relative;
+  }
+  
+  .number-placeholder {
+    width: 3rem;
+    height: 3rem;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.08);
+    border: 1px dashed rgba(255, 255, 255, 0.3);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.25rem;
+    font-weight: bold;
+    color: white;
+  }
+  
+  .strongest-placeholder {
+    width: 3rem;
+    height: 3rem;
+    border-radius: 50%;
+    background: rgba(79, 209, 197, 0.2);
+    border: 1px dashed rgba(79, 209, 197, 0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.25rem;
+    font-weight: bold;
+    color: white;
+    position: relative;
+  }
+  
+  .strongest-placeholder:after {
+    content: "★";
+    position: absolute;
+    top: -10px;
+    right: -5px;
+    color: #4FD1C5;
+    font-size: 1rem;
+  }
+  
+  /* Status Message */
+  .selection-status {
+    padding: 0.75rem 1rem;
+    border-radius: 0.5rem;
+    background: rgba(255, 255, 255, 0.05);
+    text-align: center;
+    color: #cbd5e1;
+  }
+  
+  /* Action Buttons */
+  .selection-actions {
+    display: flex;
+    justify-content: space-between;
+    gap: 1rem;
+    margin-top: 1rem;
+  }
+  
+  .selection-cancel,
+  .selection-submit {
+    padding: 0.75rem 1.5rem;
+    border-radius: 9999px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    flex: 1;
+  }
+  
+  .selection-cancel {
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    color: white;
+  }
+  
+  .selection-cancel:hover:not(:disabled) {
+    background: rgba(255, 255, 255, 0.15);
+  }
+  
+  .selection-submit {
+    background: linear-gradient(45deg, #FF6B6B, #FF8E53);
+    border: none;
+    color: white;
+    box-shadow: 0 4px 15px rgba(255, 107, 107, 0.3);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+  }
+  
+  .selection-submit:hover:not(:disabled) {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(255, 107, 107, 0.4);
+  }
+  
+  .selection-submit:disabled,
+  .selection-cancel:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    transform: none;
+    box-shadow: none;
+  }
+  
+  /* Loading Animation */
+  @keyframes spin {
+    to {
+      transform: rotate(360deg);
+    }
+  }
+  
+  .loading-indicator {
+    display: inline-block;
+    width: 1.25rem;
+    height: 1.25rem;
+    border: 2px solid rgba(255, 255, 255, 0.2);
+    border-top-color: white;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+  }
+  
+  /* Modal Animation */
+  @keyframes modalFadeIn {
+    from {
+      opacity: 0;
+      transform: translateY(-20px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+  
+  /* Media Queries */
+  @media (max-width: 768px) {
+    .number-button,
+    .strongest-number-button {
+      width: 2.75rem;
+      height: 2.75rem;
+      font-size: 1rem;
+    }
+    
+    .number-placeholder,
+    .strongest-placeholder {
+      width: 2.5rem;
+      height: 2.5rem;
+      font-size: 1rem;
+    }
+    
+    .selection-actions {
+      flex-direction: column;
+    }
+  }

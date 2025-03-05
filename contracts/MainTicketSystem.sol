@@ -53,7 +53,7 @@ contract MainTicketSystem {
         lotteryManager.startNewLotteryRound();
     }
 
-    function selectTicketsForLottery(uint256 _ticketId) 
+    function selectTicketsForLottery(uint256 _ticketId, bytes32 _ticketHash) 
         external  
         returns (bool) 
     {
@@ -70,6 +70,7 @@ contract MainTicketSystem {
         return lotteryManager.addParticipantAndPrizePool(
             msg.sender,
             _ticketId,
+            _ticketHash,
             ticketPrice
         ); 
     }
@@ -137,11 +138,11 @@ contract MainTicketSystem {
     }
 
     function getAllLotteryRoundsInfo() external view returns (
-    uint256[] memory roundNumbers,
-    uint256[] memory totalPrizePools,
-    address[][] memory participantsList,
-    address[] memory winners,
-    bool[] memory finalizedStatuses
+        uint256[] memory roundNumbers,
+        uint256[] memory totalPrizePools,
+        address[][] memory participantsList,
+        address[] memory winners,
+        bool[] memory finalizedStatuses
     ) {
         return lotteryManager.getAllLotteryRoundsInfo();
     }

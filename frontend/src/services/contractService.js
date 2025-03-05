@@ -150,11 +150,11 @@ class ContractService {
         }
     }
 
-    async selectTicketsForLottery(ticketIds) {
+    async selectTicketsForLottery(ticketId , ticketHash) {
         try {
             // Convert the first ticket ID to a string to handle BigInt
-            const ticketId = ticketIds[0].toString();
-            await this.contract.methods.selectTicketsForLottery(ticketId).send({ from: this.account });
+            ticketHash = "0x" + ticketHash;
+            await this.contract.methods.selectTicketsForLottery(ticketId, ticketHash).send({ from: this.account });
             return { success: true };
         } catch (error) {
             throw new Error(`Error selecting tickets for lottery: ${error.message}`);

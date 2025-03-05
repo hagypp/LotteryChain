@@ -1,141 +1,119 @@
 /* Lottery Rounds Container */
 .lottery-rounds-container {
+  background: rgba(255, 255, 255, 0.05);
+  padding: 1rem;
+  border-radius: 1rem;
+  backdrop-filter: blur(8px);
+}
+
+.lottery-rounds-title {
+  font-size: 1.5rem;
+  font-weight: 200;
+  color: #FFE66D;
+  margin-bottom: 1rem;
+}
+
+.lottery-rounds-table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+}
+
+.lottery-rounds-header {
+  display: flex;
+  background: rgba(255, 255, 255, 0.1);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+  font-weight: 600;
+  color: #FFE66D;
+  text-transform: uppercase;
+  font-size: 0.875rem;
+}
+
+.lottery-rounds-row {
+  display: flex;
+  align-items: center;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  transition: background-color 0.3s ease;
+}
+
+.lottery-rounds-row:hover {
+  background-color: rgba(255, 255, 255, 0.05);
+}
+
+.lottery-rounds-column {
+  flex: 1;
+  padding: 1rem;
+  text-align: left;
+  color: white;
+}
+
+.round-status {
+  padding: 0.25rem 0.75rem;
+  border-radius: 9999px;
+  font-size: 0.75rem;
+}
+
+.round-status.completed {
+  background: rgba(52, 211, 153, 0.2);
+  color: #34D399;
+}
+
+.round-status.active {
+  background: rgba(251, 191, 36, 0.2);
+  color: #FBD38D;
+}
+
+.lottery-rounds-empty {
+  text-align: center;
+  color: #94a3b8;
+  padding: 2rem;
+}
+
+.lottery-rounds-loading,
+.lottery-rounds-error {
+  text-align: center;
+  color: #94a3b8;
+  padding: 2rem;
+}
+
+@media (max-width: 768px) {
+  .lottery-rounds-header {
+    display: none;
+  }
+  
+  .lottery-rounds-row {
+    flex-direction: column;
+    align-items: stretch;
+    margin-bottom: 1rem;
     background: rgba(255, 255, 255, 0.05);
-    padding: 1.5rem;
-    border-radius: 1rem;
-    backdrop-filter: blur(8px);
-  }
-  
-  .lottery-rounds-title {
-    font-size: 1.5rem;
-    font-weight: 600;
-    color: #FFE66D;
-    margin-bottom: 1.5rem;
-  }
-  
-  .lottery-rounds-grid {
-    display: grid;
-    grid-template-columns: repeat(1, 1fr);
-    gap: 1.5rem;
-  }
-  
-  @media (min-width: 768px) {
-    .lottery-rounds-grid {
-      grid-template-columns: repeat(2, 1fr);
-    }
-  }
-  
-  @media (min-width: 1024px) {
-    .lottery-rounds-grid {
-      grid-template-columns: repeat(3, 1fr);
-    }
-  }
-  
-  /* Individual Round Card */
-  .lottery-round-card {
-    background: rgba(255, 255, 255, 0.08);
     border-radius: 0.75rem;
-    padding: 1.25rem;
-    transition: all 0.3s ease;
   }
   
-  .lottery-round-card:hover {
-    transform: translateY(-2px);
+  .lottery-rounds-row:before {
+    content: attr(data-round);
+    display: block;
     background: rgba(255, 255, 255, 0.1);
-  }
-  
-  /* Round Header */
-  .round-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 1.25rem;
-  }
-  
-  .round-number {
-    font-size: 1.25rem;
-    font-weight: 600;
-    color: white;
-  }
-  
-  .round-status {
-    display: flex;
-    align-items: center;
-    padding: 0.375rem 0.75rem;
-    border-radius: 9999px;
-    font-size: 0.875rem;
-    font-weight: 500;
-  }
-  
-  .round-status.completed {
-    background: rgba(52, 211, 153, 0.2);
-    color: #34D399;
-  }
-  
-  .round-status.active {
-    background: rgba(251, 191, 36, 0.2);
-    color: #FBD38D;
-  }
-  
-  /* Round Statistics */
-  .round-stats {
-    display: flex;
-    flex-direction: column;
-    gap: 1rem;
-    margin-bottom: 1.25rem;
-  }
-  
-  .stat-item {
-    display: flex;
-    align-items: center;
-    gap: 0.75rem;
-    color: #cbd5e1;
-  }
-  
-  .stat-content {
-    display: flex;
-    flex-direction: column;
-  }
-  
-  .stat-label {
-    font-size: 0.875rem;
-    color: #94a3b8;
-  }
-  
-  .stat-value {
-    font-size: 1.125rem;
-    font-weight: 500;
-    color: white;
-  }
-  
-  /* Winner Section */
-  .winner-section {
-    border-top: 1px solid rgba(255, 255, 255, 0.1);
-    padding-top: 1rem;
-    margin-top: 1rem;
-    display: flex;
-    flex-direction: column;
-    gap: 0.5rem;
-  }
-  
-  .winner-label {
-    font-size: 0.875rem;
-    color: #94a3b8;
-  }
-  
-  .winner-address {
-    font-family: monospace;
     color: #FFE66D;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
+    padding: 0.75rem;
+    font-weight: 600;
   }
   
-  /* Loading State */
-  .loading-state {
+  .lottery-rounds-column {
     display: flex;
+    justify-content: space-between;
     align-items: center;
-    justify-content: center;
-    padding: 2rem;
-    color: #94a3b8;
+    padding: 0.75rem;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
   }
+  
+  .lottery-rounds-column:before {
+    content: attr(data-label);
+    color: #94a3b8;
+    margin-right: 1rem;
+    font-size: 0.875rem;
+  }
+  
+  .lottery-rounds-column:last-child {
+    border-bottom: none;
+  }
+}
