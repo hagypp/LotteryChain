@@ -142,6 +142,11 @@
                 "internalType": "uint256",
                 "name": "_ticketId",
                 "type": "uint256"
+            },
+            {
+                "internalType": "bytes32",
+                "name": "_ticketHash",
+                "type": "bytes32"
             }
         ],
         "name": "selectTicketsForLottery",
@@ -269,7 +274,8 @@
               { "name": "owner", "type": "address" },
               { "name": "creationTimestamp", "type": "uint256" },
               { "name": "status", "type": "uint8" },
-              { "name": "lotteryRound", "type": "uint256" }
+              { "name": "lotteryRound", "type": "uint256" },
+              { "name": "ticketHash", "type": "bytes32" }
             ]
           }
         ],

@@ -15,6 +15,7 @@ contract TicketManager {
         uint256 creationTimestamp;  // Timestamp for when the ticket is purchased
         TicketStatus status;
         uint256 lotteryRound;  // Track which round the ticket is/was in
+        bytes32 ticketHash; // Hash of the ticket data
     }
 
     address[] private players; // Store all addresses
@@ -46,7 +47,8 @@ contract TicketManager {
             owner: _buyer,
             creationTimestamp: block.timestamp,  // Store the timestamp of ticket purchase
             status: TicketStatus.ACTIVE,
-            lotteryRound: 0
+            lotteryRound: 0,
+            ticketHash: 0
         }));
 
         totalTicketsSold++;
@@ -55,7 +57,7 @@ contract TicketManager {
     }
 
     // Set the ticket in a lottery round
-    function setTicketInLottery(address _player, uint256 _ticketId, uint256 _lotteryRound) 
+    function setTicketInLottery(address _player, uint256 _ticketId, bytes32 _ticketHash, uint256 _lotteryRound) 
         external 
         returns (bool) 
     {
@@ -68,6 +70,7 @@ contract TicketManager {
 
                 tickets[i].status = TicketStatus.IN_LOTTERY;
                 tickets[i].lotteryRound = _lotteryRound;
+                tickets[i].ticketHash = _ticketHash;
 
                 return true;
             }
