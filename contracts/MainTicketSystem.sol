@@ -9,6 +9,8 @@ contract MainTicketSystem {
     LotteryManager private lotteryManager;
     address private immutable i_owner;
     
+
+
     constructor() {
         i_owner = msg.sender;
         
@@ -49,44 +51,55 @@ contract MainTicketSystem {
 
 
     // Lottery Functions
-    function startNewLotteryRound() external onlyOwner {
+    function startNewLotteryRound() external {
         lotteryManager.startNewLotteryRound();
     }
 
-    function selectTicketsForLottery(uint256 _ticketId, bytes32 _ticketHash) 
+    function selectTicketsForLottery(uint256 _ticketId, bytes32 _ticketHash,  bytes32 _ticketHashWithStrong) 
         external  
         returns (bool) 
     {
-        uint256 currentRound = lotteryManager.getCurrentRound();
         uint256 ticketPrice = ticketManager.getTicketPrice();
 
+        require(lotteryManager.getLotteryStatus() ==  lotteryStatus.OPEN, "Lottery is not open for inserting tickets");
+
+        if(!lotteryManager.isLotteryOpen())
+        {
+            lotteryManager.closeLotteryRound();
+            revert("Lottery is not open for inserting tickets");
+        }
         // Verify ticket status is ACTIVE before entering lottery
         require(
             ticketManager.getTicketData(msg.sender, _ticketId).status == TicketManager.TicketStatus.ACTIVE,
             "Invalid ticket status"
         );
 
+
         // Add ticket to lottery round
         return lotteryManager.addParticipantAndPrizePool(
             msg.sender,
             _ticketId,
             _ticketHash,
+            _ticketHashWithStrong,
             ticketPrice
         ); 
     }
 
+    function closeLotteryRound() external {
+        lotteryManager.closeLotteryRound();
+    }
 
-    function drawLotteryWinner() external onlyOwner returns (address) {
+    function drawLotteryWinner() external returns (address) {
         (
-            uint256 roundNumber,
+            ,
             uint256 prizePool,
             address[] memory participants,
             address winner,
-            bool isFinalized
+            lotteryStatus status
         ) = lotteryManager.getLotteryRoundInfo(lotteryManager.getCurrentRound());
 
         require(participants.length > 0, "No participants in this round");
-        require(!isFinalized, "Lottery round already finalized");
+        require(status == lotteryStatus.CLOSED, "Lottery round already finalized");
         require(address(this).balance >= prizePool, "Insufficient contract balance to pay prize");
 
         winner = lotteryManager.drawLotteryWinner();
@@ -124,7 +137,7 @@ contract MainTicketSystem {
         uint256 prizePool,
         address[] memory participants,
         address winner,
-        bool isFinalized
+        lotteryStatus status
     ) {
         return lotteryManager.getLotteryRoundInfo(lotteryManager.getCurrentRound());
     }
@@ -133,7 +146,7 @@ contract MainTicketSystem {
         return ticketManager.getTicketPurchaseTime(_player, _ticketId);
     }
 
-    function isLotteryActive() external view  onlyOwner returns (bool) {
+    function isLotteryActive() external view returns (bool) {
         return lotteryManager.isLotteryActive();
     }
 
@@ -142,7 +155,7 @@ contract MainTicketSystem {
         uint256[] memory totalPrizePools,
         address[][] memory participantsList,
         address[] memory winners,
-        bool[] memory finalizedStatuses
+        lotteryStatus[] memory statuses
     ) {
         return lotteryManager.getAllLotteryRoundsInfo();
     }
