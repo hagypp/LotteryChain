@@ -1,32 +1,6 @@
 [
     {
         "inputs": [],
-        "name": "registerPlayer",
-        "outputs": [],
-        "stateMutability": "nonpayable",
-        "type": "function"
-    },
-    {
-        "inputs": [
-            {
-                "internalType": "address",
-                "name": "_player",
-                "type": "address"
-            }
-        ],
-        "name": "isPlayerRegistered",
-        "outputs": [
-            {
-                "internalType": "bool",
-                "name": "",
-                "type": "bool"
-            }
-        ],
-        "stateMutability": "view",
-        "type": "function"
-    },
-    {
-        "inputs": [],
         "name": "purchaseTicket",
         "outputs": [
             {
@@ -46,32 +20,6 @@
                 "internalType": "uint256",
                 "name": "",
                 "type": "uint256"
-            }
-        ],
-        "stateMutability": "view",
-        "type": "function"
-    },
-    {
-        "inputs": [],
-        "name": "getTotalRegisteredPlayers",
-        "outputs": [
-            {
-                "internalType": "uint256",
-                "name": "",
-                "type": "uint256"
-            }
-        ],
-        "stateMutability": "view",
-        "type": "function"
-    },
-    {
-        "inputs": [],
-        "name": "getAllRegisteredPlayers",
-        "outputs": [
-            {
-                "internalType": "address[]",
-                "name": "",
-                "type": "address[]"
             }
         ],
         "stateMutability": "view",
@@ -103,32 +51,7 @@
         "stateMutability": "view",
         "type": "function"
     },
-    {
-        "inputs": [],
-        "name": "getContractBalance",
-        "outputs": [
-            {
-                "internalType": "uint256",
-                "name": "",
-                "type": "uint256"
-            }
-        ],
-        "stateMutability": "view",
-        "type": "function"
-    },
-    {
-        "inputs": [],
-        "name": "getTotalTicketsSold",
-        "outputs": [
-            {
-                "internalType": "uint256",
-                "name": "",
-                "type": "uint256"
-            }
-        ],
-        "stateMutability": "view",
-        "type": "function"
-    },
+
     {
         "inputs": [],
         "name": "startNewLotteryRound",
@@ -147,6 +70,11 @@
                 "internalType": "bytes32",
                 "name": "_ticketHash",
                 "type": "bytes32"
+            },
+            {
+                "internalType": "bytes32",
+                "name": "_ticketHashWithStrong",
+                "type": "bytes32"
             }
         ],
         "name": "selectTicketsForLottery",
@@ -159,7 +87,7 @@
         ],
         "stateMutability": "nonpayable",
         "type": "function"
-    },    
+    },     
     {
         "inputs": [],
         "name": "drawLotteryWinner",
@@ -184,49 +112,6 @@
         "name": "setTicketPrice",
         "outputs": [],
         "stateMutability": "nonpayable",
-        "type": "function"
-    },
-    {
-        "inputs": [
-            {
-                "internalType": "enum TicketManager.TicketStatus",
-                "name": "_status",
-                "type": "uint8"
-            }
-        ],
-        "name": "getTicketsByStatus",
-        "outputs": [
-            {
-                "internalType": "uint256[]",
-                "name": "",
-                "type": "uint256[]"
-            }
-        ],
-        "stateMutability": "view",
-        "type": "function"
-    },
-    {
-        "inputs": [
-            {
-                "internalType": "uint256",
-                "name": "_ticketId",
-                "type": "uint256"
-            },   
-            {
-                "internalType": "address",
-                "name": "_player",
-                "type": "address"
-            }
-        ],
-        "name": "getTicketPurchaseTime",
-        "outputs": [
-            {
-                "internalType": "uint256",
-                "name": "",
-                "type": "uint256"
-            }
-        ],
-        "stateMutability": "view",
         "type": "function"
     },
     {
@@ -275,7 +160,8 @@
               { "name": "creationTimestamp", "type": "uint256" },
               { "name": "status", "type": "uint8" },
               { "name": "lotteryRound", "type": "uint256" },
-              { "name": "ticketHash", "type": "bytes32" }
+              { "name": "ticketHash", "type": "bytes32" },
+              { "name": "ticketHashWithStrong", "type": "bytes32" }
             ]
           }
         ],

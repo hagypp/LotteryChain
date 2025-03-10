@@ -4,7 +4,7 @@ pragma solidity ^0.8.0;
 interface ITicketManager
  {
     enum TicketStatus { ACTIVE, IN_LOTTERY, USED, EXPIRED }
-    function setTicketInLottery(address _player, uint256 _ticketId, bytes32 _ticketHash, uint256 _lotteryRound) external returns (bool);
+    function setTicketInLottery(address _player, uint256 _ticketId, bytes32 _ticketHash,bytes32 _ticketHashWithStrong ,uint256 _lotteryRound) external returns (bool);
     function markTicketAsUsed(address _player, uint256 _ticketId) external returns (bool);
     function getTicketData(address _player, uint256 _ticketId) external view returns (
         uint256 id,
@@ -57,14 +57,14 @@ contract LotteryManager {
         return currentLotteryRound;
     }
 
-    function addParticipantAndPrizePool(address _participant, uint256 _ticketId, bytes32 _ticketHash ,uint256 _ticketPrice) external returns (bool) {
+    function addParticipantAndPrizePool(address _participant, uint256 _ticketId, bytes32 _ticketHash, bytes32 _ticketHashWithStrong ,uint256 _ticketPrice) external returns (bool) {
         require(activeRound, "Current lottery round is closed");
         require(!lotteryRounds[currentLotteryRound].isFinalized, "Current lottery round is closed");
         
         LotteryRound storage round = lotteryRounds[currentLotteryRound];
         
         // Set ticket status to IN_LOTTERY
-        require(ticketManager.setTicketInLottery(_participant, _ticketId, _ticketHash,currentLotteryRound), 
+        require(ticketManager.setTicketInLottery(_participant, _ticketId, _ticketHash, _ticketHashWithStrong ,currentLotteryRound), 
                 "Failed to set ticket status");
 
         // Add participant if first ticket

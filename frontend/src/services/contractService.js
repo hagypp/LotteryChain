@@ -35,41 +35,12 @@ class ContractService {
         }
     }
 
-    async getTicketPurchaseTime(ticketId,_player) {
-        try {
-            const purchaseTime = await this.contract.methods.getTicketPurchaseTime(ticketId,_player).call();
-            return purchaseTime;
-        } catch (error) {
-            throw new Error(`Error fetching ticket purchase time: ${error.message}`);
-        }
-    }
-
     async isLotteryActive() {
         try {
             const isActive = await this.contract.methods.isLotteryActive().call();
             return isActive;
         } catch (error) {
             throw new Error(`Error checking if lottery is active: ${error.message}`);
-        }
-    }
-    
-
-    async getContractBalance() {
-        try {
-            const balance = await this.web3.eth.getBalance(CONTRACT_ADDRESS);
-            return this.web3.utils.fromWei(balance, 'ether');
-        } catch (error) {
-            throw new Error(`Error fetching contract balance: ${error.message}`);
-        }
-    }
-
-
-    async getTicketsByStatus(status) {
-        try {
-            const tickets = await this.contract.methods.getTicketsByStatus(status).call({ from: this.account });
-            return tickets;
-        } catch (error) {
-            throw new Error(`Error fetching tickets by status: ${error.message}`);
         }
     }
 
@@ -79,24 +50,6 @@ class ContractService {
             return this.web3.utils.fromWei(price.toString(), 'ether');
         } catch (error) {
             throw new Error(`Error fetching ticket price: ${error.message}`);
-        }
-    }
-
-    async getTotalRegisteredPlayers() {
-        try {
-            const totalPlayers = await this.contract.methods.getTotalRegisteredPlayers().call();
-            return totalPlayers;
-        } catch (error) {
-            throw new Error(`Error fetching total registered players: ${error.message}`);
-        }
-    }
-
-    async getAllRegisteredPlayers() {
-        try {
-            const players = await this.contract.methods.getAllRegisteredPlayers().call();
-            return players;
-        } catch (error) {
-            throw new Error(`Error fetching all registered players: ${error.message}`);
         }
     }
 
@@ -132,15 +85,6 @@ class ContractService {
         }
     }
 
-    async getTotalTicketsSold() {
-        try {
-            const totalTickets = await this.contract.methods.getTotalTicketsSold().call();
-            return totalTickets;
-        } catch (error) {
-            throw new Error(`Error fetching total tickets sold: ${error.message}`);
-        }
-    }
-
     async startNewLotteryRound() {
         try {
             await this.contract.methods.startNewLotteryRound().send({ from: this.account });
@@ -150,11 +94,12 @@ class ContractService {
         }
     }
 
-    async selectTicketsForLottery(ticketId , ticketHash) {
+    async selectTicketsForLottery(ticketId , ticketHash , ticketHashWithStrong ) {
         try {
             // Convert the first ticket ID to a string to handle BigInt
             ticketHash = "0x" + ticketHash;
-            await this.contract.methods.selectTicketsForLottery(ticketId, ticketHash).send({ from: this.account });
+            ticketHashWithStrong = "0x" + ticketHashWithStrong;
+            await this.contract.methods.selectTicketsForLottery(ticketId, ticketHash ,ticketHashWithStrong).send({ from: this.account });
             return { success: true };
         } catch (error) {
             throw new Error(`Error selecting tickets for lottery: ${error.message}`);

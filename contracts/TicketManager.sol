@@ -16,6 +16,7 @@ contract TicketManager {
         TicketStatus status;
         uint256 lotteryRound;  // Track which round the ticket is/was in
         bytes32 ticketHash; // Hash of the ticket data
+        bytes32 ticketHashWithStrong; // Hash of the ticket data with strong
     }
 
     address[] private players; // Store all addresses
@@ -48,7 +49,8 @@ contract TicketManager {
             creationTimestamp: block.timestamp,  // Store the timestamp of ticket purchase
             status: TicketStatus.ACTIVE,
             lotteryRound: 0,
-            ticketHash: 0
+            ticketHash: 0,
+            ticketHashWithStrong: 0
         }));
 
         totalTicketsSold++;
@@ -57,7 +59,7 @@ contract TicketManager {
     }
 
     // Set the ticket in a lottery round
-    function setTicketInLottery(address _player, uint256 _ticketId, bytes32 _ticketHash, uint256 _lotteryRound) 
+    function setTicketInLottery(address _player, uint256 _ticketId, bytes32 _ticketHash,bytes32 _ticketHashWithStrong,uint256 _lotteryRound) 
         external 
         returns (bool) 
     {
@@ -71,6 +73,7 @@ contract TicketManager {
                 tickets[i].status = TicketStatus.IN_LOTTERY;
                 tickets[i].lotteryRound = _lotteryRound;
                 tickets[i].ticketHash = _ticketHash;
+                tickets[i].ticketHashWithStrong = _ticketHashWithStrong;
 
                 return true;
             }
@@ -187,11 +190,6 @@ contract TicketManager {
         ticketPrice = _newPrice;
     }
 
-    // Get total tickets sold
-    function getTotalTicketsSold() external view returns (uint256) {
-        return totalTicketsSold;
-    }
-
     // Get the purchase time for a specific ticket
     function getTicketPurchaseTime(address _player, uint256 _ticketId) external view returns (uint256) {
         TicketData[] storage tickets = playerTickets[_player];
@@ -205,6 +203,6 @@ contract TicketManager {
     }
 
     function getTotalPlayers() external view returns (address[] memory) {
-    return players; // Number of unique addresses in the mapping
+        return players; // Number of unique addresses in the mapping
     }
 }

@@ -70,25 +70,30 @@ const SelectNumbers = ({ onClose, account, ticketId, onTicketAdded }) => {
             if (ticketId === undefined || ticketId === null || ticketId === "") {
                 throw new Error('No ticket ID provided');
             }
-
     
-            // Create a string representation of the selected numbers without sorting
-            const numbersString = selectedNumbers.join(',');
+            // Create a string representation of the selected numbers (6 numbers) without commas
+            const numbersString = [...selectedNumbers.sort((a, b) => a - b)].join('');
     
-            // Hash the string using Keccak-256
+            // Hash the selected numbers (6 numbers)
             const numbersHash = keccak256(numbersString);
             console.log('Numbers hash:', numbersHash);
     
-            // Include the strongest number in the request
+            // Now, include the strongest number in the string for ticketHashWithStrong
+            const ticketNumbersString = [...selectedNumbers.sort((a, b) => a - b), strongestNumber].join('');
+            const ticketHashWithStrong = keccak256(ticketNumbersString);  // Hash the 7 numbers (6 + strongest)
+            console.log('Ticket hash with strongest number:', ticketHashWithStrong);
+    
+            // Send the hash to the contract
             const result = await contractService.selectTicketsForLottery(
                 ticketId,  // Pass ticketId directly instead of an array
-                numbersHash // Send the hash along with the numbers
+                numbersHash, // Send the hash of 6 numbers
+                ticketHashWithStrong // Send the hash of 7 numbers (including the strongest)
             );
     
             if (result.success) {
                 setStatus("Ticket submitted successfully!");
-                onTicketAdded(); 
-                onClose(); 
+                onTicketAdded();
+                onClose();
             }
         } catch (error) {
             console.error('Full error details:', error);
@@ -96,7 +101,8 @@ const SelectNumbers = ({ onClose, account, ticketId, onTicketAdded }) => {
         } finally {
             setIsSubmitting(false);
         }
-    };       
+    };
+       
     
     return (
         <div className="select-numbers-overlay">

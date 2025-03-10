@@ -25,9 +25,6 @@ contract MainTicketSystem {
         require(msg.sender == i_owner, "Only the contract owner can call this function"); 
         _;
     }
-    function getAllRegisteredPlayers() external view returns (address[] memory) {
-        return ticketManager.getTotalPlayers();
-    }
 
     // Ticket Purchase Functions
     function purchaseTicket() external payable returns (uint256) {        
@@ -53,7 +50,7 @@ contract MainTicketSystem {
         lotteryManager.startNewLotteryRound();
     }
 
-    function selectTicketsForLottery(uint256 _ticketId, bytes32 _ticketHash) 
+    function selectTicketsForLottery(uint256 _ticketId, bytes32 _ticketHash, bytes32 _ticketHashWithStrong) 
         external  
         returns (bool) 
     {
@@ -67,12 +64,7 @@ contract MainTicketSystem {
         );
 
         // Add ticket to lottery round
-        return lotteryManager.addParticipantAndPrizePool(
-            msg.sender,
-            _ticketId,
-            _ticketHash,
-            ticketPrice
-        ); 
+        return lotteryManager.addParticipantAndPrizePool( msg.sender, _ticketId, _ticketHash, _ticketHashWithStrong, ticketPrice); 
     }
 
 
@@ -106,19 +98,7 @@ contract MainTicketSystem {
     function setTicketPrice(uint256 _newPrice) external onlyOwner {
         ticketManager.setTicketPrice(_newPrice);
     }
-
-    function getTotalTicketsSold() external view returns (uint256) {
-        return ticketManager.getTotalTicketsSold();
-    }
-
-    function getTotalRegisteredPlayers() external view returns (uint256) {
-        return ticketManager.getTotalPlayers().length;
-    }
-
-    function getContractBalance() external view returns (uint256) {
-        return address(this).balance;
-    }
-
+  
     function getCurrentLotteryRound() external view returns (
         uint256 roundNumber,
         uint256 prizePool,
@@ -129,9 +109,6 @@ contract MainTicketSystem {
         return lotteryManager.getLotteryRoundInfo(lotteryManager.getCurrentRound());
     }
 
-    function getTicketPurchaseTime(uint256 _ticketId, address _player) public view returns (uint256) {
-        return ticketManager.getTicketPurchaseTime(_player, _ticketId);
-    }
 
     function isLotteryActive() external view  onlyOwner returns (bool) {
         return lotteryManager.isLotteryActive();
