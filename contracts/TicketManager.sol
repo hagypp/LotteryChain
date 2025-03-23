@@ -102,26 +102,6 @@ contract TicketManager {
         return false;
     }
 
-    // Expire the ticket
-    function expireTicket(address _player, uint256 _ticketId) 
-        external 
-        returns (bool) 
-    {
-        TicketData[] storage tickets = playerTickets[_player];
-        uint256 length = tickets.length;
-
-        for (uint256 i; i < length; ++i) { // Preload length for gas optimization
-            if (tickets[i].id == _ticketId) {
-                require(tickets[i].status == TicketStatus.ACTIVE, "Ticket is not active");
-
-                tickets[i].status = TicketStatus.EXPIRED;
-                return true;
-            }
-        }
-
-        return false;
-    }
-
     // Get tickets by a specific status
     function getTicketsByStatus(address _player, TicketStatus _status) 
         external 
@@ -172,11 +152,7 @@ contract TicketManager {
     }
 
     // Get all tickets for a player
-    function getPlayerTickets(address _player) 
-        external 
-        view 
-        returns (TicketData[] memory) 
-    {
+    function getPlayerTickets(address _player) external view returns (TicketData[] memory) {
         return playerTickets[_player];
     }
 
@@ -188,21 +164,5 @@ contract TicketManager {
     // Set a new ticket price
     function setTicketPrice(uint256 _newPrice) external onlyOwner {
         ticketPrice = _newPrice;
-    }
-
-    // Get the purchase time for a specific ticket
-    function getTicketPurchaseTime(address _player, uint256 _ticketId) external view returns (uint256) {
-        TicketData[] storage tickets = playerTickets[_player];
-        uint256 length = tickets.length;
-        for (uint256 i = 0; i < length; i++) {
-            if (tickets[i].id == _ticketId) {
-                return tickets[i].creationTimestamp;  // Return the timestamp of ticket purchase
-            }
-        }
-        revert("Ticket not found");
-    }
-
-    function getTotalPlayers() external view returns (address[] memory) {
-        return players; // Number of unique addresses in the mapping
     }
 }
