@@ -15,53 +15,105 @@ interface ITicketManager
     );
 }
 
+enum lotteryStatus { OPEN, CLOSED, FINALIZED }
+
 struct LotteryRound {
     uint256 roundNumber;
     uint256 totalPrizePool;
     address[] participants;
     mapping(address => uint256[]) participantTickets; // Store ticket IDs for each participant
     address winner;
-    bool isFinalized;
+
+    lotteryStatus status;
+
+    uint256 openBlock;
+    uint256 closeBlock;
 }
 
 contract LotteryManager {
     mapping(uint256 => LotteryRound) private lotteryRounds;
-    uint256 private currentLotteryRound = 1;
+    uint256 private currentLotteryRound;
     address private immutable i_owner;
     bool private activeRound;
     ITicketManager private ticketManager;
+
     uint256 private constant SCALE_FACTOR = 1e18;
+    uint256 private BLOCKS_TO_WAIT_fOR_CLOSE = 5;
+    uint256 private BLOCKS_TO_WAIT_fOR_DRAW = 5;
 
     constructor(address _ticketManagerAddress) {
-        i_owner = msg.sender;
         activeRound = false;
-
         ticketManager = ITicketManager(_ticketManagerAddress);
+        startNewLotteryRound();
     }
 
-    modifier onlyOwner() {
-        require(msg.sender == i_owner, "Only the contract owner can call this function");
-        _;
+  function getLotteryBlockStatus() external view returns (
+        uint256 blocksUntilClose,
+        uint256 blocksUntilDraw
+    ) {
+        uint256 currentBlock = block.number;
+        blocksUntilClose = 0;
+        blocksUntilDraw = 0;
+
+        LotteryRound storage round = lotteryRounds[currentLotteryRound];
+
+            if (round.status == lotteryStatus.OPEN) {
+                blocksUntilClose = (round.openBlock + BLOCKS_TO_WAIT_fOR_CLOSE > currentBlock)
+                    ? (round.openBlock + BLOCKS_TO_WAIT_fOR_CLOSE) - currentBlock
+                    : 0;
+                    blocksUntilDraw = BLOCKS_TO_WAIT_fOR_DRAW + blocksUntilClose;
+            } else if (round.status == lotteryStatus.CLOSED) {
+                blocksUntilDraw = (round.closeBlock + BLOCKS_TO_WAIT_fOR_DRAW > currentBlock)
+                    ? (round.closeBlock + BLOCKS_TO_WAIT_fOR_DRAW) - currentBlock
+                    : 0;
+            }
+            return ( blocksUntilClose, blocksUntilDraw);
     }
 
-    function startNewLotteryRound() external onlyOwner returns (uint256) {
+   
+    function getLotteryStatus() external view returns (lotteryStatus) {
+        return lotteryRounds[currentLotteryRound].status;
+    }
+    
+    function canCloseLottery () public view returns (bool) {
+        LotteryRound storage round = lotteryRounds[currentLotteryRound];
+        return round.openBlock + BLOCKS_TO_WAIT_fOR_CLOSE <= block.number;
+    }
+
+    function canDrawWinner() public view returns (bool) {
+        LotteryRound storage round = lotteryRounds[currentLotteryRound];
+        return round.closeBlock + BLOCKS_TO_WAIT_fOR_DRAW <= block.number;
+    }
+
+    function closeLotteryRound() external {
+        LotteryRound storage round = lotteryRounds[currentLotteryRound];
+        require(round.status == lotteryStatus.OPEN, "Current lottery round is not open");
+        require(canCloseLottery (), "Wait for some time to close the lottery round");
+        round.status = lotteryStatus.CLOSED;
+        round.closeBlock = block.number;
+        activeRound = false;
+    }
+
+    function startNewLotteryRound() public returns (uint256) {
         require(!activeRound, "There is a lottery active");
         
         LotteryRound storage newRound = lotteryRounds[currentLotteryRound];
         newRound.roundNumber = currentLotteryRound;
         newRound.totalPrizePool = 0;
         newRound.winner = address(0);
-        newRound.isFinalized = false;
+        newRound.status = lotteryStatus.OPEN;
         
         activeRound = true;
+
+        newRound.openBlock = block.number;
+        newRound.closeBlock = 0 ;
         return currentLotteryRound;
     }
 
     function addParticipantAndPrizePool(address _participant, uint256 _ticketId, bytes32 _ticketHash, bytes32 _ticketHashWithStrong ,uint256 _ticketPrice) external returns (bool) {
-        require(activeRound, "Current lottery round is closed");
-        require(!lotteryRounds[currentLotteryRound].isFinalized, "Current lottery round is closed");
-        
         LotteryRound storage round = lotteryRounds[currentLotteryRound];
+
+        require(round.status == lotteryStatus.OPEN, "Current lottery round is closed");
         
         // Set ticket status to IN_LOTTERY
         require(ticketManager.setTicketInLottery(_participant, _ticketId, _ticketHash, _ticketHashWithStrong ,currentLotteryRound), 
@@ -115,21 +167,21 @@ contract LotteryManager {
         return weights;
     }
 
+    function drawLotteryWinner() external returns (address) {
+        require(canDrawWinner(), "Wait for some time to draw the winner");
 
-    function drawLotteryWinner() external onlyOwner returns (address) {
-        require(activeRound, "Current lottery round is closed");
         LotteryRound storage currentRound = lotteryRounds[currentLotteryRound];
-        
-        require(!currentRound.isFinalized, "Lottery round already finalized");
-        require(currentRound.participants.length > 0, "No participants in this round");
 
-        // Calculate weights based on holding time
+        require(currentRound.status == lotteryStatus.CLOSED, "Lottery round already finalized");
+        require(currentRound.participants.length > 0, "No participants in this round");
+        
+        //Calculate weights based on holding time
         uint256[] memory weights = calculateSoftmaxWeights();
 
         // Select winner using weighted random selection
         uint256 randomValue = uint256(keccak256(abi.encodePacked(block.timestamp, block.prevrandao))) % SCALE_FACTOR;
         uint256 cumulativeWeight = 0;
-        address winner = currentRound.participants[0];
+        address winner;
 
         for (uint256 i = 0; i < currentRound.participants.length; i++) {
             cumulativeWeight += weights[i];
@@ -148,41 +200,15 @@ contract LotteryManager {
             }
         }
 
+        (bool success, ) = payable(winner).call{value: currentRound.totalPrizePool}("");
+        require(success, "Prize transfer failed");
+
         currentRound.winner = winner;
-        currentRound.isFinalized = true;
+        currentRound.status = lotteryStatus.FINALIZED;
         activeRound = false;
         currentLotteryRound++;
         
         return winner;
-    }
-
-    function getLotteryRoundInfo(uint256 _index) external view returns (
-        uint256 roundNumber,
-        uint256 totalPrizePool,
-        address[] memory participants,
-        address winner,
-        bool isFinalized
-    ) {
-        LotteryRound storage round = lotteryRounds[_index];
-        return (
-            round.roundNumber,
-            round.totalPrizePool,
-            round.participants,
-            round.winner,
-            round.isFinalized
-        );
-    }
-
-    function getParticipantTicketsInRound(uint256 _roundNumber, address _participant) 
-        external 
-        view 
-        returns (uint256[] memory) 
-    {
-        return lotteryRounds[_roundNumber].participantTickets[_participant];
-    }
-
-    function getTotalPrizePool() external view returns (uint256) {
-        return lotteryRounds[currentLotteryRound].totalPrizePool;
     }
 
     function getCurrentRound() external view returns (uint256) {
@@ -190,32 +216,52 @@ contract LotteryManager {
     }
 
     function isLotteryActive() external view returns (bool) {
-    return activeRound;
+        return activeRound;
     }
+
+    function getLotteryRoundInfo(uint256 _index) external view returns (
+        uint256 roundNumber,
+        uint256 totalPrizePool,
+        address[] memory participants,
+        address winner,
+        lotteryStatus status
+    ) {
+        LotteryRound storage round = lotteryRounds[_index];
+        return (
+            round.roundNumber,
+            round.totalPrizePool,
+            round.participants,
+            round.winner,
+            round.status
+        );
+    }
+
     function getAllLotteryRoundsInfo() external view returns (
         uint256[] memory roundNumbers,
         uint256[] memory totalPrizePools,
         address[][] memory participantsList,
         address[] memory winners,
-        bool[] memory finalizedStatuses
-    ) {
-        uint256 totalRounds = currentLotteryRound; 
+        lotteryStatus[] memory Statuses
+    )
+    {
+        uint256 totalRounds = currentLotteryRound+1; 
         roundNumbers = new uint256[](totalRounds);
         totalPrizePools = new uint256[](totalRounds);
         participantsList = new address[][](totalRounds);
         winners = new address[](totalRounds);
-        finalizedStatuses = new bool[](totalRounds);
+        Statuses = new lotteryStatus[](totalRounds);
 
-        for (uint256 i = 0; i < currentLotteryRound; i++) {
+        for (uint256 i = 0; i < totalRounds; i++) {
             LotteryRound storage round = lotteryRounds[i];
 
             roundNumbers[i] = round.roundNumber;
             totalPrizePools[i] = round.totalPrizePool;
             participantsList[i] = round.participants;
             winners[i] = round.winner;
-            finalizedStatuses[i] = round.isFinalized;
+            Statuses[i] = round.status;
         }
 
-        return (roundNumbers, totalPrizePools, participantsList, winners, finalizedStatuses);
+        return (roundNumbers, totalPrizePools, participantsList, winners, Statuses);
     }
+
 }

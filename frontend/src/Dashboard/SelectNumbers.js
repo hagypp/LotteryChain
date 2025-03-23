@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import contractService from '../services/contractService';
 import './SelectNumbers.css';
 import { keccak256 } from 'js-sha3';

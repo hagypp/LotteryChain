@@ -1,6 +1,5 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import contractService from '../services/contractService';
-import AdminDashboard from './AdminDashboard';
 import LotteryRounds from './LotteryRounds';
 import SelectNumbers from './SelectNumbers';
 import TicketsList from './TicketsList';
@@ -12,67 +11,152 @@ const Dashboard = ({ account }) => {
     const [isContractReady, setIsContractReady] = useState(false);
     const [isLoading, setIsLoading] = useState({});
     const [activeTickets, setActiveTickets] = useState([]);
-    const [isOwner, setIsOwner] = useState(false);
     const [isSelectingNumbers, setIsSelectingNumbers] = useState(false);
     const [selectedTicketId, setSelectedTicketId] = useState(null);
     const [isLotteryActive, setIsLotteryActive] = useState(false);
     const [ticketCategory, setTicketCategory] = useState('active');
-
-    const today = new Date().toLocaleDateString('en-US', {
-        weekday: 'long', 
-        year: 'numeric', 
-        month: 'long', 
-        day: 'numeric'
+    const [lotteryControlError, setLotteryControlError] = useState('');
+    const [isLotteryActionLoading, setIsLotteryActionLoading] = useState(false);
+    
+    // Use a ref to track the current lottery status to prevent redundant updates
+    const lotteryStatusRef = useRef(false);
+    
+    // Block status state
+    const [blockStatus, setBlockStatus] = useState({
+        blocksUntilClose: 'unknown',
+        blocksUntilDraw: 'unknown'
     });
 
     // Status mapping for ticket states
     const STATUS_MAP = {
         0: 'Active',
         1: 'In Lottery',
-        2: 'Won',
-        3: 'Expired'
+        2: 'Won'
     };
 
-    const refreshDashboardData = async () => {
+    // Single source of truth for refreshing dashboard data
+    const refreshDashboardData = useCallback(async () => {
+        // Skip if contract not ready
+        if (!isContractReady) {
+            return;
+        }
+        
         try {
             const [
                 price,
                 tickets,
-                owner
+                blockStatusData
             ] = await Promise.all([
                 contractService.getTicketPrice(),
                 contractService.getPlayerTickets(account),
-                contractService.getOwner()
+                contractService.getLotteryBlockStatus()
             ]);
 
             setTicketPrice(price.toString());
             setActiveTickets(tickets);
-            setIsOwner(owner.toLowerCase() === account.toLowerCase());
-
-            try {
-                const lotteryActiveStatus = await contractService.isLotteryActive();
-                setIsLotteryActive(lotteryActiveStatus);
-            } catch (lotteryError) {
-                console.warn("Could not determine lottery status:", lotteryError.message);
-                setIsLotteryActive(false);
-            }
+            setBlockStatus({
+                blocksUntilClose: blockStatusData.blocksUntilClose.toString(),
+                blocksUntilDraw: blockStatusData.blocksUntilDraw.toString()
+            });
         } catch (error) {
             setStatus(`Error refreshing dashboard data: ${error.message}`);
         }
-    };
+    }, [account, isContractReady]);
 
+    // Pure lottery status handler - only updates UI, doesn't trigger refreshes
+    const handleLotteryStatusChange = useCallback((isActive) => {
+        // Skip if no change in status
+        if (isActive === lotteryStatusRef.current) return;
+        lotteryStatusRef.current = isActive;
+        setIsLotteryActive(isActive);
+        setStatus(`Lottery is now ${isActive ? 'open' : 'closed'}`);
+    }, []);
+    
+    // Handler for block status updates
+    const handleBlockStatusChange = useCallback((blocksUntilClose, blocksUntilDraw) => {
+        setBlockStatus({
+            blocksUntilClose,
+            blocksUntilDraw
+        });
+    }, []);
+
+    // Initial contract setup and listener registration
     useEffect(() => {
-        const loadData = async () => {
+        const initialize = async () => {
             try {
                 await contractService.init();
                 setIsContractReady(true);
-                await refreshDashboardData();
+                
+                // Turn off any automatic polling in contractService
+                if (typeof contractService.stopLotteryStatusPolling === 'function') {
+                    contractService.stopLotteryStatusPolling();
+                }
+                
+                // Get initial lottery status only once
+                const status = await contractService.isLotteryActive();
+                lotteryStatusRef.current = status;
+                setIsLotteryActive(status);
+                
+                // Get initial block status
+                const blockStatusData = await contractService.getLotteryBlockStatus();
+                setBlockStatus({
+                    blocksUntilClose: blockStatusData.blocksUntilClose.toString(),
+                    blocksUntilDraw: blockStatusData.blocksUntilDraw.toString()
+                });
+                
+                // Register listeners after initialization
+                const unsubscribeLotteryStatus = contractService.addLotteryStatusListener(handleLotteryStatusChange);
+                const unsubscribeBlockStatus = contractService.addBlockStatusListener(handleBlockStatusChange);
+                
+                return () => {
+                    unsubscribeLotteryStatus();
+                    unsubscribeBlockStatus();
+                };
             } catch (error) {
                 setStatus(`Error initializing contract: ${error.message}`);
             }
         };
-        loadData();
-    }, [account]);
+        
+        initialize();
+    }, [handleBlockStatusChange, handleLotteryStatusChange]);
+
+    // Only refresh data once when contract becomes ready or account changes
+    useEffect(() => {
+        if (isContractReady && account) {
+            refreshDashboardData();
+        }
+    }, [isContractReady, account, refreshDashboardData]);
+    
+    // Draw winner handler
+    const handleDrawWinner = async () => {
+        setIsLotteryActionLoading(true);
+        setLotteryControlError('');
+        try {
+            await contractService.drawLotteryWinner();
+            // Manually refresh data after successful action
+            await refreshDashboardData();
+            setStatus('Lottery winner drawn successfully!');
+        } catch (error) {
+            setLotteryControlError(`Failed to draw winner: ${error.message}`);
+            console.error("Failed to draw lottery winner:", error);
+        } finally {
+            setIsLotteryActionLoading(false);
+        }
+    };
+
+    const handleCloseLottery = async () => {
+        setIsLotteryActionLoading(true);
+        setLotteryControlError('');
+        try {
+            await contractService.closeLotteryRound();
+            // Manually refresh data after successful action
+            await refreshDashboardData();
+        } catch (error) {
+            setLotteryControlError(`Failed to close lottery: ${error.message}`);
+        } finally {
+            setIsLotteryActionLoading(false);
+        }
+    };
 
     const handlePurchase = async () => {
         if (!isContractReady) {
@@ -118,47 +202,79 @@ const Dashboard = ({ account }) => {
 
     return (
         <div className="dashboard-container">
-            {/* Updated Header Row with Purchase Button */}
+            {/* Updated Header Row with more consistent sizing */}
             <div className="dashboard-header-row">
                 <div className="header-info-container">
                     <div className="header-info-item">
-                        <span className="header-info-label">Today</span>
-                        <span className="header-info-value">{today}</span>
-                    </div>
-                    <div className="header-divider"></div>
-                    <div className="header-info-item">
-                        <span className="header-info-label">Lottery Status</span>
+                        <span className="header-info-label">LOTTERY STATUS</span>
                         <span className={`header-info-value ${isLotteryActive ? 'lottery-active' : 'lottery-inactive'}`}>
                             {isLotteryActive ? 'Open' : 'Closed'}
                         </span>
                     </div>
-                    <div className="header-divider"></div>
+                    
                     <div className="header-info-item">
-                        <span className="header-info-label">Ticket Price</span>
+                        <span className="header-info-label">TICKET PRICE</span>
                         <span className="header-info-value">{ticketPrice} ETH</span>
                     </div>
-                    <div className="header-divider"></div>
+                    
                     <div className="header-info-item">
-                        <span className="header-info-label">Active Tickets</span>
+                        <span className="header-info-label">ACTIVE TICKETS</span>
                         <span className="header-info-value">{activeTickets.length}</span>
                     </div>
-                    <div className="header-divider"></div>
-                    <div className="header-info-item">
-                        <button 
-                            onClick={handlePurchase} 
-                            disabled={isLoading.purchase}
-                            className="header-purchase-button"
-                        >
-                            {isLoading.purchase ? "Processing..." : "Buy Ticket"}
-                        </button>
+                </div>
+                
+                {/* Block Status Section without refresh button */}
+                <div className="block-status-consolidated">
+                    <div className="block-status-header">
+                    <span className="header-info-label" style={{textAlign: 'center', display: 'block', marginBottom: '0.75rem'}}>
+                    BLOCK STATUS
+                    </span>
+                    </div>
+                    <div className="block-status-content">
+                        <div className="block-metric">
+                            <span className="block-metric-label">UNTIL BLOCKS CLOSE</span>
+                            <span className="block-metric-value">
+                                {blockStatus.blocksUntilClose}
+                            </span>
+                        </div>
+                        <div className="block-metric">
+                            <span className="block-metric-label">UNTIL LOTTERY WINNER</span>
+                            <span className="block-metric-value">
+                                {blockStatus.blocksUntilDraw}
+                            </span>
+                        </div>
                     </div>
                 </div>
+                
+                {/* Button Container with consistent sizing */}
+                <div className="button-container">
+                    <button 
+                        onClick={handlePurchase} 
+                        disabled={isLoading.purchase}
+                        className="header-purchase-button"
+                    >
+                        {isLoading.purchase ? "Processing..." : "BUY TICKET"}
+                    </button>
+                    
+                    <button 
+                        onClick={isLotteryActive ? handleCloseLottery : handleDrawWinner}
+                        disabled={isLotteryActionLoading}
+                        className={`header-purchase-button ${isLotteryActive ? 'close-lottery' : 'draw-winner'}`}
+                    >
+                        {isLotteryActionLoading ? "Processing..." : isLotteryActive ? "CLOSE LOTTERY" : "DRAW WINNER"}
+                    </button>
+                </div>
+                
+                {lotteryControlError && (
+                    <div className={lotteryControlError.includes("successfully") ? "success-message" : "error-message"}>
+                        {lotteryControlError}
+                    </div>
+                )}
             </div>
-
-            {/* Two-Column Layout */}
+            
             <div className="dashboard-content-grid">
+                {/* הטור של הכרטיסים */}
                 <div className="dashboard-tickets-column">
-                    {/* Tickets Section */}
                     <TicketsList 
                         tickets={activeTickets}
                         ticketCategory={ticketCategory}
@@ -169,17 +285,11 @@ const Dashboard = ({ account }) => {
                         handleSelectForLottery={handleSelectForLottery}
                     />
                 </div>
+                
                 <div className="dashboard-lottery-column">
                     <LotteryRounds />
                 </div>
             </div>
-
-            {/* Admin Panel */}
-            {isOwner && (
-                <div className="dashboard-section admin-section">
-                    <AdminDashboard onActionComplete={refreshDashboardData} />
-                </div>
-            )}
 
             {/* Status Message */}
             {status && (

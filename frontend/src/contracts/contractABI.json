@@ -51,10 +51,9 @@
         "stateMutability": "view",
         "type": "function"
     },
-
     {
         "inputs": [],
-        "name": "startNewLotteryRound",
+        "name": "closeLotteryRound",
         "outputs": [],
         "stateMutability": "nonpayable",
         "type": "function"
@@ -129,19 +128,6 @@
         "type": "function"
     },
     {
-        "name": "getAllLotteryRoundsInfo",
-        "type": "function",
-        "stateMutability": "view",
-        "inputs": [],
-        "outputs": [
-          { "name": "roundNumbers", "type": "uint256[]" },
-          { "name": "totalPrizePools", "type": "uint256[]" },
-          { "name": "participantsList", "type": "address[][]" },
-          { "name": "winners", "type": "address[]" },
-          { "name": "finalizedStatuses", "type": "bool[]" }
-        ]
-      },
-      {
         "constant": true,
         "inputs": [
           {
@@ -168,6 +154,86 @@
         "payable": false,
         "stateMutability": "view",
         "type": "function"
-      }
-                
+    },
+    {
+        "anonymous": false,
+        "inputs": [
+            {
+                "indexed": false,
+                "internalType": "bool",
+                "name": "isOpen",
+                "type": "bool"
+            }
+        ],
+        "name": "LotteryRoundStatusChanged",
+        "type": "event"
+    },
+    {
+        "anonymous": false,
+        "inputs": [
+            {
+                "indexed": false,
+                "internalType": "uint256",
+                "name": "blocksUntilClose",
+                "type": "uint256"
+            },
+            {
+                "indexed": false,
+                "internalType": "uint256",
+                "name": "blocksUntilDraw",
+                "type": "uint256"
+            }
+        ],
+        "name": "BlockStatusUpdated",
+        "type": "event"
+    },
+    {
+        "constant": true,
+        "inputs": [],
+        "name": "getLotteryBlockStatus",
+        "outputs": [
+            {
+                "name": "blocksUntilClose",
+                "type": "uint256"
+            },
+            {
+                "name": "blocksUntilDraw",
+                "type": "uint256"
+            }
+        ],
+        "payable": false,
+        "stateMutability": "view",
+        "type": "function"
+    },
+    {
+        "constant": true,
+        "inputs": [],
+        "name": "getAllLotteryRoundsInfo",
+        "outputs": [
+          {
+            "name": "roundNumbers",
+            "type": "uint256[]"
+          },
+          {
+            "name": "totalPrizePools",
+            "type": "uint256[]"
+          },
+          {
+            "name": "participantsList",
+            "type": "address[][]"
+          },
+          {
+            "name": "winners",
+            "type": "address[]"
+          },
+          {
+            "name": "Statuses",
+            "type": "uint8[]"
+          }
+        ],
+        "payable": false,
+        "stateMutability": "view",
+        "type": "function"
+      }        
 ]
+

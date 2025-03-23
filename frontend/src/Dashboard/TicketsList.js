@@ -12,8 +12,6 @@ const TicketsList = ({ tickets, ticketCategory, setTicketCategory, STATUS_MAP, i
                 return tickets.filter(ticket => Number(ticket.status) === 1);
             case 'USED':
                 return tickets.filter(ticket => Number(ticket.status) === 2);
-            case 'expired':
-                return tickets.filter(ticket => Number(ticket.status) === 3);
             default:
                 return tickets;
         }
@@ -27,8 +25,7 @@ const TicketsList = ({ tickets, ticketCategory, setTicketCategory, STATUS_MAP, i
                     { key: 'all', label: 'All Tickets' },
                     { key: 'active', label: 'Active' },
                     { key: 'inLottery', label: 'In Lottery' },
-                    { key: 'USED', label: 'USED' },
-                    { key: 'expired', label: 'Expired' }
+                    { key: 'USED', label: 'USED' }
                 ].map(category => (
                     <button
                         key={category.key}
@@ -89,7 +86,7 @@ const TicketsList = ({ tickets, ticketCategory, setTicketCategory, STATUS_MAP, i
                 ) : (
                     <div className="empty-state">
                         No {STATUS_MAP[
-                            {'active': 0, 'inLottery': 1, 'USED': 2, 'expired': 3}[ticketCategory]
+                            {'active': 0, 'inLottery': 1, 'USED': 2}[ticketCategory]
                         ]} tickets found.
                     </div>
                 )}
