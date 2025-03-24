@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import contractService from '../services/contractService';
 import './SelectNumbers.css';
-import { keccak256 } from 'js-sha3';
+const { sha3_256 } = require('js-sha3');  // Note: using sha3_256 instead of keccak_256
 
 
 const SelectNumbers = ({ onClose, account, ticketId, onTicketAdded }) => {
@@ -70,17 +70,21 @@ const SelectNumbers = ({ onClose, account, ticketId, onTicketAdded }) => {
             if (ticketId === undefined || ticketId === null || ticketId === "") {
                 throw new Error('No ticket ID provided');
             }
-    
+
+            const selectedNumbers = [1, 2, 3, 4, 5, 6];
+            const strongestNumber = 7;
             // Create a string representation of the selected numbers (6 numbers) without commas
             const numbersString = [...selectedNumbers.sort((a, b) => a - b)].join('');
     
             // Hash the selected numbers (6 numbers)
-            const numbersHash = keccak256(numbersString);
+            const numbersHash = sha3_256(numbersString).toString('hex');
+            console.log('Selected numbers:', numbersString);
             console.log('Numbers hash:', numbersHash);
     
             // Now, include the strongest number in the string for ticketHashWithStrong
             const ticketNumbersString = [...selectedNumbers.sort((a, b) => a - b), strongestNumber].join('');
-            const ticketHashWithStrong = keccak256(ticketNumbersString);  // Hash the 7 numbers (6 + strongest)
+            const ticketHashWithStrong = sha3_256(ticketNumbersString).toString('hex');  // Hash the 7 numbers (6 + strongest)
+            console.log('Ticket numbers with strongest:', ticketNumbersString);
             console.log('Ticket hash with strongest number:', ticketHashWithStrong);
     
             // Send the hash to the contract
