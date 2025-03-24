@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
+import "./TicketManager.sol";
 
 interface ITicketManager
  {
-    enum TicketStatus { ACTIVE, IN_LOTTERY, USED, EXPIRED }
     function setTicketInLottery(address _player, uint256 _ticketId, bytes32 _ticketHash,bytes32 _ticketHashWithStrong ,uint256 _lotteryRound) external returns (bool);
     function markTicketAsUsed(address _player, uint256 _ticketId) external returns (bool);
     function getTicketData(address _player, uint256 _ticketId) external view returns (
@@ -11,7 +11,9 @@ interface ITicketManager
         address owner,
         uint256 creationTimestamp,
         TicketStatus status,
-        uint256 lotteryRound
+        uint256 lotteryRound,
+        bytes32 ticketHash,
+        bytes32 ticketHashWithStrong
     );
 }
 
@@ -143,7 +145,7 @@ contract LotteryManager {
 
             // Sum up the hold time for all tickets
             for (uint256 j = 0; j < ticketIds.length; j++) {
-                (,, uint256 creationTimestamp,,) = ticketManager.getTicketData(participant, ticketIds[j]); //get the ticket data
+                (,, uint256 creationTimestamp,,,,) = ticketManager.getTicketData(participant, ticketIds[j]); //get the ticket data
                 uint256 timeHeld = (maxTime - creationTimestamp) / 1 hours; // Time held in hours
                 totalHoldTime += timeHeld;
             }
@@ -167,7 +169,7 @@ contract LotteryManager {
         return weights;
     }
 
-    function drawLotteryWinner() external returns (address) {
+    function drawLotteryWinner(bytes32 keccak256HashNumbers, bytes32 keccak256HashFull) external returns (address) {
         require(canDrawWinner(), "Wait for some time to draw the winner");
 
         LotteryRound storage currentRound = lotteryRounds[currentLotteryRound];
@@ -176,20 +178,32 @@ contract LotteryManager {
         require(currentRound.participants.length > 0, "No participants in this round");
         
         //Calculate weights based on holding time
-        uint256[] memory weights = calculateSoftmaxWeights();
+        // uint256[] memory weights = calculateSoftmaxWeights();
 
         // Select winner using weighted random selection
-        uint256 randomValue = uint256(keccak256(abi.encodePacked(block.timestamp, block.prevrandao))) % SCALE_FACTOR;
-        uint256 cumulativeWeight = 0;
+        // uint256 randomValue = uint256(keccak256(abi.encodePacked(block.timestamp, block.prevrandao))) % SCALE_FACTOR;
+        // uint256 cumulativeWeight = 0;
         address winner;
 
         for (uint256 i = 0; i < currentRound.participants.length; i++) {
-            cumulativeWeight += weights[i];
-            if (randomValue < cumulativeWeight) {
-                winner = currentRound.participants[i];
-                break;
+            address participant = currentRound.participants[i];
+            uint256[] storage ticketIds = currentRound.participantTickets[participant];
+            for (uint256 j = 0; j < ticketIds.length; j++) {
+                (uint256 id,address owner,uint256 creationTimestamp,TicketStatus status ,uint256 lotteryRound,bytes32 ticketHash,bytes32 ticketHashWithStrong) = ticketManager.getTicketData(participant, ticketIds[j]);
+                if(ticketHashWithStrong == keccak256HashFull){
+                    winner = participant;
+                    break;
+                }
             }
+            break;
         }
+        // for (uint256 i = 0; i < currentRound.participants.length; i++) {
+        //     cumulativeWeight += weights[i];
+        //     if (randomValue < cumulativeWeight) {
+        //         winner = currentRound.participants[i];
+        //         break;
+        //     }
+        // }
 
         // Mark all tickets in this round as USED
         for (uint256 i = 0; i < currentRound.participants.length; i++) {
