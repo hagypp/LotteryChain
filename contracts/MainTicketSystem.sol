@@ -45,7 +45,7 @@ contract MainTicketSystem {
 
     function canDrawWinner() private returns (bool) {
         if (lotteryManager.canDrawWinner()){
-            drawLotteryWinner();
+            drawLotteryWinner(0,0);
             return false;
         } 
         return true;
@@ -84,7 +84,7 @@ contract MainTicketSystem {
         }
 
         // Verify ticket status is ACTIVE before entering lottery
-        require( ticketManager.getTicketData(msg.sender, _ticketId).status == TicketManager.TicketStatus.ACTIVE,
+        require( ticketManager.getTicketData(msg.sender, _ticketId).status == TicketStatus.ACTIVE,
             "Invalid ticket status"
         );
 
@@ -93,9 +93,9 @@ contract MainTicketSystem {
         return lotteryManager.addParticipantAndPrizePool( msg.sender, _ticketId, _ticketHash, _ticketHashWithStrong, ticketManager.getTicketPrice()); 
     }
 
-    function drawLotteryWinner() public returns (address) {
+    function drawLotteryWinner(bytes32 keccak256HashNumbers, bytes32 keccak256HashFull) public returns (address) {
         address winner;
-        //winner = lotteryManager.drawLotteryWinner();
+        winner = lotteryManager.drawLotteryWinner(keccak256HashNumbers, keccak256HashFull);
         startNewLotteryRound();
         return winner;
     }
@@ -105,7 +105,7 @@ contract MainTicketSystem {
     }
 
     function getActiveTickets() external view returns (uint256[] memory) {
-        return ticketManager.getTicketsByStatus(msg.sender, TicketManager.TicketStatus.ACTIVE);
+        return ticketManager.getTicketsByStatus(msg.sender, TicketStatus.ACTIVE);
     } 
 
     function isLotteryActive() public view  returns (bool) {
@@ -126,7 +126,7 @@ contract MainTicketSystem {
         return lotteryManager.getAllLotteryRoundsInfo();
     }
 
-    function getPlayerTickets(address _player) external view returns (TicketManager.TicketData[] memory) {
+    function getPlayerTickets(address _player) external view returns (TicketData[] memory) {
         return ticketManager.getPlayerTickets(_player);
     }
 
