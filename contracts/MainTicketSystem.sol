@@ -14,6 +14,7 @@ contract MainTicketSystem {
 
     constructor() {
         // Deploy sub-contracts
+        i_owner = msg.sender;
         ticketManager = new TicketManager(1 ether);
         lotteryManager = new LotteryManager(address(ticketManager));
     }
@@ -45,7 +46,7 @@ contract MainTicketSystem {
 
     function canDrawWinner() private returns (bool) {
         if (lotteryManager.canDrawWinner()){
-            drawLotteryWinner();
+            drawLotteryWinner(0,0);
             return false;
         } 
         return true;
@@ -58,6 +59,10 @@ contract MainTicketSystem {
 
         uint256 ticketId = ticketManager.purchaseTicket(msg.sender);
         
+        // Forward the ticket price to LotteryManager
+        (bool success, ) = address(lotteryManager).call{value: ticketPrice}("");
+        require(success, "Failed to forward Ether to LotteryManager");
+
         if (msg.value > ticketPrice) {
             payable(msg.sender).transfer(msg.value - ticketPrice);
         }
@@ -84,7 +89,7 @@ contract MainTicketSystem {
         }
 
         // Verify ticket status is ACTIVE before entering lottery
-        require( ticketManager.getTicketData(msg.sender, _ticketId).status == TicketManager.TicketStatus.ACTIVE,
+        require( ticketManager.getTicketData(msg.sender, _ticketId).status == TicketStatus.ACTIVE,
             "Invalid ticket status"
         );
 
@@ -93,11 +98,10 @@ contract MainTicketSystem {
         return lotteryManager.addParticipantAndPrizePool( msg.sender, _ticketId, _ticketHash, _ticketHashWithStrong, ticketManager.getTicketPrice()); 
     }
 
-    function drawLotteryWinner() public returns (address) {
-        address winner;
-        //winner = lotteryManager.drawLotteryWinner();
+    function drawLotteryWinner(bytes32 keccak256HashNumbers, bytes32 keccak256HashFull) public returns (address[] memory, address[] memory) {
+        (address[] memory smallPrizeWinners, address[] memory bigPrizeWinners) = lotteryManager.drawLotteryWinner(keccak256HashNumbers, keccak256HashFull);
         startNewLotteryRound();
-        return winner;
+        return (smallPrizeWinners, bigPrizeWinners);
     }
 
     function setTicketPrice(uint256 _newPrice) external {
@@ -105,7 +109,7 @@ contract MainTicketSystem {
     }
 
     function getActiveTickets() external view returns (uint256[] memory) {
-        return ticketManager.getTicketsByStatus(msg.sender, TicketManager.TicketStatus.ACTIVE);
+        return ticketManager.getTicketsByStatus(msg.sender, TicketStatus.ACTIVE);
     } 
 
     function isLotteryActive() public view  returns (bool) {
@@ -120,18 +124,24 @@ contract MainTicketSystem {
         uint256[] memory roundNumbers,
         uint256[] memory totalPrizePools,
         address[][] memory participantsList,
-        address[] memory winners,
-        lotteryStatus[] memory Statuses
+        address[][] memory smallPrizeWinnersList,
+        address[][] memory bigPrizeWinnersList,
+        lotteryStatus[] memory statuses
     ) {
         return lotteryManager.getAllLotteryRoundsInfo();
     }
 
-    function getPlayerTickets(address _player) external view returns (TicketManager.TicketData[] memory) {
+    function getPlayerTickets(address _player) external view returns (TicketData[] memory) {
         return ticketManager.getPlayerTickets(_player);
     }
 
     function getLotteryBlockStatus() public view returns (uint256 blocksUntilClose, uint256 blocksUntilDraw) {
         return lotteryManager.getLotteryBlockStatus();
+    }
+
+    function getContractBlance() public view returns (uint balance)
+    {
+        return address(lotteryManager).balance;
     }
 
     receive() external payable {}

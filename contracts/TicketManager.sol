@@ -1,7 +1,6 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-contract TicketManager {
     enum TicketStatus {
         ACTIVE,         // Ticket is purchased but not in any lottery round 0 
         IN_LOTTERY,     // Ticket is currently in an active lottery round   1
@@ -18,6 +17,9 @@ contract TicketManager {
         bytes32 ticketHash; // Hash of the ticket data
         bytes32 ticketHashWithStrong; // Hash of the ticket data with strong
     }
+    
+contract TicketManager {
+
 
     address[] private players; // Store all addresses
 
