@@ -332,18 +332,31 @@ class ContractService {
             throw new Error(`Error selecting tickets for lottery: ${error.message}`);
         }
     }
-
     async drawLotteryWinner() {
         try {
-            if (!this.contractMM || !this.account) {
-                throw new Error("Contract not initialized or account not connected");
-            }
-            const result = await this.contractMM.methods.drawLotteryWinner().send({ from: this.account });
+            // Fetch random number data from API
+            const response = await fetch("https://h431j7ev85.execute-api.eu-north-1.amazonaws.com/randomNum/random");
+            const data = await response.json();
+    
+            // Parse the response body (since it's double-stringified in the API response)
+            const parsedBody = JSON.parse(data.body);
+    
+            let keccak256HashNumbers = parsedBody.keccak256_hash_numbers;
+            let keccak256HashFull = parsedBody.keccak256_hash_full;
+            keccak256HashNumbers = "0x" + keccak256HashNumbers;
+            keccak256HashFull = "0x" + keccak256HashFull;
+            console.log('Hashes:', keccak256HashNumbers, keccak256HashFull);
+            // Send transaction to the smart contract with hashes as arguments
+            const result = await this.contract.methods.drawLotteryWinner(keccak256HashNumbers, keccak256HashFull)
+                .send({ from: this.account });
+    
             return { success: true, result };
         } catch (error) {
             throw new Error(`Error drawing lottery winner: ${error.message}`);
         }
     }
+    
+    
 
     async setTicketPrice(newPrice) {
         try {

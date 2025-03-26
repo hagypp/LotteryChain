@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
+import "./TicketManager.sol";
 
 interface ITicketManager
  {
-    enum TicketStatus { ACTIVE, IN_LOTTERY, USED, EXPIRED }
     function setTicketInLottery(address _player, uint256 _ticketId, bytes32 _ticketHash,bytes32 _ticketHashWithStrong ,uint256 _lotteryRound) external returns (bool);
     function markTicketAsUsed(address _player, uint256 _ticketId) external returns (bool);
     function getTicketData(address _player, uint256 _ticketId) external view returns (
@@ -11,7 +11,9 @@ interface ITicketManager
         address owner,
         uint256 creationTimestamp,
         TicketStatus status,
-        uint256 lotteryRound
+        uint256 lotteryRound,
+        bytes32 ticketHash,
+        bytes32 ticketHashWithStrong
     );
 }
 
@@ -22,8 +24,9 @@ struct LotteryRound {
     uint256 totalPrizePool;
     address[] participants;
     mapping(address => uint256[]) participantTickets; // Store ticket IDs for each participant
-    address winner;
 
+    address[] smallPrizeWinners;  // Winners of small prize
+    address[] bigPrizeWinners;    // Winners of big prize
     lotteryStatus status;
 
     uint256 openBlock;
@@ -38,10 +41,15 @@ contract LotteryManager {
     ITicketManager private ticketManager;
 
     uint256 private constant SCALE_FACTOR = 1e18;
-    uint256 private BLOCKS_TO_WAIT_fOR_CLOSE = 5;
+    uint256 private BLOCKS_TO_WAIT_fOR_CLOSE = 10;
     uint256 private BLOCKS_TO_WAIT_fOR_DRAW = 5;
 
-    constructor(address _ticketManagerAddress) {
+    uint256 private constant SMALL_PRIZE_PERCENTAGE = 20; // 20% of prize pool for small prize the rest if for the big (80%)
+    uint256 private constant FLEX_COMMISSION = 10;       // 10% commission for owner
+
+    constructor(address _ticketManagerAddress) 
+    {
+        i_owner = msg.sender;
         activeRound = false;
         ticketManager = ITicketManager(_ticketManagerAddress);
         startNewLotteryRound();
@@ -96,11 +104,17 @@ contract LotteryManager {
 
     function startNewLotteryRound() public returns (uint256) {
         require(!activeRound, "There is a lottery active");
-        
+
+        LotteryRound storage currentRound = lotteryRounds[currentLotteryRound];
+        activeRound = false;        
+        currentRound.status = lotteryStatus.FINALIZED;
+        currentLotteryRound++;
+
         LotteryRound storage newRound = lotteryRounds[currentLotteryRound];
         newRound.roundNumber = currentLotteryRound;
         newRound.totalPrizePool = 0;
-        newRound.winner = address(0);
+        // newRound.smallPrizeWinners = [];
+        // newRound.bigPrizeWinners = [];
         newRound.status = lotteryStatus.OPEN;
         
         activeRound = true;
@@ -143,7 +157,7 @@ contract LotteryManager {
 
             // Sum up the hold time for all tickets
             for (uint256 j = 0; j < ticketIds.length; j++) {
-                (,, uint256 creationTimestamp,,) = ticketManager.getTicketData(participant, ticketIds[j]); //get the ticket data
+                (,, uint256 creationTimestamp,,,,) = ticketManager.getTicketData(participant, ticketIds[j]); //get the ticket data
                 uint256 timeHeld = (maxTime - creationTimestamp) / 1 hours; // Time held in hours
                 totalHoldTime += timeHeld;
             }
@@ -167,7 +181,8 @@ contract LotteryManager {
         return weights;
     }
 
-    function drawLotteryWinner() external returns (address) {
+    function drawLotteryWinner(bytes32 keccak256HashNumbers, bytes32 keccak256HashFull) external 
+    returns (address[] memory, address[] memory) {
         require(canDrawWinner(), "Wait for some time to draw the winner");
 
         LotteryRound storage currentRound = lotteryRounds[currentLotteryRound];
@@ -176,22 +191,84 @@ contract LotteryManager {
         require(currentRound.participants.length > 0, "No participants in this round");
         
         //Calculate weights based on holding time
-        uint256[] memory weights = calculateSoftmaxWeights();
+        // uint256[] memory weights = calculateSoftmaxWeights();
 
         // Select winner using weighted random selection
-        uint256 randomValue = uint256(keccak256(abi.encodePacked(block.timestamp, block.prevrandao))) % SCALE_FACTOR;
-        uint256 cumulativeWeight = 0;
-        address winner;
+        // uint256 randomValue = uint256(keccak256(abi.encodePacked(block.timestamp, block.prevrandao))) % SCALE_FACTOR;
+        // uint256 cumulativeWeight = 0;
+        
+        // Arrays to store winners
+        address[] memory smallPrizeWinners = new address[](currentRound.participants.length);
+        address[] memory bigPrizeWinners = new address[](currentRound.participants.length);
+        uint256 smallWinnerCount = 0;
+        uint256 bigWinnerCount = 0;
 
+        // Identify winners
         for (uint256 i = 0; i < currentRound.participants.length; i++) {
-            cumulativeWeight += weights[i];
-            if (randomValue < cumulativeWeight) {
-                winner = currentRound.participants[i];
-                break;
+            address participant = currentRound.participants[i];
+            uint256[] storage ticketIds = currentRound.participantTickets[participant];
+            for (uint256 j = 0; j < ticketIds.length; j++) {
+                (, , , , , bytes32 ticketHash, bytes32 ticketHashWithStrong) = ticketManager.getTicketData(participant, ticketIds[j]);
+                if (ticketHashWithStrong == keccak256HashFull) {
+                    bigPrizeWinners[bigWinnerCount] = participant;
+                    bigWinnerCount++;
+                    break; // One win per participant
+                } else if (ticketHash == keccak256HashNumbers) {
+                    smallPrizeWinners[smallWinnerCount] = participant;
+                    smallWinnerCount++;
+                    break; // One win per participant
+                }
             }
         }
+        // for (uint256 i = 0; i < currentRound.participants.length; i++) {
+        //     cumulativeWeight += weights[i];
+        //     if (randomValue < cumulativeWeight) {
+        //         winner = currentRound.participants[i];
+        //         break;
+        //     }
+        // }
 
-        // Mark all tickets in this round as USED
+// Resize winner arrays
+        assembly {
+            mstore(smallPrizeWinners, smallWinnerCount)
+            mstore(bigPrizeWinners, bigWinnerCount)
+        }
+
+        // Calculate prize distribution
+        uint256 totalPrizePool = currentRound.totalPrizePool;
+        uint256 commission = (totalPrizePool * FLEX_COMMISSION) / 100;
+        uint256 prizePoolAfterCommission = totalPrizePool - commission;
+
+        uint256 smallPrizePool = (prizePoolAfterCommission * SMALL_PRIZE_PERCENTAGE) / 100;
+        uint256 bigPrizePool = prizePoolAfterCommission - smallPrizePool;
+
+    // Distribute prizes or send to owner if no winners
+    if (smallWinnerCount > 0) {
+        uint256 smallPrizePerWinner = smallPrizePool / smallWinnerCount;
+        for (uint256 i = 0; i < smallWinnerCount; i++) {
+            payable(smallPrizeWinners[i]).transfer(smallPrizePerWinner);
+        }
+    } else if (smallPrizePool > 0) {
+        // If no small prize winners, send the small prize pool to the owner
+        payable(i_owner).transfer(smallPrizePool);
+    }
+
+    if (bigWinnerCount > 0) {
+        uint256 bigPrizePerWinner = bigPrizePool / bigWinnerCount;
+        for (uint256 i = 0; i < bigWinnerCount; i++) {
+            payable(bigPrizeWinners[i]).transfer(bigPrizePerWinner);
+        }
+    } else if (bigPrizePool > 0) {
+        // If no big prize winners, send the big prize pool to the owner
+        payable(i_owner).transfer(bigPrizePool);
+    }
+
+        // Send commission to owner
+        if (commission > 0) {
+            payable(i_owner).transfer(commission);
+        }
+
+        // Mark all tickets as USED
         for (uint256 i = 0; i < currentRound.participants.length; i++) {
             address participant = currentRound.participants[i];
             uint256[] storage ticketIds = currentRound.participantTickets[participant];
@@ -200,15 +277,11 @@ contract LotteryManager {
             }
         }
 
-        (bool success, ) = payable(winner).call{value: currentRound.totalPrizePool}("");
-        require(success, "Prize transfer failed");
+        // Store winners
+        currentRound.smallPrizeWinners = smallPrizeWinners;
+        currentRound.bigPrizeWinners = bigPrizeWinners;
 
-        currentRound.winner = winner;
-        currentRound.status = lotteryStatus.FINALIZED;
-        activeRound = false;
-        currentLotteryRound++;
-        
-        return winner;
+        return (smallPrizeWinners, bigPrizeWinners);
     }
 
     function getCurrentRound() external view returns (uint256) {
@@ -219,11 +292,13 @@ contract LotteryManager {
         return activeRound;
     }
 
+    // Updated getLotteryRoundInfo to include small and big prize winners
     function getLotteryRoundInfo(uint256 _index) external view returns (
         uint256 roundNumber,
         uint256 totalPrizePool,
         address[] memory participants,
-        address winner,
+        address[] memory smallPrizeWinners,
+        address[] memory bigPrizeWinners,
         lotteryStatus status
     ) {
         LotteryRound storage round = lotteryRounds[_index];
@@ -231,37 +306,41 @@ contract LotteryManager {
             round.roundNumber,
             round.totalPrizePool,
             round.participants,
-            round.winner,
+            round.smallPrizeWinners,
+            round.bigPrizeWinners,
             round.status
         );
     }
 
+// Updated getAllLotteryRoundsInfo to include small and big prize winners
     function getAllLotteryRoundsInfo() external view returns (
         uint256[] memory roundNumbers,
         uint256[] memory totalPrizePools,
         address[][] memory participantsList,
-        address[] memory winners,
-        lotteryStatus[] memory Statuses
-    )
-    {
-        uint256 totalRounds = currentLotteryRound+1; 
+        address[][] memory smallPrizeWinnersList,
+        address[][] memory bigPrizeWinnersList,
+        lotteryStatus[] memory statuses
+    ) {
+        uint256 totalRounds = currentLotteryRound + 1;
         roundNumbers = new uint256[](totalRounds);
         totalPrizePools = new uint256[](totalRounds);
         participantsList = new address[][](totalRounds);
-        winners = new address[](totalRounds);
-        Statuses = new lotteryStatus[](totalRounds);
+        smallPrizeWinnersList = new address[][](totalRounds);
+        bigPrizeWinnersList = new address[][](totalRounds);
+        statuses = new lotteryStatus[](totalRounds);
 
         for (uint256 i = 0; i < totalRounds; i++) {
             LotteryRound storage round = lotteryRounds[i];
-
             roundNumbers[i] = round.roundNumber;
             totalPrizePools[i] = round.totalPrizePool;
             participantsList[i] = round.participants;
-            winners[i] = round.winner;
-            Statuses[i] = round.status;
+            smallPrizeWinnersList[i] = round.smallPrizeWinners;
+            bigPrizeWinnersList[i] = round.bigPrizeWinners;
+            statuses[i] = round.status;
         }
 
-        return (roundNumbers, totalPrizePools, participantsList, winners, Statuses);
+        return (roundNumbers, totalPrizePools, participantsList, smallPrizeWinnersList, bigPrizeWinnersList, statuses);
     }
 
+    receive() external payable {}
 }
