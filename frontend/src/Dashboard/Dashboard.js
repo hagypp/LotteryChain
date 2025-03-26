@@ -273,7 +273,7 @@ const Dashboard = ({ account }) => {
             </div>
             
             <div className="dashboard-content-grid">
-                {/* הטור של הכרטיסים */}
+           
                 <div className="dashboard-tickets-column">
                     <TicketsList 
                         tickets={activeTickets}
