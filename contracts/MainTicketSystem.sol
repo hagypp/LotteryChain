@@ -100,6 +100,7 @@ contract MainTicketSystem {
         {
             uint256 totalPrizePools;
             (,totalPrizePools,,,) = lotteryManager.getLotteryRoundInfo(lotteryManager.getCurrentRound());
+            require(totalPrizePools>0,"No money");
             (bool success, ) = payable(winner).call{value: totalPrizePools}("");
             require(success, "Prize transfer failed");
         }
@@ -139,6 +140,11 @@ contract MainTicketSystem {
 
     function getLotteryBlockStatus() public view returns (uint256 blocksUntilClose, uint256 blocksUntilDraw) {
         return lotteryManager.getLotteryBlockStatus();
+    }
+
+    function getContractBlance() public view returns (uint balance)
+    {
+        return address(this).balance;
     }
 
     receive() external payable {}

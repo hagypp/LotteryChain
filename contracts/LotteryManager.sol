@@ -98,7 +98,12 @@ contract LotteryManager {
 
     function startNewLotteryRound() public returns (uint256) {
         require(!activeRound, "There is a lottery active");
-        
+
+        LotteryRound storage currentRound = lotteryRounds[currentLotteryRound];
+        activeRound = false;        
+        currentRound.status = lotteryStatus.FINALIZED;
+        currentLotteryRound++;
+
         LotteryRound storage newRound = lotteryRounds[currentLotteryRound];
         newRound.roundNumber = currentLotteryRound;
         newRound.totalPrizePool = 0;
@@ -214,13 +219,7 @@ contract LotteryManager {
             }
         }
 
-
-
         currentRound.winner = winner;
-        currentRound.status = lotteryStatus.FINALIZED;
-        activeRound = false;
-        currentLotteryRound++;
-        
         return winner;
     }
 
