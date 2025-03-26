@@ -96,6 +96,13 @@ contract MainTicketSystem {
     function drawLotteryWinner(bytes32 keccak256HashNumbers, bytes32 keccak256HashFull) public returns (address) {
         address winner;
         winner = lotteryManager.drawLotteryWinner(keccak256HashNumbers, keccak256HashFull);
+        if (winner!=address(0))
+        {
+            uint256 totalPrizePools;
+            (,totalPrizePools,,,) = lotteryManager.getLotteryRoundInfo(lotteryManager.getCurrentRound());
+            (bool success, ) = payable(winner).call{value: totalPrizePools}("");
+            require(success, "Prize transfer failed");
+        }
         startNewLotteryRound();
         return winner;
     }

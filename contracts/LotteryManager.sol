@@ -214,8 +214,7 @@ contract LotteryManager {
             }
         }
 
-        (bool success, ) = payable(winner).call{value: currentRound.totalPrizePool}("");
-        require(success, "Prize transfer failed");
+
 
         currentRound.winner = winner;
         currentRound.status = lotteryStatus.FINALIZED;
