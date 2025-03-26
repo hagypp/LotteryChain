@@ -71,8 +71,8 @@ const SelectNumbers = ({ onClose, account, ticketId, onTicketAdded }) => {
                 throw new Error('No ticket ID provided');
             }
 
-            const selectedNumbers = [1, 2, 3, 4, 5, 6];
-            const strongestNumber = 7;
+            // const selectedNumbers = [1, 2, 3, 4, 5, 6];
+            // const strongestNumber = 7;
             // Create a string representation of the selected numbers (6 numbers) without commas
             const numbersString = [...selectedNumbers.sort((a, b) => a - b)].join('');
     

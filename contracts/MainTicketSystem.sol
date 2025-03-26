@@ -14,6 +14,7 @@ contract MainTicketSystem {
 
     constructor() {
         // Deploy sub-contracts
+        i_owner = msg.sender;
         ticketManager = new TicketManager(1 ether);
         lotteryManager = new LotteryManager(address(ticketManager));
     }
@@ -58,6 +59,10 @@ contract MainTicketSystem {
 
         uint256 ticketId = ticketManager.purchaseTicket(msg.sender);
         
+        // Forward the ticket price to LotteryManager
+        (bool success, ) = address(lotteryManager).call{value: ticketPrice}("");
+        require(success, "Failed to forward Ether to LotteryManager");
+
         if (msg.value > ticketPrice) {
             payable(msg.sender).transfer(msg.value - ticketPrice);
         }
@@ -93,19 +98,10 @@ contract MainTicketSystem {
         return lotteryManager.addParticipantAndPrizePool( msg.sender, _ticketId, _ticketHash, _ticketHashWithStrong, ticketManager.getTicketPrice()); 
     }
 
-    function drawLotteryWinner(bytes32 keccak256HashNumbers, bytes32 keccak256HashFull) public returns (address) {
-        address winner;
-        winner = lotteryManager.drawLotteryWinner(keccak256HashNumbers, keccak256HashFull);
-        if (winner!=address(0))
-        {
-            uint256 totalPrizePools;
-            (,totalPrizePools,,,) = lotteryManager.getLotteryRoundInfo(lotteryManager.getCurrentRound());
-            require(totalPrizePools>0,"No money");
-            (bool success, ) = payable(winner).call{value: totalPrizePools}("");
-            require(success, "Prize transfer failed");
-        }
+    function drawLotteryWinner(bytes32 keccak256HashNumbers, bytes32 keccak256HashFull) public returns (address[] memory, address[] memory) {
+        (address[] memory smallPrizeWinners, address[] memory bigPrizeWinners) = lotteryManager.drawLotteryWinner(keccak256HashNumbers, keccak256HashFull);
         startNewLotteryRound();
-        return winner;
+        return (smallPrizeWinners, bigPrizeWinners);
     }
 
     function setTicketPrice(uint256 _newPrice) external {
@@ -128,8 +124,9 @@ contract MainTicketSystem {
         uint256[] memory roundNumbers,
         uint256[] memory totalPrizePools,
         address[][] memory participantsList,
-        address[] memory winners,
-        lotteryStatus[] memory Statuses
+        address[][] memory smallPrizeWinnersList,
+        address[][] memory bigPrizeWinnersList,
+        lotteryStatus[] memory statuses
     ) {
         return lotteryManager.getAllLotteryRoundsInfo();
     }
@@ -144,7 +141,7 @@ contract MainTicketSystem {
 
     function getContractBlance() public view returns (uint balance)
     {
-        return address(this).balance;
+        return address(lotteryManager).balance;
     }
 
     receive() external payable {}
