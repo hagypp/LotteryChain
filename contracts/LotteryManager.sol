@@ -41,7 +41,7 @@ contract LotteryManager {
     ITicketManager private ticketManager;
 
     uint256 private constant SCALE_FACTOR = 1e18;
-    uint256 private BLOCKS_TO_WAIT_fOR_CLOSE = 10;
+    uint256 private BLOCKS_TO_WAIT_fOR_CLOSE = 5;
     uint256 private BLOCKS_TO_WAIT_fOR_DRAW = 5;
 
     uint256 private constant SMALL_PRIZE_PERCENTAGE = 20; // 20% of prize pool for small prize the rest if for the big (80%)
@@ -49,7 +49,7 @@ contract LotteryManager {
 
     constructor(address _ticketManagerAddress) 
     {
-        i_owner = msg.sender;
+        i_owner = tx.origin;
         activeRound = false;
         ticketManager = ITicketManager(_ticketManagerAddress);
         startNewLotteryRound();
