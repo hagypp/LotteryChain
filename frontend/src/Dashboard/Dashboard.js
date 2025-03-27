@@ -14,7 +14,7 @@ const Dashboard = ({ account }) => {
     const [isSelectingNumbers, setIsSelectingNumbers] = useState(false);
     const [selectedTicketId, setSelectedTicketId] = useState(null);
     const [isLotteryActive, setIsLotteryActive] = useState(false);
-    const [ticketCategory, setTicketCategory] = useState('active');
+    const [ticketCategory, setTicketCategory] = useState('all');
     const [lotteryControlError, setLotteryControlError] = useState('');
     const [isLotteryActionLoading, setIsLotteryActionLoading] = useState(false);
     
