@@ -103,9 +103,14 @@
         "name": "drawLotteryWinner",
         "outputs": [
             {
-                "internalType": "address",
+                "internalType": "address[]",
                 "name": "",
-                "type": "address"
+                "type": "address[]"
+            },
+            {
+                "internalType": "address[]",
+                "name": "",
+                "type": "address[]"
             }
         ],
         "stateMutability": "nonpayable",
@@ -234,8 +239,12 @@
             "type": "address[][]"
           },
           {
-            "name": "winners",
-            "type": "address[]"
+            "name": "smallPrizeWinnersList",
+            "type": "address[][]"
+          },
+          {
+            "name": "bigPrizeWinnersList",
+            "type": "address[][]"
           },
           {
             "name": "Statuses",
