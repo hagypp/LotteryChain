@@ -332,8 +332,13 @@ class ContractService {
             throw new Error(`Error selecting tickets for lottery: ${error.message}`);
         }
     }
+
     async drawLotteryWinner() {
         try {
+            if (!this.contractMM || !this.account) {
+                throw new Error("Contract not initialized or account not connected");
+            }
+    
             // Fetch random number data from API
             const response = await fetch("https://h431j7ev85.execute-api.eu-north-1.amazonaws.com/randomNum/random");
             const data = await response.json();
@@ -346,8 +351,9 @@ class ContractService {
             keccak256HashNumbers = "0x" + keccak256HashNumbers;
             keccak256HashFull = "0x" + keccak256HashFull;
             console.log('Hashes:', keccak256HashNumbers, keccak256HashFull);
-            // Send transaction to the smart contract with hashes as arguments
-            const result = await this.contract.methods.drawLotteryWinner(keccak256HashNumbers, keccak256HashFull)
+    
+            // Use contractMM for the transaction
+            const result = await this.contractMM.methods.drawLotteryWinner(keccak256HashNumbers, keccak256HashFull)
                 .send({ from: this.account });
     
             return { success: true, result };
@@ -417,23 +423,40 @@ class ContractService {
             }
             
             const result = await contract.methods.getAllLotteryRoundsInfo().call();
+            console.log("Raw rounds:", result);
             
-            // Process the result to ensure proper handling of complex types
-            return {
-                roundNumbers: Array.isArray(result.roundNumbers) 
-                    ? result.roundNumbers.map(num => num.toString()) 
-                    : [],
-                totalPrizePools: Array.isArray(result.totalPrizePools) 
-                    ? result.totalPrizePools.map(pool => web3.utils.fromWei(pool.toString(), 'ether')) 
-                    : [],
-                participantsList: Array.isArray(result.participantsList) 
-                    ? result.participantsList.map(list => Array.isArray(list) ? list : []) 
-                    : [],
-                winners: Array.isArray(result.winners) ? result.winners : [],
-                Statuses: Array.isArray(result.Statuses) 
-                    ? result.Statuses.map(status => parseInt(status)) 
-                    : []
+            // Ensure we have at least the basic required structure
+            const processedResult = {
+                roundNumbers: [],
+                totalPrizePools: [],
+                participantsList: [],
+                smallPrizeWinnersList: [],
+                bigPrizeWinnersList: [],
+                statuses: []
             };
+    
+            // Safely access and process data
+            if (result.roundNumbers && result.roundNumbers.length > 0) {
+                processedResult.roundNumbers = result.roundNumbers.map(num => num.toString());
+                processedResult.totalPrizePools = result.totalPrizePools.map(pool => pool.toString());
+                processedResult.statuses = result.Statuses ? result.Statuses.map(status => status.toString()) : [];
+                
+                // Safely process lists with fallback to empty arrays
+                processedResult.participantsList = result.participantsList 
+                    ? result.participantsList.map(list => Array.isArray(list) ? list : []) 
+                    : [];
+                
+                processedResult.smallPrizeWinnersList = result.smallPrizeWinnersList
+                    ? result.smallPrizeWinnersList.map(list => Array.isArray(list) ? list : [])
+                    : [];
+                
+                processedResult.bigPrizeWinnersList = result.bigPrizeWinnersList
+                    ? result.bigPrizeWinnersList.map(list => Array.isArray(list) ? list : [])
+                    : [];
+            }
+    
+            console.log("Processed rounds info:", processedResult);
+            return processedResult;
         } catch (error) {
             console.error("Error in getAllLotteryRoundsInfo:", error);
             throw new Error(`Error fetching lottery rounds info: ${error.message}`);
