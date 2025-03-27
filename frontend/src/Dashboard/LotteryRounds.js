@@ -9,61 +9,58 @@ const LotteryRounds = ({ refreshTrigger }) => {
 
   const fetchRounds = async () => {
     try {
-      setIsLoading(true); // Start loading
+      setIsLoading(true);
       const roundsInfo = await contractService.getAllLotteryRoundsInfo();
+      console.log("Raw rounds inside:", roundsInfo);
       
-      // Extract relevant information from the fetched data
-      const lotteryRounds = roundsInfo.roundNumbers.map((roundNumber, index) => ({
-        roundNumber: Number(roundNumber.toString()),
-        status: Number(roundsInfo.Statuses[index].toString()), // Convert BigInt to string, then to Number
-        totalPrizePool: contractService.web3.utils.fromWei(roundsInfo.totalPrizePools[index].toString(), 'ether'),
-        participants: roundsInfo.participantsList[index],
-        winner: roundsInfo.winners[index],
-      }));
-      
+      const lotteryRounds = roundsInfo.roundNumbers
+        .map((roundNumber, index) => {
+          // Safely handle potential missing or undefined data
+          const rawPrizePool = roundsInfo.totalPrizePools[index] || '0';
+          const status = Number(roundsInfo.statuses[index]);
+
+          return {
+            roundNumber: Number(roundNumber),
+            status: status,
+            totalPrizePool: rawPrizePool, // Keep as Wei
+            participants: roundsInfo.participantsList[index] || [],
+            smallPrizeWinners: roundsInfo.smallPrizeWinnersList[index] || [],
+            bigPrizeWinners: roundsInfo.bigPrizeWinnersList[index] || [],
+          };
+        })
+        .filter(round => round.roundNumber > 0);
+
+      console.log("Processed rounds:", lotteryRounds);
       setRounds(lotteryRounds);
       setError(null);
     } catch (error) {
       console.error("Error fetching rounds:", error);
       setError(error.message);
     } finally {
-      setIsLoading(false); // End loading
+      setIsLoading(false);
     }
   };
 
   useEffect(() => {
-    // Only fetch rounds when the component mounts
-    let isMounted = true;
-    
-    const loadRounds = async () => {
+    const initializeAndFetch = async () => {
       try {
-        await contractService.init(); // Ensure contract is initialized
-        if (isMounted) {
-          fetchRounds();
-        }
+        await contractService.init();
+        await fetchRounds();
       } catch (error) {
-        console.error("Failed to initialize contract:", error);
-        if (isMounted) {
-          setError("Failed to initialize contract service");
-          setIsLoading(false);
-        }
+        console.error("Failed to initialize or fetch rounds:", error);
+        setError("Failed to load lottery rounds");
+        setIsLoading(false);
       }
     };
-    
-    loadRounds();
-    
-    // Cleanup function to prevent state updates after unmount
-    return () => {
-      isMounted = false;
-    };
-  }, []); // Only run on mount
 
-  // Separate useEffect for refresh trigger
+    initializeAndFetch();
+  }, []);
+
   useEffect(() => {
     if (refreshTrigger) {
       fetchRounds();
     }
-  }, [refreshTrigger]); // Fetch again if refreshTrigger changes
+  }, [refreshTrigger]);
 
   if (isLoading) {
     return (
@@ -84,14 +81,19 @@ const LotteryRounds = ({ refreshTrigger }) => {
   const getStatusText = (status) => {
     switch (status) {
       case 0:
-        return 'Open'; // OPEN
+        return 'Open';
       case 1:
-        return 'Closed'; // CLOSED
+        return 'Closed';
       case 2:
-        return 'Finalized'; // FINALIZED
+        return 'Finalized';
       default:
         return 'Unknown Status';
     }
+  };
+
+  const formatAddress = (address) => {
+    if (!address || address === '0x0000000000000000000000000000000000000000') return 'N/A';
+    return `${address.slice(0, 6)}...${address.slice(-4)}`;
   };
 
   return (
@@ -102,9 +104,10 @@ const LotteryRounds = ({ refreshTrigger }) => {
         <div className="lottery-rounds-header">
           <div className="lottery-rounds-column">Round</div>
           <div className="lottery-rounds-column">Status</div>
-          <div className="lottery-rounds-column">Prize Pool</div>
+          <div className="lottery-rounds-column">Prize Pool (Wei)</div>
           <div className="lottery-rounds-column">Participants</div>
-          <div className="lottery-rounds-column">Winner</div>
+          <div className="lottery-rounds-column">Small Prize Winners</div>
+          <div className="lottery-rounds-column">Big Prize Winners</div>
         </div>
         
         {rounds && rounds.length > 0 ? (
@@ -116,11 +119,16 @@ const LotteryRounds = ({ refreshTrigger }) => {
                   {getStatusText(round.status)}
                 </span>
               </div>
-              <div className="lottery-rounds-column">{round.totalPrizePool} ETH</div>
+              <div className="lottery-rounds-column">{round.totalPrizePool}</div>
               <div className="lottery-rounds-column">{round.participants.length}</div>
               <div className="lottery-rounds-column">
-                {round.status === 2 && round.winner !== '0x0000000000000000000000000000000000000000'
-                  ? `${round.winner.slice(0, 6)}...${round.winner.slice(-4)}`
+                {round.status === 2 && round.smallPrizeWinners.length > 0
+                  ? round.smallPrizeWinners.map((winner) => formatAddress(winner)).join(', ')
+                  : 'N/A'}
+              </div>
+              <div className="lottery-rounds-column">
+                {round.bigPrizeWinners.length > 0
+                  ? round.bigPrizeWinners.map((winner) => formatAddress(winner)).join(', ')
                   : 'N/A'}
               </div>
             </div>
