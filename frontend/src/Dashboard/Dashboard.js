@@ -132,8 +132,12 @@ const Dashboard = ({ account }) => {
         setIsLotteryActionLoading(true);
         setLotteryControlError('');
         try {
-            await contractService.drawLotteryWinner();
+            const result = await contractService.drawLotteryWinner();
             // Manually refresh data after successful action
+            if (!result.success) {
+                setLotteryControlError(result.message); // Display the error from canDraw check
+                return;
+            }
             await refreshDashboardData();
             setStatus('Lottery winner drawn successfully!');
         } catch (error) {
@@ -148,10 +152,18 @@ const Dashboard = ({ account }) => {
         setIsLotteryActionLoading(true);
         setLotteryControlError('');
         try {
-            await contractService.closeLotteryRound();
+            const result = await contractService.closeLotteryRound();
             // Manually refresh data after successful action
+            if (!result.success) {
+                setLotteryControlError(result.message); // Display the error from canClose check
+                return;
+            }
+            
+            // If successful, refresh data
             await refreshDashboardData();
-        } catch (error) {
+            setStatus('Lottery closed successfully!');
+            } 
+            catch (error) {
             setLotteryControlError(`Failed to close lottery: ${error.message}`);
         } finally {
             setIsLotteryActionLoading(false);

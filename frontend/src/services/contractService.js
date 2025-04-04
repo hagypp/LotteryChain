@@ -307,10 +307,28 @@ class ContractService {
             if (!this.contractMM || !this.account) {
                 throw new Error("Contract not initialized or account not connected");
             }
+            // First, try to check if we can close the lottery
+            const canClose = await this.contractMM.methods.closeLotteryRound().call({ from: this.account })
+                .then(() => true)
+                .catch(err => {
+                    console.log("Call error:", err);
+                    // Extract the revert reason from the error message if available
+                    const revertReason = err.data.message.match(/reverted with reason string '([^']+)'/)?.[1] || err.data.message;
+                    return { error: revertReason };
+                });
+    
+            if (canClose !== true) {
+                return { success: false, message: `Cannot close lottery: ${canClose.error}` };
+            }
+    
+            // If check passes, perform the actual transaction
             const result = await this.contractMM.methods.closeLotteryRound().send({ from: this.account });
             return { success: true, transactionHash: result.transactionHash };
         } catch (error) {
-            throw new Error(`Failed to close lottery: ${error.message}`);
+            console.error("Transaction error:", error);
+            // Extract the revert reason from the error message if available
+            const revertReason = error.message.match(/reverted with reason string '([^']+)'/)?.[1] || error.message;
+            throw new Error(`Failed to close lottery: ${revertReason}`);
         }
     }
 
@@ -339,7 +357,22 @@ class ContractService {
                 throw new Error("Contract not initialized or account not connected");
             }
     
-            // Fetch random number data from API
+            // Step 1: Simulate the transaction with .call() first to check if drawing is possible
+            const dummyHash = "0x0000000000000000000000000000000000000000000000000000000000000000";
+            const canDraw = await this.contractMM.methods.drawLotteryWinner(dummyHash, dummyHash)
+                .call({ from: this.account })
+                .then(() => true)
+                .catch(err => {
+                    console.log("Call error:", err);
+                    const revertReason = err.data.message.match(/reverted with reason string '([^']+)'/)?.[1] || err.data.message;
+                    return { error: revertReason };
+                });
+    
+            if (canDraw !== true) {
+                return { success: false, message: `Cannot draw winner: ${canDraw.error}` };
+            }
+    
+            // Step 2: If simulation succeeds, fetch random number data from API
             const response = await fetch("https://h431j7ev85.execute-api.eu-north-1.amazonaws.com/randomNum/random");
             const data = await response.json();
     
@@ -352,16 +385,17 @@ class ContractService {
             keccak256HashFull = "0x" + keccak256HashFull;
             console.log('Hashes:', keccak256HashNumbers, keccak256HashFull);
     
-            // Use contractMM for the transaction
+            // Step 3: Send the actual transaction with the real hash values
             const result = await this.contractMM.methods.drawLotteryWinner(keccak256HashNumbers, keccak256HashFull)
                 .send({ from: this.account });
     
             return { success: true, result };
         } catch (error) {
-            throw new Error(`Error drawing lottery winner: ${error.message}`);
+            console.error("Transaction error:", error);
+            const revertReason = error.message.match(/reverted with reason string '([^']+)'/)?.[1] || error.message;
+            throw new Error(`Failed to draw lottery winner: ${revertReason}`);
         }
     }
-    
     
 
     async setTicketPrice(newPrice) {
