@@ -1,50 +1,95 @@
-import React, { useRef, useEffect, useState } from 'react';
+import React, { useRef, useEffect, useState, useMemo, useCallback } from 'react';
 import "./TicketsList.css";
 
-const TicketsList = ({ tickets, ticketCategory, setTicketCategory, STATUS_MAP, isLoading, isLotteryActive, handleSelectForLottery }) => {
+// Only enable detailed logging when debugging specific issues
+const DETAILED_LOGGING = false;
+
+const TicketsList = React.memo(({ tickets, ticketCategory, setTicketCategory, isLoading, isLotteryActive, handleSelectForLottery }) => {
+    // Track previous values to only log meaningful changes
+    const prevTicketsLengthRef = useRef(tickets.length);
+    const prevCategoryRef = useRef(ticketCategory);
+    
+    useEffect(() => {
+        const ticketsChanged = prevTicketsLengthRef.current !== tickets.length;
+        const categoryChanged = prevCategoryRef.current !== ticketCategory;
+        
+        if (DETAILED_LOGGING || ticketsChanged || categoryChanged) {
+            console.log(`TicketsList component rendering - ${tickets.length} tickets, category: ${ticketCategory}`);
+            prevTicketsLengthRef.current = tickets.length;
+            prevCategoryRef.current = ticketCategory;
+        }
+    });
+    
     const scrollContainerRef = useRef(null);
     const [showLeftButton, setShowLeftButton] = useState(false);
     const [showRightButton, setShowRightButton] = useState(false);
     
-    // בדיקה אם צריך להציג את כפתורי הגלילה
+    // Define STATUS_MAP outside of render function to prevent recreation on each render
+    const STATUS_MAP = useMemo(() => ({
+        0: 'Active',
+        1: 'In Lottery',
+        2: 'USED'
+    }), []);
+    
+    // Memoize the scroll checking function
+    const checkForScrollButtons = useCallback(() => {
+        if (scrollContainerRef.current) {
+            const { scrollLeft, scrollWidth, clientWidth } = scrollContainerRef.current;
+            setShowLeftButton(scrollLeft > 10);
+            setShowRightButton(scrollLeft < scrollWidth - clientWidth - 10);
+        }
+    }, []);
+
+    // Effect to add scroll event listener - only depends on the checkForScrollButtons function
     useEffect(() => {
-        const checkForScrollButtons = () => {
-            if (scrollContainerRef.current) {
-                const { scrollLeft, scrollWidth, clientWidth } = scrollContainerRef.current;
-                setShowLeftButton(scrollLeft > 10);
-                setShowRightButton(scrollLeft < scrollWidth - clientWidth - 10);
-            }
-        };
-
-        // בדיקה ראשונית
+        if (DETAILED_LOGGING) {
+            console.log("useEffect triggered: Setting up scroll button checker");
+        }
+        
         checkForScrollButtons();
-
-        // מוסיף את בדיקת הכפתורים בזמן גלילה
+        
         const scrollContainer = scrollContainerRef.current;
         if (scrollContainer) {
             scrollContainer.addEventListener('scroll', checkForScrollButtons);
-            // יצירת בדיקה לאחר שהנתונים נטענו
-            window.setTimeout(checkForScrollButtons, 100);
             
-            // מנקה את האירוע כשהקומפוננטה מתנתקת
             return () => {
                 scrollContainer.removeEventListener('scroll', checkForScrollButtons);
             };
         }
-    }, [tickets, ticketCategory]);
+    }, [checkForScrollButtons]);
 
-    const handleScroll = (direction) => {
+    // Separate effect to check scroll buttons when tickets or category changes
+    useEffect(() => {
+        // Add a small delay to ensure DOM has updated
+        const timer = setTimeout(() => {
+            checkForScrollButtons();
+        }, 100);
+        
+        return () => clearTimeout(timer);
+    }, [tickets.length, ticketCategory, checkForScrollButtons]);
+
+    // Memoize the scroll handler
+    const handleScroll = useCallback((direction) => {
+        if (DETAILED_LOGGING) {
+            console.log(`Scrolling ${direction}`);
+        }
+        
         if (scrollContainerRef.current) {
-            const scrollAmount = 920; // גלילה של קבוצה של 4 כרטיסים ברוחב
+            const scrollAmount = 920; 
             const currentScroll = scrollContainerRef.current.scrollLeft;
             scrollContainerRef.current.scrollTo({
                 left: direction === 'left' ? currentScroll - scrollAmount : currentScroll + scrollAmount,
                 behavior: 'smooth'
             });
         }
-    };
+    }, []);
 
-    const getFilteredTickets = () => {
+    // Memoize the filtered tickets calculation to avoid recalculating on every render
+    const filteredTickets = useMemo(() => {
+        if (DETAILED_LOGGING) {
+            console.log(`Filtering tickets for category: ${ticketCategory}`);
+        }
+        
         switch(ticketCategory) {
             case 'all':
                 return tickets;
@@ -57,25 +102,36 @@ const TicketsList = ({ tickets, ticketCategory, setTicketCategory, STATUS_MAP, i
             default:
                 return tickets;
         }
-    };
+    }, [tickets, ticketCategory]);
 
-    const filteredTickets = getFilteredTickets();
-    const hasMoreThanEightTickets = filteredTickets.length > 8; // בדיקה אם יש יותר מ-8 כרטיסים (2 שורות של 4)
+    if (DETAILED_LOGGING) {
+        console.log(`Number of filtered tickets: ${filteredTickets.length}`);
+    }
+    
+    // Memoize this calculation
+    const hasMoreThanEightTickets = useMemo(() => filteredTickets.length > 8, [filteredTickets.length]);
+    
+    // Memoize category tabs to prevent recreation on each render
+    const categoryTabs = useMemo(() => [
+        { key: 'all', label: 'All Tickets' },
+        { key: 'active', label: 'Active' },
+        { key: 'inLottery', label: 'In Lottery' },
+        { key: 'USED', label: 'USED' }
+    ], []);
+
+    // Create memoized handler for ticket category selection
+    const handleCategoryClick = useCallback((category) => {
+        setTicketCategory(category);
+    }, [setTicketCategory]);
 
     return (
         <div className="tickets-container">
-            {/* כפתורי סינון */}
             <div className="ticket-category-tabs">
-                {[
-                    { key: 'all', label: 'All Tickets' },
-                    { key: 'active', label: 'Active' },
-                    { key: 'inLottery', label: 'In Lottery' },
-                    { key: 'USED', label: 'USED' }
-                ].map(category => (
+                {categoryTabs.map(category => (
                     <button
                         key={category.key}
                         className={`ticket-category-tab ${ticketCategory === category.key ? 'active' : ''}`}
-                        onClick={() => setTicketCategory(category.key)}
+                        onClick={() => handleCategoryClick(category.key)}
                     >
                         {category.label}
                     </button>
@@ -122,13 +178,13 @@ const TicketsList = ({ tickets, ticketCategory, setTicketCategory, STATUS_MAP, i
                                     <button 
                                         onClick={() => handleSelectForLottery(ticket.id)}
                                         disabled={
-                                            isLoading[ticket.id] || 
+                                            isLoading[`ticket-${ticket.id}`] || 
                                             Number(ticket.status) !== 0 || 
                                             !isLotteryActive
                                         }
                                         className="lottery-button"
                                     >
-                                        {isLoading[ticket.id] ? (
+                                        {isLoading[`ticket-${ticket.id}`] ? (
                                             <>
                                                 <span className="loading-indicator"></span>
                                                 Processing...
@@ -145,9 +201,9 @@ const TicketsList = ({ tickets, ticketCategory, setTicketCategory, STATUS_MAP, i
                             ))
                         ) : (
                             <div className="empty-state">
-                                No {STATUS_MAP[
+                                No {ticketCategory !== 'all' ? STATUS_MAP[
                                     {'active': 0, 'inLottery': 1, 'USED': 2}[ticketCategory]
-                                ] || ''} tickets found.
+                                ] || '' : ''} tickets found.
                             </div>
                         )}
                     </div>
@@ -165,6 +221,6 @@ const TicketsList = ({ tickets, ticketCategory, setTicketCategory, STATUS_MAP, i
             </div>
         </div>
     );
-};
+});
 
 export default TicketsList;

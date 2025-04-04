@@ -1,11 +1,12 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import contractService from '../services/contractService';
 import './LotteryRounds.css';
 
-const LotteryRounds = ({ refreshTrigger }) => {
+const LotteryRounds = ({ isContractReady }) => {
   const [rounds, setRounds] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
+  const dataFetchedRef = useRef(false);
 
   const fetchRounds = async () => {
     try {
@@ -41,26 +42,31 @@ const LotteryRounds = ({ refreshTrigger }) => {
     }
   };
 
+  // Only fetch data when contract is ready and we haven't fetched before
   useEffect(() => {
-    const initializeAndFetch = async () => {
-      try {
-        await contractService.init();
-        await fetchRounds();
-      } catch (error) {
-        console.error("Failed to initialize or fetch rounds:", error);
-        setError("Failed to load lottery rounds");
-        setIsLoading(false);
+    if (isContractReady && !dataFetchedRef.current) {
+      fetchRounds();
+      dataFetchedRef.current = true;
+    }
+  }, [isContractReady]);
+
+  // Listen for lottery updates
+  useEffect(() => {
+    const handleLotteryUpdate = () => {
+      if (isContractReady) {
+        fetchRounds();
       }
     };
 
-    initializeAndFetch();
-  }, []);
+    // Listen for custom events that should trigger a refresh
+    window.addEventListener('drawLotteryComplete', handleLotteryUpdate);
+    window.addEventListener('lotteryStatusUpdated', handleLotteryUpdate);
 
-  useEffect(() => {
-    if (refreshTrigger) {
-      fetchRounds();
-    }
-  }, [refreshTrigger]);
+    return () => {
+      window.removeEventListener('drawLotteryComplete', handleLotteryUpdate);
+      window.removeEventListener('lotteryStatusUpdated', handleLotteryUpdate);
+    };
+  }, [isContractReady]);
 
   if (isLoading) {
     return (

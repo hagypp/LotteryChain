@@ -19,11 +19,9 @@ class ContractService {
 
         this.listeners = [];
         this.blockStatusListeners = [];
+        this.winnersAnnouncedListeners = [];
 
         this.initialized = false;
-        
-        // Initialize Web3 with a fallback HTTP provider to ensure utils is always available
-        this.web3 = new Web3('http://localhost:8545');
     }
 
     // Listener management
@@ -38,6 +36,13 @@ class ContractService {
         this.blockStatusListeners.push(callback);
         return () => {
             this.blockStatusListeners = this.blockStatusListeners.filter(listener => listener !== callback);
+        };
+    }
+
+    addWinnersAnnouncedListener(callback) {
+        this.winnersAnnouncedListeners.push(callback);
+        return () => {
+            this.winnersAnnouncedListeners = this.winnersAnnouncedListeners.filter(listener => listener !== callback);
         };
     }
 
@@ -73,6 +78,23 @@ class ContractService {
         window.dispatchEvent(event);
     }
 
+
+    notifyWinnersAnnouncedListeners(smallPrizeWinners, bigPrizeWinners) {    
+        this.winnersAnnouncedListeners.forEach(listener => {
+            try {
+                listener({ smallPrizeWinners, bigPrizeWinners });
+            } catch (error) {
+                console.error("Error in winners announced listener:", error);
+            }
+        });
+
+        const event = new CustomEvent('winnersAnnounced', { 
+            detail: { smallPrizeWinners, bigPrizeWinners },
+            bubbles: true
+        });
+        window.dispatchEvent(event);
+    }
+    
     // Initialization: MetaMask + WebSocket
     async init() {
         if (this.initialized) return true;
@@ -103,7 +125,7 @@ class ContractService {
             this.initialized = true;
             return true;
         } catch (error) {
-            console.error("❌ Initialization failed:", error);
+            console.error("Initialization failed:", error);
             throw error;
         }
     }
@@ -112,18 +134,12 @@ class ContractService {
         try {
             // Create a new WebSocketProvider
             const wsProvider = new Web3.providers.WebsocketProvider(WS_PROVIDER_URL);
-            
-            // Add event handlers to the provider
-            wsProvider.on('connect', () => {
-                console.log('✅ WebSocket connected');
-            });
-            
+                    
             wsProvider.on('error', (error) => {
-                console.error('❌ WebSocket error:', error);
+                console.error('WebSocket error:', error);
             });
             
             wsProvider.on('end', () => {
-                console.log('WebSocket connection ended');
                 setTimeout(() => this.reconnectWebSocket(), 5000);
             });
             
@@ -132,10 +148,6 @@ class ContractService {
             
             // Create contract instance
             this.contractWS = new this.web3WS.eth.Contract(ABI, CONTRACT_ADDRESS);
-            
-            // Test if the contract exists and has necessary methods
-            const isActive = await this.contractWS.methods.isLotteryActive().call();
-            console.log("Contract connection test - isLotteryActive:", isActive);
             
             // If WebSocketProvider is working but MetaMask isn't, use it as main web3
             if (!this.web3MM) {
@@ -147,14 +159,12 @@ class ContractService {
             
             return true;
         } catch (wsError) {
-            console.error("❌ WebSocket initialization failed:", wsError);
-            console.log("Continuing with MetaMask provider only");
+            console.error("WebSocket initialization failed:", wsError);
             return false;
         }
     }
 
     async reconnectWebSocket() {
-        console.log("Attempting to reconnect WebSocket...");
         await this.initWebSocketProvider();
     }
 
@@ -165,16 +175,11 @@ class ContractService {
         }
 
         try {
-            // Set up individual event subscriptions manually instead of using
-            // the contract.events property directly
-            
-            // For BlockStatusUpdated
             const blockStatusSubscription = await this.web3WS.eth.subscribe('logs', {
                 address: CONTRACT_ADDRESS,
                 topics: [this.web3WS.utils.sha3('BlockStatusUpdated(uint256,uint256)')]
             });
             
-            console.log('BlockStatusUpdated subscription ID:', blockStatusSubscription.id);
             
             blockStatusSubscription.on('data', (log) => {
                 // Decode the log data
@@ -186,8 +191,7 @@ class ContractService {
                     log.data,
                     log.topics.slice(1)
                 );
-                
-                console.log("BlockStatusUpdated:", decodedLog.blocksUntilClose, decodedLog.blocksUntilDraw);
+            
                 this.notifyBlockStatusListeners(
                     decodedLog.blocksUntilClose, 
                     decodedLog.blocksUntilDraw
@@ -203,9 +207,7 @@ class ContractService {
                 address: CONTRACT_ADDRESS,
                 topics: [this.web3WS.utils.sha3('LotteryRoundStatusChanged(bool)')]
             });
-            
-            console.log('LotteryRoundStatusChanged subscription ID:', lotteryStatusSubscription.id);
-            
+
             lotteryStatusSubscription.on('data', (log) => {
                 // Decode the log data
                 const decodedLog = this.web3WS.eth.abi.decodeLog(
@@ -213,27 +215,49 @@ class ContractService {
                     log.data,
                     log.topics.slice(1)
                 );
-                
-                console.log("LotteryRoundStatusChanged:", decodedLog.isOpen);
+         
                 this.notifyLotteryStatusListeners(decodedLog.isOpen);
             });
             
             lotteryStatusSubscription.on('error', (error) => {
                 console.error("LotteryRoundStatusChanged subscription error:", error);
             });
-    
-            console.log("✅ Event listeners set on WebSocketProvider");
+
+            // For WinnersAnnounced
+            const winnersAnnouncedSubscription = await this.web3WS.eth.subscribe('logs', {
+                address: CONTRACT_ADDRESS,
+                topics: [this.web3WS.utils.sha3('WinnersAnnounced(address[],address[])')]
+            });
+            
+            winnersAnnouncedSubscription.on('data', async (log) => {
+                const decodedLog = this.web3WS.eth.abi.decodeLog(
+                    [
+                        { indexed: false, name: 'smallPrizeWinners', type: 'address[]' },
+                        { indexed: false, name: 'bigPrizeWinners', type: 'address[]' }
+                    ],
+                    log.data,
+                    log.topics.slice(1)
+                );
+
+                this.notifyWinnersAnnouncedListeners(
+                    decodedLog.smallPrizeWinners, 
+                    decodedLog.bigPrizeWinners
+                );
+            });
+            
+            winnersAnnouncedSubscription.on('error', (error) => {
+                console.error("WinnersAnnounced subscription error:", error);
+            });
             return true;
-        } catch (error) {
-            console.error("❌ Failed to set up event listeners on WebSocketProvider:", error);
-            return false;
-        }
+            } catch (error) {
+                console.error("Failed to set up event listeners on WebSocketProvider:", error);
+                return false;
+            }
     }
 
     disconnectWebSocket() {
         if (this.web3WS && this.web3WS.currentProvider) {
             this.web3WS.currentProvider.disconnect();
-            console.log("Disconnected WebSocket Provider");
         }
     }
 
@@ -242,15 +266,27 @@ class ContractService {
         return this.web3MM || this.web3WS || this.web3;
     }
 
-    // Contract method wrappers (MetaMask account required for writes)
-    // Use getWeb3() to ensure we always have a valid Web3 instance with utils
+    // Helper method to get the best available contract instance and validate
+    getReadContract() {
+        const contract = this.contractMM || this.contractWS;
+        if (!contract) {
+            throw new Error("No contract instance available");
+        }
+        return contract;
+    }
 
+    // Helper method to validate write operations requirements
+    validateWriteRequirements() {
+        if (!this.contractMM || !this.account) {
+            throw new Error("Contract not initialized or account not connected");
+        }
+        return this.contractMM;
+    }
+
+    // Contract READ method wrappers (any web3 instance)
     async isLotteryActive() {
         try {
-            const contract = this.contractMM || this.contractWS;
-            if (!contract) {
-                throw new Error("No contract instance available");
-            }
+            const contract = this.getReadContract();
             const isActive = await contract.methods.isLotteryActive().call();
             return isActive;
         } catch (error) {
@@ -260,12 +296,8 @@ class ContractService {
 
     async getTicketPrice() {
         try {
-            const contract = this.contractMM || this.contractWS;
+            const contract = this.getReadContract();
             const web3 = this.getWeb3();
-            
-            if (!contract || !web3) {
-                throw new Error("No contract or Web3 instance available");
-            }
             
             const price = await contract.methods.getTicketPrice().call();
             return web3.utils.fromWei(price.toString(), 'ether');
@@ -274,118 +306,9 @@ class ContractService {
         }
     }
 
-    async purchaseTicket() {
-        try {
-            if (!this.contractMM || !this.account) {
-                throw new Error("Contract not initialized or account not connected");
-            }
-            const ticketPrice = await this.contractMM.methods.getTicketPrice().call();
-            await this.contractMM.methods.purchaseTicket().send({
-                from: this.account,
-                value: ticketPrice
-            });
-            return { success: true };
-        } catch (error) {
-            throw new Error(`Ticket purchase failed: ${error.message}`);
-        }
-    }
-
-    async openLotteryRound() {
-        try {
-            if (!this.contractMM || !this.account) {
-                throw new Error("Contract not initialized or account not connected");
-            }
-            const result = await this.contractMM.methods.startNewLotteryRound().send({ from: this.account });
-            return { success: true, transactionHash: result.transactionHash };
-        } catch (error) {
-            throw new Error(`Error starting a new lottery round: ${error.message}`);
-        }
-    }
-
-    async closeLotteryRound() {
-        try {
-            if (!this.contractMM || !this.account) {
-                throw new Error("Contract not initialized or account not connected");
-            }
-            const result = await this.contractMM.methods.closeLotteryRound().send({ from: this.account });
-            return { success: true, transactionHash: result.transactionHash };
-        } catch (error) {
-            throw new Error(`Failed to close lottery: ${error.message}`);
-        }
-    }
-
-    async selectTicketsForLottery(ticketId, ticketHash, ticketHashWithStrong) {
-        try {
-            if (!this.contractMM || !this.account) {
-                throw new Error("Contract not initialized or account not connected");
-            }
-            // Ensure proper hex formatting
-            if (!ticketHash.startsWith('0x')) {
-                ticketHash = "0x" + ticketHash;
-            }
-            if (!ticketHashWithStrong.startsWith('0x')) {
-                ticketHashWithStrong = "0x" + ticketHashWithStrong;
-            }
-            await this.contractMM.methods.selectTicketsForLottery(ticketId, ticketHash, ticketHashWithStrong).send({ from: this.account });
-            return { success: true };
-        } catch (error) {
-            throw new Error(`Error selecting tickets for lottery: ${error.message}`);
-        }
-    }
-
-    async drawLotteryWinner() {
-        try {
-            if (!this.contractMM || !this.account) {
-                throw new Error("Contract not initialized or account not connected");
-            }
-    
-            // Fetch random number data from API
-            const response = await fetch("https://h431j7ev85.execute-api.eu-north-1.amazonaws.com/randomNum/random");
-            const data = await response.json();
-    
-            // Parse the response body (since it's double-stringified in the API response)
-            const parsedBody = JSON.parse(data.body);
-    
-            let keccak256HashNumbers = parsedBody.keccak256_hash_numbers;
-            let keccak256HashFull = parsedBody.keccak256_hash_full;
-            keccak256HashNumbers = "0x" + keccak256HashNumbers;
-            keccak256HashFull = "0x" + keccak256HashFull;
-            console.log('Hashes:', keccak256HashNumbers, keccak256HashFull);
-    
-            // Use contractMM for the transaction
-            const result = await this.contractMM.methods.drawLotteryWinner(keccak256HashNumbers, keccak256HashFull)
-                .send({ from: this.account });
-    
-            return { success: true, result };
-        } catch (error) {
-            throw new Error(`Error drawing lottery winner: ${error.message}`);
-        }
-    }
-    
-    
-
-    async setTicketPrice(newPrice) {
-        try {
-            if (!this.contractMM || !this.account) {
-                throw new Error("Contract not initialized or account not connected");
-            }
-            
-            const web3 = this.getWeb3();
-            const weiPrice = web3.utils.toWei(newPrice.toString(), 'ether');
-            
-            await this.contractMM.methods.setTicketPrice(weiPrice).send({ from: this.account });
-            return { success: true };
-        } catch (error) {
-            throw new Error(`Error setting ticket price: ${error.message}`);
-        }
-    }
-
     async getPlayerTickets(playerAddress) {
         try {
-            const contract = this.contractMM || this.contractWS;
-            if (!contract) {
-                throw new Error("No contract instance available");
-            }
+            const contract = this.getReadContract();
             const tickets = await contract.methods.getPlayerTickets(playerAddress).call();
             return tickets; 
         } catch (error) {
@@ -395,10 +318,7 @@ class ContractService {
 
     async getLotteryBlockStatus() {
         try {
-            const contract = this.contractMM || this.contractWS;
-            if (!contract) {
-                throw new Error("No contract instance available");
-            }
+            const contract = this.getReadContract();
             const status = await contract.methods.getLotteryBlockStatus().call();
             return {
                 blocksUntilClose: status.blocksUntilClose.toString(),
@@ -411,19 +331,9 @@ class ContractService {
 
     async getAllLotteryRoundsInfo() {
         try {
-            const contract = this.contractMM || this.contractWS;
-            const web3 = this.getWeb3();
-            
-            if (!contract) {
-                throw new Error("No contract instance available");
-            }
-            
-            if (!web3 || !web3.utils) {
-                throw new Error("Web3 utils not available");
-            }
+            const contract = this.getReadContract();
             
             const result = await contract.methods.getAllLotteryRoundsInfo().call();
-            console.log("Raw rounds:", result);
             
             // Ensure we have at least the basic required structure
             const processedResult = {
@@ -455,11 +365,95 @@ class ContractService {
                     : [];
             }
     
-            console.log("Processed rounds info:", processedResult);
             return processedResult;
         } catch (error) {
             console.error("Error in getAllLotteryRoundsInfo:", error);
             throw new Error(`Error fetching lottery rounds info: ${error.message}`);
+        }
+    }
+    
+    async getCurrentWinners() {
+        try {
+            const contract = this.getReadContract();
+            const winners = await contract.methods.getCurrentWinners().call();
+            return {
+                smallPrizeWinners: winners[0],
+                bigPrizeWinners: winners[1]
+            };
+        } catch (error) {
+            throw new Error(`Error fetching winners: ${error.message}`);
+        }
+    }
+
+    // Contract WRITE method wrappers (MetaMask account required)
+    async purchaseTicket() {
+        try {
+            const contract = this.validateWriteRequirements();
+            const ticketPrice = await contract.methods.getTicketPrice().call();
+            await contract.methods.purchaseTicket().send({
+                from: this.account,
+                value: ticketPrice
+            });
+            return { success: true };
+        } catch (error) {
+            throw new Error(`Ticket purchase failed: ${error.message}`);
+        }
+    }
+
+    async closeLotteryRound() {
+        try {
+            const contract = this.validateWriteRequirements();
+            const result = await contract.methods.closeLotteryRound().send({ from: this.account });
+            return { success: true, transactionHash: result.transactionHash };
+        } catch (error) {
+            throw new Error(`Failed to close lottery: ${error.message}`);
+        }
+    }
+
+    async selectTicketsForLottery(ticketId, ticketHash, ticketHashWithStrong) {
+        try {
+            const contract = this.validateWriteRequirements();
+            // Ensure proper hex formatting
+            if (!ticketHash.startsWith('0x')) {
+                ticketHash = "0x" + ticketHash;
+            }
+            if (!ticketHashWithStrong.startsWith('0x')) {
+                ticketHashWithStrong = "0x" + ticketHashWithStrong;
+            }
+            await contract.methods.selectTicketsForLottery(ticketId, ticketHash, ticketHashWithStrong).send({ from: this.account });
+            return { success: true };
+        } catch (error) {
+            throw new Error(`Error selecting tickets for lottery: ${error.message}`);
+        }
+    }
+
+    async drawLotteryWinner() {
+        try {
+            const contract = this.validateWriteRequirements();
+    
+            // Fetch random number data from API
+            const response = await fetch("https://h431j7ev85.execute-api.eu-north-1.amazonaws.com/randomNum/random");
+            const data = await response.json();
+    
+            // Parse the response body
+            const parsedBody = JSON.parse(data.body);
+    
+            let keccak256HashNumbers = parsedBody.keccak256_hash_numbers;
+            let keccak256HashFull = parsedBody.keccak256_hash_full;
+            keccak256HashNumbers = "0x" + keccak256HashNumbers;
+            keccak256HashFull = "0x" + keccak256HashFull;
+            
+            // Use contractMM for the transaction
+            const tx = await contract.methods.drawLotteryWinner(keccak256HashNumbers, keccak256HashFull)
+                .send({ from: this.account });
+            
+            // Immediately after transaction completes, check for winners
+            const winners = await this.getCurrentWinners();
+            this.notifyWinnersAnnouncedListeners(winners.smallPrizeWinners, winners.bigPrizeWinners);
+            
+            return { success: true, result: tx };
+        } catch (error) {
+            throw new Error(`Error drawing lottery winner: ${error.message}`);
         }
     }
 }

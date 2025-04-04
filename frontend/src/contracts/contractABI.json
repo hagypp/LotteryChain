@@ -101,18 +101,7 @@
             }
         ],
         "name": "drawLotteryWinner",
-        "outputs": [
-            {
-                "internalType": "address[]",
-                "name": "",
-                "type": "address[]"
-            },
-            {
-                "internalType": "address[]",
-                "name": "",
-                "type": "address[]"
-            }
-        ],
+        "outputs": [],
         "stateMutability": "nonpayable",
         "type": "function"
     },
@@ -204,6 +193,25 @@
         "type": "event"
     },
     {
+        "anonymous": false,
+        "inputs": [
+            {
+                "indexed": false,
+                "internalType": "address[]",
+                "name": "smallPrizeWinners",
+                "type": "address[]"
+            },
+            {
+                "indexed": false,
+                "internalType": "address[]",
+                "name": "bigPrizeWinners",
+                "type": "address[]"
+            }
+        ],
+        "name": "WinnersAnnounced",
+        "type": "event"
+    },
+    {
         "constant": true,
         "inputs": [],
         "name": "getLotteryBlockStatus",
@@ -254,6 +262,25 @@
         "payable": false,
         "stateMutability": "view",
         "type": "function"
-      }        
+      },
+    {
+        "inputs": [],
+        "name": "getCurrentWinners",
+        "outputs": [
+            {
+                "internalType": "address[]",
+                "name": "smallPrizeWinners",
+                "type": "address[]"
+            },
+            {
+                "internalType": "address[]",
+                "name": "bigPrizeWinners",
+                "type": "address[]"
+            }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+    }
+        
 ]
 
