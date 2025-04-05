@@ -337,7 +337,7 @@ async purchaseTicket() {
                 .then(() => true)
                 .catch(err => {
                     console.log("Call error:", err);
-                    const revertReason = err.message.match(/reverted with reason string '([^']+)'/)?.[1] || err.message;
+                    const revertReason = err.data.message.match(/reverted with reason string '([^']+)'/)?.[1] || err.message;
                     return { error: revertReason };
                 });
     
@@ -354,17 +354,6 @@ async purchaseTicket() {
         }
     }
 
-    async selectTicketsForLottery(ticketId, ticketHash, ticketHashWithStrong) {
-        try {
-            const contract = this.validateWriteRequirements();
-            if (!ticketHash.startsWith('0x')) ticketHash = "0x" + ticketHash;
-            if (!ticketHashWithStrong.startsWith('0x')) ticketHashWithStrong = "0x" + ticketHashWithStrong;
-            await contract.methods.selectTicketsForLottery(ticketId, ticketHash, ticketHashWithStrong).send({ from: this.account });
-            return { success: true };
-        } catch (error) {
-            throw new Error(`Error selecting tickets for lottery: ${error.message}`);
-        }
-    }
 
     async drawLotteryWinner() {
         try {
@@ -376,7 +365,7 @@ async purchaseTicket() {
                 .then(() => true)
                 .catch(err => {
                     console.log("Call error:", err);
-                    const revertReason = err.message.match(/reverted with reason string '([^']+)'/)?.[1] || err.message;
+                    const revertReason = err.data.message.match(/reverted with reason string '([^']+)'/)?.[1] || err.message;
                     return { error: revertReason };
                 });
     
@@ -416,7 +405,7 @@ async purchaseTicket() {
             throw new Error(`Error setting ticket price: ${error.message}`);
         }
     }
-}
+
     async getPlayerTickets(playerAddress) {
         try {
             const contract = this.getReadContract();
@@ -496,30 +485,6 @@ async purchaseTicket() {
         }
     }
 
-    // Contract WRITE method wrappers (MetaMask account required)
-    async purchaseTicket() {
-        try {
-            const contract = this.validateWriteRequirements();
-            const ticketPrice = await contract.methods.getTicketPrice().call();
-            await contract.methods.purchaseTicket().send({
-                from: this.account,
-                value: ticketPrice
-            });
-            return { success: true };
-        } catch (error) {
-            throw new Error(`Ticket purchase failed: ${error.message}`);
-        }
-    }
-
-    async closeLotteryRound() {
-        try {
-            const contract = this.validateWriteRequirements();
-            const result = await contract.methods.closeLotteryRound().send({ from: this.account });
-            return { success: true, transactionHash: result.transactionHash };
-        } catch (error) {
-            throw new Error(`Failed to close lottery: ${error.message}`);
-        }
-    }
 
     async selectTicketsForLottery(ticketId, ticketHash, ticketHashWithStrong) {
         try {
@@ -538,35 +503,6 @@ async purchaseTicket() {
         }
     }
 
-    async drawLotteryWinner() {
-        try {
-            const contract = this.validateWriteRequirements();
-    
-            // Fetch random number data from API
-            const response = await fetch("https://h431j7ev85.execute-api.eu-north-1.amazonaws.com/randomNum/random");
-            const data = await response.json();
-    
-            // Parse the response body
-            const parsedBody = JSON.parse(data.body);
-    
-            let keccak256HashNumbers = parsedBody.keccak256_hash_numbers;
-            let keccak256HashFull = parsedBody.keccak256_hash_full;
-            keccak256HashNumbers = "0x" + keccak256HashNumbers;
-            keccak256HashFull = "0x" + keccak256HashFull;
-            
-            // Use contractMM for the transaction
-            const tx = await contract.methods.drawLotteryWinner(keccak256HashNumbers, keccak256HashFull)
-                .send({ from: this.account });
-            
-            // Immediately after transaction completes, check for winners
-            const winners = await this.getCurrentWinners();
-            this.notifyWinnersAnnouncedListeners(winners.smallPrizeWinners, winners.bigPrizeWinners);
-            
-            return { success: true, result: tx };
-        } catch (error) {
-            throw new Error(`Error drawing lottery winner: ${error.message}`);
-        }
-    }
 }
 
 const contractService = new ContractService();
