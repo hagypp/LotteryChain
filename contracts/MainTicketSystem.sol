@@ -36,20 +36,16 @@ contract MainTicketSystem {
         emit LotteryRoundStatusChanged(false);
     }
 
-    function canCloseLottery () private returns (bool) {
-        if (lotteryManager.canCloseLottery ()){
-            closeLotteryRound();
-            return false;
+    function canCloseLottery () private {
+        if (lotteryManager.canCloseLottery()){
+            closeLotteryRound(); 
         } 
-        return true;
     }
 
-    function canDrawWinner() private returns (bool) {
+    function canDrawWinner() private {
         if (lotteryManager.canDrawWinner()){
             drawLotteryWinner(0,0);
-            return false;
         } 
-        return true;
     }
 
     // Ticket Purchase Functions
@@ -82,8 +78,7 @@ contract MainTicketSystem {
         returns (bool) 
     {   
         if (isLotteryActive()) {
-            canCloseLottery();
-            
+            canCloseLottery();  
         } else {
             canDrawWinner();
         }
@@ -98,10 +93,9 @@ contract MainTicketSystem {
         return lotteryManager.addParticipantAndPrizePool( msg.sender, _ticketId, _ticketHash, _ticketHashWithStrong, ticketManager.getTicketPrice()); 
     }
 
-    function drawLotteryWinner(bytes32 keccak256HashNumbers, bytes32 keccak256HashFull) public returns (address[] memory, address[] memory) {
-        (address[] memory smallPrizeWinners, address[] memory bigPrizeWinners) = lotteryManager.drawLotteryWinner(keccak256HashNumbers, keccak256HashFull);
+    function drawLotteryWinner(bytes32 keccak256HashNumbers, bytes32 keccak256HashFull) public  {
+        lotteryManager.drawLotteryWinner(keccak256HashNumbers, keccak256HashFull);
         startNewLotteryRound();
-        return (smallPrizeWinners, bigPrizeWinners);
     }
 
     function setTicketPrice(uint256 _newPrice) external {
@@ -142,6 +136,13 @@ contract MainTicketSystem {
     function getContractBlance() public view returns (uint balance)
     {
         return address(lotteryManager).balance;
+    }
+
+    function getCurrentWinners() external view returns (
+    address[] memory smallPrizeWinners,
+    address[] memory bigPrizeWinners
+    ) {
+        return lotteryManager.getCurrentWinners();
     }
 
     receive() external payable {}

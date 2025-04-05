@@ -41,8 +41,8 @@ contract LotteryManager {
     ITicketManager private ticketManager;
 
     uint256 private constant SCALE_FACTOR = 1e18;
-    uint256 private BLOCKS_TO_WAIT_fOR_CLOSE = 5;
-    uint256 private BLOCKS_TO_WAIT_fOR_DRAW = 5;
+    uint256 private BLOCKS_TO_WAIT_fOR_CLOSE = 4;
+    uint256 private BLOCKS_TO_WAIT_fOR_DRAW = 1;
 
     uint256 private constant SMALL_PRIZE_PERCENTAGE = 20; // 20% of prize pool for small prize the rest if for the big (80%)
     uint256 private constant FLEX_COMMISSION = 10;       // 10% commission for owner
@@ -85,12 +85,12 @@ contract LotteryManager {
     
     function canCloseLottery () public view returns (bool) {
         LotteryRound storage round = lotteryRounds[currentLotteryRound];
-        return round.openBlock + BLOCKS_TO_WAIT_fOR_CLOSE <= block.number;
+        return round.openBlock + BLOCKS_TO_WAIT_fOR_CLOSE < block.number;
     }
 
     function canDrawWinner() public view returns (bool) {
         LotteryRound storage round = lotteryRounds[currentLotteryRound];
-        return round.closeBlock + BLOCKS_TO_WAIT_fOR_DRAW <= block.number;
+        return round.closeBlock + BLOCKS_TO_WAIT_fOR_DRAW < block.number;
     }
 
     function closeLotteryRound() external {
@@ -346,6 +346,15 @@ contract LotteryManager {
 
         return (roundNumbers, totalPrizePools, participantsList, smallPrizeWinnersList, bigPrizeWinnersList, statuses);
     }
+
+    function getCurrentWinners() external view returns (
+    address[] memory smallPrizeWinners,
+    address[] memory bigPrizeWinners
+    ) {
+        LotteryRound storage currentRound = lotteryRounds[currentLotteryRound-1];
+        return (currentRound.smallPrizeWinners, currentRound.bigPrizeWinners);
+    }
+
 
     receive() external payable {}
 }
