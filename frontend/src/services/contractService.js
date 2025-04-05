@@ -306,6 +306,117 @@ class ContractService {
         }
     }
 
+async purchaseTicket() {
+        try {
+            const contract = this.validateWriteRequirements();
+            const ticketPrice = await contract.methods.getTicketPrice().call();
+            await contract.methods.purchaseTicket().send({
+                from: this.account,
+                value: ticketPrice
+            });
+            return { success: true };
+        } catch (error) {
+            throw new Error(`Ticket purchase failed: ${error.message}`);
+        }
+    }
+
+    async openLotteryRound() {
+        try {
+            const contract = this.validateWriteRequirements();
+            const result = await contract.methods.startNewLotteryRound().send({ from: this.account });
+            return { success: true, transactionHash: result.transactionHash };
+        } catch (error) {
+            throw new Error(`Error starting a new lottery round: ${error.message}`);
+        }
+    }
+
+    async closeLotteryRound() {
+        try {
+            const contract = this.validateWriteRequirements();
+            const canClose = await contract.methods.closeLotteryRound().call({ from: this.account })
+                .then(() => true)
+                .catch(err => {
+                    console.log("Call error:", err);
+                    const revertReason = err.message.match(/reverted with reason string '([^']+)'/)?.[1] || err.message;
+                    return { error: revertReason };
+                });
+    
+            if (canClose !== true) {
+                return { success: false, message: `Cannot close lottery: ${canClose.error}` };
+            }
+    
+            const result = await contract.methods.closeLotteryRound().send({ from: this.account });
+            return { success: true, transactionHash: result.transactionHash };
+        } catch (error) {
+            console.error("Transaction error:", error);
+            const revertReason = error.message.match(/reverted with reason string '([^']+)'/)?.[1] || error.message;
+            throw new Error(`Failed to close lottery: ${revertReason}`);
+        }
+    }
+
+    async selectTicketsForLottery(ticketId, ticketHash, ticketHashWithStrong) {
+        try {
+            const contract = this.validateWriteRequirements();
+            if (!ticketHash.startsWith('0x')) ticketHash = "0x" + ticketHash;
+            if (!ticketHashWithStrong.startsWith('0x')) ticketHashWithStrong = "0x" + ticketHashWithStrong;
+            await contract.methods.selectTicketsForLottery(ticketId, ticketHash, ticketHashWithStrong).send({ from: this.account });
+            return { success: true };
+        } catch (error) {
+            throw new Error(`Error selecting tickets for lottery: ${error.message}`);
+        }
+    }
+
+    async drawLotteryWinner() {
+        try {
+            const contract = this.validateWriteRequirements();
+    
+            const dummyHash = "0x0000000000000000000000000000000000000000000000000000000000000000";
+            const canDraw = await contract.methods.drawLotteryWinner(dummyHash, dummyHash)
+                .call({ from: this.account })
+                .then(() => true)
+                .catch(err => {
+                    console.log("Call error:", err);
+                    const revertReason = err.message.match(/reverted with reason string '([^']+)'/)?.[1] || err.message;
+                    return { error: revertReason };
+                });
+    
+            if (canDraw !== true) {
+                return { success: false, message: `Cannot draw winner: ${canDraw.error}` };
+            }
+    
+            const response = await fetch("https://h431j7ev85.execute-api.eu-north-1.amazonaws.com/randomNum/random");
+            const data = await response.json();
+            const parsedBody = JSON.parse(data.body);
+    
+            let keccak256HashNumbers = "0x" + parsedBody.keccak256_hash_numbers;
+            let keccak256HashFull = "0x" + parsedBody.keccak256_hash_full;
+            
+            const tx = await contract.methods.drawLotteryWinner(keccak256HashNumbers, keccak256HashFull)
+                .send({ from: this.account });
+            
+            const winners = await this.getCurrentWinners();
+            this.notifyWinnersAnnouncedListeners(winners.smallPrizeWinners, winners.bigPrizeWinners);
+            
+            return { success: true, result: tx };
+        } catch (error) {
+            console.error("Transaction error:", error);
+            const revertReason = error.message.match(/reverted with reason string '([^']+)'/)?.[1] || error.message;
+            throw new Error(`Failed to draw lottery winner: ${revertReason}`);
+        }
+    }
+
+    async setTicketPrice(newPrice) {
+        try {
+            const contract = this.validateWriteRequirements();
+            const web3 = this.getWeb3();
+            const weiPrice = web3.utils.toWei(newPrice.toString(), 'ether');
+            await contract.methods.setTicketPrice(weiPrice).send({ from: this.account });
+            return { success: true };
+        } catch (error) {
+            throw new Error(`Error setting ticket price: ${error.message}`);
+        }
+    }
+}
     async getPlayerTickets(playerAddress) {
         try {
             const contract = this.getReadContract();

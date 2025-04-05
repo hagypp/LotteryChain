@@ -224,10 +224,20 @@ const Dashboard = ({ account }) => {
         setUiState(prev => ({ ...prev, lotteryControlError: '', status: 'Drawing lottery winner...' }));
         
         try {
-            await contractService.drawLotteryWinner();
-            window.dispatchEvent(new CustomEvent('drawLotteryComplete'));
+            const result = await contractService.drawLotteryWinner();
+            
+            if (!result.success) {
+                setUiState(prev => ({
+                    ...prev,
+                    lotteryControlError: result.message,
+                    status: result.message
+                }));
+                return;
+            }
+            
             await refreshDashboardData();
             setUiState(prev => ({ ...prev, status: 'Lottery winners have been drawn!' }));
+            window.dispatchEvent(new CustomEvent('drawLotteryComplete'));
         } catch (error) {
             console.error('❌ Error drawing winner:', error);
             setUiState(prev => ({
@@ -239,14 +249,24 @@ const Dashboard = ({ account }) => {
             setIsLoading('lotteryAction', false);
         }
     };
-    
+  
     const handleCloseLottery = async () => {
         logDev('🔒 Closing lottery round');
         setIsLoading('lotteryAction', true);
         setUiState(prev => ({ ...prev, lotteryControlError: '', status: 'Closing lottery round...' }));
         
         try {
-            await contractService.closeLotteryRound();
+            const result = await contractService.closeLotteryRound();
+            
+            if (!result.success) {
+                setUiState(prev => ({
+                    ...prev,
+                    lotteryControlError: result.message,
+                    status: result.message
+                }));
+                return;
+            }
+            
             await refreshDashboardData();
             setUiState(prev => ({ ...prev, status: 'Lottery round closed successfully!' }));
         } catch (error) {

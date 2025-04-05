@@ -188,7 +188,12 @@ contract LotteryManager {
         LotteryRound storage currentRound = lotteryRounds[currentLotteryRound];
 
         require(currentRound.status == lotteryStatus.CLOSED, "Lottery round already finalized");
-        require(currentRound.participants.length > 0, "No participants in this round");
+
+        if (currentRound.participants.length == 0) {
+            currentRound.smallPrizeWinners = new address[](0);
+            currentRound.bigPrizeWinners = new address[](0);
+            return (new address[](0), new address[](0));
+        }
         
         //Calculate weights based on holding time
         // uint256[] memory weights = calculateSoftmaxWeights();
