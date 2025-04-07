@@ -36,17 +36,18 @@ contract MainTicketSystem {
         emit LotteryRoundStatusChanged(false);
     }
 
-    function canCloseLottery () private {
-        if (lotteryManager.canCloseLottery()){
-            closeLotteryRound(); 
-        } 
-    }
+    // function canCloseLottery () private {
+    //     if (lotteryManager.canCloseLottery()){
+    //         closeLotteryRound(); 
+    //     } 
+    // }
 
-    function canDrawWinner() private {
-        if (lotteryManager.canDrawWinner()){
-            drawLotteryWinner(0,0);
-        } 
-    }
+    // function canDrawWinner() private {
+    //     if (lotteryManager.canDrawWinner()){
+    //         // drawLotteryWinner(0,0);
+    //         return; // Placeholder for drawing winner logic
+    //     } 
+    // }
 
     // Ticket Purchase Functions
     function purchaseTicket() external payable returns (uint256) {        
@@ -63,11 +64,11 @@ contract MainTicketSystem {
             payable(msg.sender).transfer(msg.value - ticketPrice);
         }
 
-        if (isLotteryActive()) {
-            canCloseLottery();
-        } else {
-            canDrawWinner();
-        }
+        // if (isLotteryActive()) {
+        //     canCloseLottery();
+        // } else {
+        //     canDrawWinner();
+        // }
            
         updateBlockStatus();
         return ticketId;
@@ -77,11 +78,11 @@ contract MainTicketSystem {
         external  
         returns (bool) 
     {   
-        if (isLotteryActive()) {
-            canCloseLottery();  
-        } else {
-            canDrawWinner();
-        }
+        // if (isLotteryActive()) {
+        //     canCloseLottery();  
+        // } else {
+        //     canDrawWinner();
+        // }
 
         // Verify ticket status is ACTIVE before entering lottery
         require( ticketManager.getTicketData(msg.sender, _ticketId).status == TicketStatus.ACTIVE,
