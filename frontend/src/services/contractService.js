@@ -337,7 +337,10 @@ async purchaseTicket() {
             const contract = this.validateWriteRequirements();
             
             const blockStatus = await this.getLotteryBlockStatus();
+            console.log("Block status:", blockStatus);
             if (blockStatus.blocksUntilClose === "0") {
+                // Go straight to send when keysUntilClose is 0
+                console.log("Closing lottery round immediately");
                 const result = await contract.methods.closeLotteryRound().send({ from: this.account });
                 return { success: true, transactionHash: result.transactionHash };
             }
@@ -346,6 +349,7 @@ async purchaseTicket() {
             const canClose = await contract.methods.closeLotteryRound().call({ from: this.account })
                 .then(() => true)
                 .catch(err => {
+                    console.log("Call error:", err);
                     const revertReason = err.data.message.match(/reverted with reason string '([^']+)'/)?.[1] || err.message;
                     return { error: revertReason };
                 });
@@ -364,7 +368,6 @@ async purchaseTicket() {
             return { success: false, message: `Failed to close lottery: ${revertReason}` };
         }
     }
-
 
     async drawLotteryWinner() {
         try {
