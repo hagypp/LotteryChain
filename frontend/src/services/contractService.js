@@ -369,7 +369,6 @@ async purchaseTicket() {
         }
     }
 
-
     async drawLotteryWinner() {
         try {
             const contract = this.validateWriteRequirements();
@@ -400,7 +399,6 @@ async purchaseTicket() {
                 .call({ from: this.account })
                 .then(() => true)
                 .catch(err => {
-                    console.log("Call error:", err);
                     const revertReason = err.data.message.match(/reverted with reason string '([^']+)'/)?.[1] || err.message;
                     return { error: revertReason };
                 });

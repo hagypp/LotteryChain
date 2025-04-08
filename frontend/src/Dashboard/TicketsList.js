@@ -5,7 +5,7 @@ import "./TicketsList.css";
 const DETAILED_LOGGING = false;
 
 const TicketsList = React.memo(({ tickets, ticketCategory, setTicketCategory, isLoading, isLotteryActive, handleSelectForLottery }) => {
-    // Track previous values to only log meaningful changes
+
     const prevTicketsLengthRef = useRef(tickets.length);
     const prevCategoryRef = useRef(ticketCategory);
     
@@ -14,7 +14,6 @@ const TicketsList = React.memo(({ tickets, ticketCategory, setTicketCategory, is
         const categoryChanged = prevCategoryRef.current !== ticketCategory;
         
         if (DETAILED_LOGGING || ticketsChanged || categoryChanged) {
-            console.log(`TicketsList component rendering - ${tickets.length} tickets, category: ${ticketCategory}`);
             prevTicketsLengthRef.current = tickets.length;
             prevCategoryRef.current = ticketCategory;
         }
@@ -70,10 +69,7 @@ const TicketsList = React.memo(({ tickets, ticketCategory, setTicketCategory, is
 
     // Memoize the scroll handler
     const handleScroll = useCallback((direction) => {
-        if (DETAILED_LOGGING) {
-            console.log(`Scrolling ${direction}`);
-        }
-        
+   
         if (scrollContainerRef.current) {
             const scrollAmount = 920; 
             const currentScroll = scrollContainerRef.current.scrollLeft;
@@ -86,10 +82,6 @@ const TicketsList = React.memo(({ tickets, ticketCategory, setTicketCategory, is
 
     // Memoize the filtered tickets calculation to avoid recalculating on every render
     const filteredTickets = useMemo(() => {
-        if (DETAILED_LOGGING) {
-            console.log(`Filtering tickets for category: ${ticketCategory}`);
-        }
-        
         switch(ticketCategory) {
             case 'all':
                 return tickets;
@@ -104,10 +96,6 @@ const TicketsList = React.memo(({ tickets, ticketCategory, setTicketCategory, is
         }
     }, [tickets, ticketCategory]);
 
-    if (DETAILED_LOGGING) {
-        console.log(`Number of filtered tickets: ${filteredTickets.length}`);
-    }
-    
     // Memoize this calculation
     const hasMoreThanEightTickets = useMemo(() => filteredTickets.length > 8, [filteredTickets.length]);
     

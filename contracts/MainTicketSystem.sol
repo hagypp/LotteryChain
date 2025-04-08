@@ -36,11 +36,12 @@ contract MainTicketSystem {
         emit LotteryRoundStatusChanged(false);
     }
 
-    // function canCloseLottery () private {
-    //     if (lotteryManager.canCloseLottery()){
-    //         closeLotteryRound(); 
-    //     } 
-    // }
+    function canCloseLottery() private {
+        if (lotteryManager.canCloseLottery()){
+            closeLotteryRound(); 
+        } 
+    }
+
 
     // function canDrawWinner() private {
     //     if (lotteryManager.canDrawWinner()){
@@ -64,9 +65,10 @@ contract MainTicketSystem {
             payable(msg.sender).transfer(msg.value - ticketPrice);
         }
 
-        // if (isLotteryActive()) {
-        //     canCloseLottery();
-        // } else {
+        if (isLotteryActive()) {
+            canCloseLottery();
+        } 
+        // else {
         //     canDrawWinner();
         // }
            
@@ -78,9 +80,10 @@ contract MainTicketSystem {
         external  
         returns (bool) 
     {   
-        // if (isLotteryActive()) {
-        //     canCloseLottery();  
-        // } else {
+        if (isLotteryActive()) {
+            canCloseLottery();  
+        } 
+        // else {
         //     canDrawWinner();
         // }
 

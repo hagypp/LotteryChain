@@ -283,3 +283,115 @@
     min-width: 100px;
   }
 }
+/* Lottery Tabs Navigation */
+.lottery-tabs {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 1.5rem;
+  gap: 1rem;
+}
+
+.tab-button {
+  background: rgba(255, 255, 255, 0.08);
+  border: none;
+  border-radius: 0.75rem;
+  padding: 0.75rem 1.5rem;
+  color: white;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-size: 0.875rem;
+  min-width: 120px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.tab-button:hover:not(.active) {
+  background: rgba(255, 255, 255, 0.12);
+  transform: translateY(-1px);
+}
+
+.tab-button.active {
+  background: linear-gradient(45deg, #3B82F6, #60A5FA);
+  color: white;
+  box-shadow: 0 3px 6px rgba(59, 130, 246, 0.25);
+}
+
+/* Difficulty level badges */
+.difficulty-level-info {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+  justify-content: center;
+  padding: 0.5rem;
+  background: rgba(0, 0, 0, 0.15);
+  border-radius: 0.5rem;
+}
+
+.difficulty-badge {
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  padding: 0.25rem 0.75rem;
+  border-radius: 999px;
+}
+
+.difficulty-badge.easy {
+  background: linear-gradient(45deg, #34D399, #10B981);
+  color: white;
+}
+
+.difficulty-badge.hard {
+  background: linear-gradient(45deg, #F87171, #EF4444);
+  color: white;
+}
+
+/* Game explanation section */
+.game-explanation {
+  background: rgba(255, 255, 255, 0.03);
+  border-radius: 0.75rem;
+  padding: 1.25rem;
+  margin-bottom: 1.5rem;
+  backdrop-filter: blur(8px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.game-explanation h3 {
+  color: #FFD700;
+  margin-top: 0;
+  margin-bottom: 0.75rem;
+  font-size: 1.125rem;
+}
+
+.game-explanation p {
+  color: rgba(255, 255, 255, 0.8);
+  font-size: 0.875rem;
+  line-height: 1.5;
+  margin: 0.5rem 0;
+}
+
+/* Container styling */
+.easy-lotto-game-container,
+.hard-lotto-game-container {
+  padding: 1rem;
+  border-radius: 0.75rem;
+  background: rgba(0, 0, 0, 0.1);
+}
+
+/* Responsive adjustments */
+@media (max-width: 640px) {
+  .lottery-tabs {
+    flex-direction: column;
+    align-items: center;
+  }
+  
+  .tab-button {
+    width: 80%;
+  }
+  
+  .difficulty-level-info {
+    flex-direction: column;
+    text-align: center;
+  }
+}

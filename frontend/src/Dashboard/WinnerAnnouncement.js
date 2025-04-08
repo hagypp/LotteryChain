@@ -8,39 +8,22 @@ const WinnerAnnouncement = ({ account, contractService }) => {
         visible: false
     });
     
-    // Track initialization and checks
-    const isInitializedRef = useRef(false);
-    const hasCheckedWinnersRef = useRef(false);
-    // Store contract service reference to avoid unnecessary effect runs
-    const contractServiceRef = useRef(contractService);
-    const accountRef = useRef(account);
+    // Use a single ref to track initialization
+    const initialized = useRef(false);
     
-    // Update refs when props change
-    useEffect(() => {
-        contractServiceRef.current = contractService;
-        accountRef.current = account;
-    }, [contractService, account]);
-
-    // First effect - Set up listeners ONCE
     useEffect(() => {
         // Skip if already initialized or missing dependencies
-        if (isInitializedRef.current || !contractService || !contractService.initialized || !account) {
+        if (initialized.current || !contractService || !contractService.initialized || !account) {
             return;
         }
         
-        console.log('Setting up WinnerAnnouncement listeners with account:', account);
-        isInitializedRef.current = true;
+        initialized.current = true;
 
-        // Function to check if user is a winner - with more debugging
+        // Function to check if user is a winner
         const checkWinnerStatus = (smallPrizeWinners, bigPrizeWinners) => {
-            const currentAccount = accountRef.current;
-            if (!currentAccount) return false;
-            
-            console.log('Checking if user is winner. Account:', currentAccount);
-            console.log('Small prize winners:', smallPrizeWinners);
-            console.log('Big prize winners:', bigPrizeWinners);
-            
-            const normalizedAccount = currentAccount.toLowerCase();
+            if (!account) return false;
+                        
+            const normalizedAccount = account.toLowerCase();
             
             const isSmallPrizeWinner = Array.isArray(smallPrizeWinners) && 
                 smallPrizeWinners.some(winner => winner && winner.toLowerCase() === normalizedAccount);
@@ -48,11 +31,8 @@ const WinnerAnnouncement = ({ account, contractService }) => {
             const isBigPrizeWinner = Array.isArray(bigPrizeWinners) && 
                 bigPrizeWinners.some(winner => winner && winner.toLowerCase() === normalizedAccount);
             
-            console.log('User is small prize winner:', isSmallPrizeWinner);
-            console.log('User is big prize winner:', isBigPrizeWinner);
-            
+    
             if (isSmallPrizeWinner || isBigPrizeWinner) {
-                console.log('Setting winner status to visible');
                 setWinnerStatus({
                     isSmallPrizeWinner,
                     isBigPrizeWinner,
@@ -65,7 +45,6 @@ const WinnerAnnouncement = ({ account, contractService }) => {
 
         // Handler for winners announced event
         const handleWinnerAnnouncement = (winnersData) => {
-            console.log('Winners Announced Event Received:', winnersData);
             const smallPrizeWinners = winnersData.smallPrizeWinners || [];
             const bigPrizeWinners = winnersData.bigPrizeWinners || [];
             checkWinnerStatus(smallPrizeWinners, bigPrizeWinners);
@@ -73,7 +52,6 @@ const WinnerAnnouncement = ({ account, contractService }) => {
 
         // Handler for custom DOM event
         const handleWinnerAnnouncementEvent = (event) => {
-            console.log('Winners Announced Custom Event Received', event.detail);
             if (!event.detail) return;
             
             const { smallPrizeWinners, bigPrizeWinners } = event.detail;
@@ -82,17 +60,28 @@ const WinnerAnnouncement = ({ account, contractService }) => {
 
         // Handler for draw complete event
         const handleDrawComplete = async () => {
-            console.log("Draw complete event detected");
             try {
-                const currentContractService = contractServiceRef.current;
-                if (currentContractService && currentContractService.initialized) {
-                    const { smallPrizeWinners, bigPrizeWinners } = await currentContractService.getCurrentWinners();
+                if (contractService && contractService.initialized) {
+                    const { smallPrizeWinners, bigPrizeWinners } = await contractService.getCurrentWinners();
                     checkWinnerStatus(smallPrizeWinners, bigPrizeWinners);
                 }
             } catch (error) {
                 console.error("Error checking winners after draw:", error);
             }
         };
+
+        // Check current winners immediately
+        const checkCurrentWinners = async () => {
+            try {
+                const { smallPrizeWinners, bigPrizeWinners } = await contractService.getCurrentWinners();
+                checkWinnerStatus(smallPrizeWinners, bigPrizeWinners);
+            } catch (error) {
+                console.error("Error checking current winners:", error);
+            }
+        };
+        
+        // Check winners immediately
+        checkCurrentWinners();
 
         // Set up all event listeners
         const unsubscribe = contractService.addWinnersAnnouncedListener(handleWinnerAnnouncement);
@@ -101,52 +90,11 @@ const WinnerAnnouncement = ({ account, contractService }) => {
         
         // Cleanup function
         return () => {
-            console.log('Cleaning up WinnerAnnouncement event listeners');
             if (unsubscribe) unsubscribe();
             window.removeEventListener('drawLotteryComplete', handleDrawComplete);
             window.removeEventListener('winnersAnnounced', handleWinnerAnnouncementEvent);
         };
-    }, [account, contractService]);  // Add the dependencies here
-
-    // Second effect - Check winners ONCE when contract and account are ready
-    useEffect(() => {
-        // Skip if already checked or missing dependencies
-        if (hasCheckedWinnersRef.current || !contractService || !contractService.initialized || !account) {
-            return;
-        }
-        
-        const checkCurrentWinners = async () => {
-            try {
-                console.log('Fetching current winners from contract');
-                const { smallPrizeWinners, bigPrizeWinners } = await contractService.getCurrentWinners();
-                console.log('Current winners fetched:', { smallPrizeWinners, bigPrizeWinners });
-                
-                const normalizedAccount = account.toLowerCase();
-                
-                const isSmallPrizeWinner = Array.isArray(smallPrizeWinners) && 
-                    smallPrizeWinners.some(winner => winner && winner.toLowerCase() === normalizedAccount);
-                
-                const isBigPrizeWinner = Array.isArray(bigPrizeWinners) && 
-                    bigPrizeWinners.some(winner => winner && winner.toLowerCase() === normalizedAccount);
-                
-                if (isSmallPrizeWinner || isBigPrizeWinner) {
-                    console.log('Setting winner status to visible');
-                    setWinnerStatus({
-                        isSmallPrizeWinner,
-                        isBigPrizeWinner,
-                        visible: true
-                    });
-                }
-                
-                hasCheckedWinnersRef.current = true; // Mark as checked no matter the result
-            } catch (error) {
-                console.error("Error checking current winners:", error);
-            }
-        };
-        
-        checkCurrentWinners();
-        
-    }, [account, contractService]);
+    }, [account, contractService]);  // Dependencies
 
     const handleClose = () => {
         setWinnerStatus(prev => ({ ...prev, visible: false }));

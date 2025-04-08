@@ -4,7 +4,7 @@ import './SelectNumbers.css';
 const { sha3_256 } = require('js-sha3');  // Note: using sha3_256 instead of keccak_256
 
 
-const SelectNumbers = ({ onClose, account, ticketId, onTicketAdded }) => {
+const SelectNumbers = ({ onClose, ticketId, onTicketAdded }) => {
 
     const [selectedNumbers, setSelectedNumbers] = useState([]);
     const [strongestNumber, setStrongestNumber] = useState(null);
@@ -78,15 +78,11 @@ const SelectNumbers = ({ onClose, account, ticketId, onTicketAdded }) => {
     
             // Hash the selected numbers (6 numbers)
             const numbersHash = sha3_256(numbersString).toString('hex');
-            console.log('Selected numbers:', numbersString);
-            console.log('Numbers hash:', numbersHash);
-    
+           
             // Now, include the strongest number in the string for ticketHashWithStrong
             const ticketNumbersString = [...selectedNumbers.sort((a, b) => a - b), strongestNumber].join('');
             const ticketHashWithStrong = sha3_256(ticketNumbersString).toString('hex');  // Hash the 7 numbers (6 + strongest)
-            console.log('Ticket numbers with strongest:', ticketNumbersString);
-            console.log('Ticket hash with strongest number:', ticketHashWithStrong);
-    
+
             // Send the hash to the contract
             const result = await contractService.selectTicketsForLottery(
                 ticketId,  // Pass ticketId directly instead of an array
