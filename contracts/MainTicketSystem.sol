@@ -36,7 +36,7 @@ contract MainTicketSystem {
         emit LotteryRoundStatusChanged(false);
     }
 
-    function canCloseLottery () private {
+    function canCloseLottery() private {
         if (lotteryManager.canCloseLottery()){
             closeLotteryRound(); 
         } 
@@ -65,10 +65,7 @@ contract MainTicketSystem {
 
         if (isLotteryActive()) {
             canCloseLottery();
-        } else {
-            canDrawWinner();
-        }
-           
+        } 
         updateBlockStatus();
         return ticketId;
     }

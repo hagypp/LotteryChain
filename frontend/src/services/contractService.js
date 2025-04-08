@@ -330,13 +330,22 @@ async purchaseTicket() {
         }
     }
 
-    async closeLotteryRound() {
-        try {
+    async closeLotteryRound() 
+    {
+        try 
+        {
             const contract = this.validateWriteRequirements();
+            
+            const blockStatus = await this.getLotteryBlockStatus();
+            if (blockStatus.blocksUntilClose === "0") {
+                const result = await contract.methods.closeLotteryRound().send({ from: this.account });
+                return { success: true, transactionHash: result.transactionHash };
+            }
+            
+            // For all other values, do both call and send
             const canClose = await contract.methods.closeLotteryRound().call({ from: this.account })
                 .then(() => true)
                 .catch(err => {
-                    console.log("Call error:", err);
                     const revertReason = err.data.message.match(/reverted with reason string '([^']+)'/)?.[1] || err.message;
                     return { error: revertReason };
                 });
@@ -344,13 +353,15 @@ async purchaseTicket() {
             if (canClose !== true) {
                 return { success: false, message: `Cannot close lottery: ${canClose.error}` };
             }
-    
+            
             const result = await contract.methods.closeLotteryRound().send({ from: this.account });
             return { success: true, transactionHash: result.transactionHash };
-        } catch (error) {
+        } 
+        catch (error) 
+        {
             console.error("Transaction error:", error);
             const revertReason = error.message.match(/reverted with reason string '([^']+)'/)?.[1] || error.message;
-            throw new Error(`Failed to close lottery: ${revertReason}`);
+            return { success: false, message: `Failed to close lottery: ${revertReason}` };
         }
     }
 
@@ -358,25 +369,45 @@ async purchaseTicket() {
     async drawLotteryWinner() {
         try {
             const contract = this.validateWriteRequirements();
-    
+            
+            const blockStatus = await this.getLotteryBlockStatus();
+            
+            if (blockStatus.blocksUntilDraw === "0") {
+                // Go straight to send when keysUntilClose is 0
+                const response = await fetch("https://h431j7ev85.execute-api.eu-north-1.amazonaws.com/randomNum/random");
+                const data = await response.json();
+                const parsedBody = JSON.parse(data.body);
+        
+                let keccak256HashNumbers = "0x" + parsedBody.keccak256_hash_numbers;
+                let keccak256HashFull = "0x" + parsedBody.keccak256_hash_full;
+                
+                const tx = await contract.methods.drawLotteryWinner(keccak256HashNumbers, keccak256HashFull)
+                    .send({ from: this.account });
+                
+                const winners = await this.getCurrentWinners();
+                this.notifyWinnersAnnouncedListeners(winners.smallPrizeWinners, winners.bigPrizeWinners);
+                
+                return { success: true, result: tx };
+            }
+            
+            // For all other values, do both call and send
             const dummyHash = "0x0000000000000000000000000000000000000000000000000000000000000000";
             const canDraw = await contract.methods.drawLotteryWinner(dummyHash, dummyHash)
                 .call({ from: this.account })
                 .then(() => true)
                 .catch(err => {
-                    console.log("Call error:", err);
                     const revertReason = err.data.message.match(/reverted with reason string '([^']+)'/)?.[1] || err.message;
                     return { error: revertReason };
                 });
-    
+        
             if (canDraw !== true) {
                 return { success: false, message: `Cannot draw winner: ${canDraw.error}` };
             }
-    
+        
             const response = await fetch("https://h431j7ev85.execute-api.eu-north-1.amazonaws.com/randomNum/random");
             const data = await response.json();
             const parsedBody = JSON.parse(data.body);
-    
+        
             let keccak256HashNumbers = "0x" + parsedBody.keccak256_hash_numbers;
             let keccak256HashFull = "0x" + parsedBody.keccak256_hash_full;
             
