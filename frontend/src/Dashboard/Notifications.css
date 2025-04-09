@@ -1,0 +1,123 @@
+.notification-container {
+    position: fixed;
+    bottom: 1.5rem;
+    right: 1.5rem;
+    max-width: 28rem;
+    z-index: 9999;
+    transition: opacity 0.3s ease-in-out, transform 0.3s ease-in-out;
+    opacity: 1;
+    transform: translateY(0);
+  }
+  
+  .notification-container.fade-out {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  
+  .notification-toast {
+    background: rgba(255, 255, 255, 0.03);
+    border-radius: 0.75rem;
+    padding: 0.75rem 1.5rem;
+    margin-bottom: 10px;
+    backdrop-filter: blur(8px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    min-width: 280px;
+    color: white;
+    border: 1px solid rgba(37, 99, 235, 0.1);
+  }
+  
+  .notification-content {
+    flex: 1;
+    display: flex;
+    align-items: center;
+  }
+  
+  .notification-message {
+    font-size: 0.875rem;
+    margin-right: 10px;
+    font-weight: 500;
+    letter-spacing: 0.2px;
+  }
+  
+  .notification-close {
+    background: none;
+    border: none;
+    color: white;
+    font-size: 1.25rem;
+    cursor: pointer;
+    padding: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 24px;
+    height: 24px;
+    opacity: 0.7;
+    transition: opacity 0.2s ease;
+  }
+  
+  .notification-close:hover {
+    opacity: 1;
+  }
+  
+  /* Notification types matching your color scheme */
+  .notification-toast.info {
+    background: linear-gradient(135deg, rgba(59, 130, 246, 0.1), rgba(96, 165, 250, 0.1));
+    border-left: 3px solid #3B82F6;
+  }
+  
+  .notification-toast.success {
+    background: linear-gradient(135deg, rgba(52, 211, 153, 0.1), rgba(16, 185, 129, 0.1));
+    border-left: 3px solid #34D399;
+  }
+  
+  .notification-toast.warning {
+    background: linear-gradient(135deg, rgba(245, 158, 11, 0.1), rgba(249, 115, 22, 0.1));
+    border-left: 3px solid #F59E0B;
+  }
+  
+  .notification-toast.error {
+    background: linear-gradient(135deg, rgba(248, 113, 113, 0.1), rgba(239, 68, 68, 0.1));
+    border-left: 3px solid #EF4444;
+  }
+  
+  /* Status icon before the message */
+  .notification-toast .notification-message::before {
+    content: '';
+    display: inline-block;
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    margin-right: 10px;
+  }
+  
+  .notification-toast.info .notification-message::before {
+    background: #3B82F6;
+  }
+  
+  .notification-toast.success .notification-message::before {
+    background: #34D399;
+  }
+  
+  .notification-toast.warning .notification-message::before {
+    background: #F59E0B;
+  }
+  
+  .notification-toast.error .notification-message::before {
+    background: #EF4444;
+  }
+  
+  /* Responsive adjustments */
+  @media (max-width: 640px) {
+    .notification-container {
+      left: 1rem;
+      right: 1rem;
+      max-width: calc(100% - 2rem);
+    }
+    
+    .notification-toast {
+      width: 100%;
+    }
+  }

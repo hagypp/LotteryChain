@@ -28,17 +28,21 @@ export const LotteryProvider = ({ children, account }) => {
   
   const [tickets, setTickets] = useState([]);
   const [uiState, setUiState] = useState({
-    status: '',
     isSelectingNumbers: false,
     selectedTicketId: null,
     ticketCategory: 'all',
-    lotteryControlError: '',
     isLoading: {
       purchase: false,
       lotteryAction: false
       // Ticket-specific loading states will be added dynamically
     }
   });
+  
+  // New notification state
+  const [notification, setNotification] = useState(null);
+  
+  // Reference to store timeout ID for auto-clearing notifications
+  const notificationTimeoutRef = useRef(null);
   
   // Refs to track initialization
   const initializationDoneRef = useRef(false);
@@ -54,6 +58,43 @@ export const LotteryProvider = ({ children, account }) => {
         [key]: value
       }
     }));
+  }, []);
+  
+  // Notification management with auto-clearing
+  const showNotification = useCallback((message, type = 'info', duration = 5000) => {
+    // Clear any existing timeout to prevent race conditions
+    if (notificationTimeoutRef.current) {
+      clearTimeout(notificationTimeoutRef.current);
+      notificationTimeoutRef.current = null;
+    }
+    
+    // Set the new notification
+    setNotification({ message, type });
+    
+    // Set up auto-clearing timeout
+    if (duration > 0) {
+      notificationTimeoutRef.current = setTimeout(() => {
+        setNotification(null);
+        notificationTimeoutRef.current = null;
+      }, duration);
+    }
+  }, []);
+  
+  const clearNotification = useCallback(() => {
+    if (notificationTimeoutRef.current) {
+      clearTimeout(notificationTimeoutRef.current);
+      notificationTimeoutRef.current = null;
+    }
+    setNotification(null);
+  }, []);
+  
+  // Clean up notification timeout on unmount
+  useEffect(() => {
+    return () => {
+      if (notificationTimeoutRef.current) {
+        clearTimeout(notificationTimeoutRef.current);
+      }
+    };
   }, []);
   
   // Initialize contract
@@ -87,10 +128,7 @@ export const LotteryProvider = ({ children, account }) => {
         });
         
         setTickets(userTickets);
-        setUiState(prev => ({
-          ...prev,
-          status: `Lottery is ${lotteryStatus ? 'open' : 'closed'}`
-        }));
+        showNotification(`Lottery is ${lotteryStatus ? 'open' : 'closed'}`, 'info');
         
         initializationDoneRef.current = true;
         
@@ -101,10 +139,7 @@ export const LotteryProvider = ({ children, account }) => {
               ...prev,
               isLotteryActive: isActive
             }));
-            setUiState(prev => ({
-              ...prev,
-              status: `Lottery is now ${isActive ? 'open' : 'closed'}`
-            }));
+            showNotification(`Lottery is now ${isActive ? 'open' : 'closed'}`, 'info');
           });
           
           const unsubscribeBlockStatus = contractService.addBlockStatusListener((blocksUntilClose, blocksUntilDraw) => {
@@ -126,15 +161,12 @@ export const LotteryProvider = ({ children, account }) => {
         }
       } catch (error) {
         console.error('Error initializing contract:', error);
-        setUiState(prev => ({
-          ...prev,
-          status: `Error initializing contract: ${error.message}`
-        }));
+        showNotification(`Error initializing contract: ${error.message}`, 'error');
       }
     };
     
     initialize();
-  }, [account]);
+  }, [account, showNotification]);
   
   // Refresh dashboard data
   const refreshDashboardData = useCallback(async () => {
@@ -161,12 +193,9 @@ export const LotteryProvider = ({ children, account }) => {
       setTickets(playerTickets);
     } catch (error) {
       console.error('Error refreshing dashboard data:', error);
-      setUiState(prev => ({
-        ...prev,
-        status: `Error refreshing data: ${error.message}`
-      }));
+      showNotification(`Error refreshing data: ${error.message}`, 'error');
     }
-  }, [account, contractState.isContractReady]);
+  }, [account, contractState.isContractReady, showNotification]);
   
   // Auto-refresh when account changes
   useEffect(() => {
@@ -178,30 +207,22 @@ export const LotteryProvider = ({ children, account }) => {
   // Lottery action handlers
   const handleDrawWinner = async () => {
     setIsLoading('lotteryAction', true);
-    setUiState(prev => ({ ...prev, lotteryControlError: '', status: 'Drawing lottery winner...' }));
+    showNotification('Drawing lottery winner...', 'info');
     
     try {
       const result = await contractService.drawLotteryWinner();
       
       if (!result.success) {
-        setUiState(prev => ({
-          ...prev,
-          lotteryControlError: result.message,
-          status: result.message
-        }));
+        showNotification(result.message, 'error');
         return;
       }
       
       await refreshDashboardData();
-      setUiState(prev => ({ ...prev, status: 'Lottery winners have been drawn!' }));
+      showNotification('Lottery winners have been drawn!', 'success');
       window.dispatchEvent(new CustomEvent('drawLotteryComplete'));
     } catch (error) {
       console.error('Error drawing winner:', error);
-      setUiState(prev => ({
-        ...prev,
-        lotteryControlError: `Failed to draw winner: ${error.message}`,
-        status: `Error drawing winner: ${error.message}`
-      }));
+      showNotification(`Failed to draw winner: ${error.message}`, 'error');
     } finally {
       setIsLoading('lotteryAction', false);
     }
@@ -209,29 +230,21 @@ export const LotteryProvider = ({ children, account }) => {
   
   const handleCloseLottery = async () => {
     setIsLoading('lotteryAction', true);
-    setUiState(prev => ({ ...prev, lotteryControlError: '', status: 'Closing lottery round...' }));
+    showNotification('Closing lottery round...', 'info');
     
     try {
       const result = await contractService.closeLotteryRound();
       
       if (!result.success) {
-        setUiState(prev => ({
-          ...prev,
-          lotteryControlError: result.message,
-          status: result.message
-        }));
+        showNotification(result.message, 'error');
         return;
       }
       
       await refreshDashboardData();
-      setUiState(prev => ({ ...prev, status: 'Lottery round closed successfully!' }));
+      showNotification('Lottery round closed successfully!', 'success');
     } catch (error) {
       console.error('Error closing lottery:', error);
-      setUiState(prev => ({
-        ...prev,
-        lotteryControlError: `Failed to close lottery: ${error.message}`,
-        status: `Error closing lottery: ${error.message}`
-      }));
+      showNotification(`Failed to close lottery: ${error.message}`, 'error');
     } finally {
       setIsLoading('lotteryAction', false);
     }
@@ -239,26 +252,23 @@ export const LotteryProvider = ({ children, account }) => {
   
   const handlePurchase = async () => {
     if (!contractState.isContractReady) {
-      setUiState(prev => ({
-        ...prev,
-        status: 'Contract not initialized yet. Please try again later.'
-      }));
+      showNotification('Contract not initialized yet. Please try again later.', 'warning');
       return;
     }
     
     setIsLoading('purchase', true);
-    setUiState(prev => ({ ...prev, status: 'Purchasing ticket...' }));
+    showNotification('Purchasing ticket...', 'info');
     
     try {
       const purchaseResult = await contractService.purchaseTicket();
       
       if (purchaseResult.success) {
         await refreshDashboardData();
-        setUiState(prev => ({ ...prev, status: 'Ticket purchased successfully!' }));
+        showNotification('Ticket purchased successfully!', 'success');
       }
     } catch (error) {
       console.error('Purchase failed:', error);
-      setUiState(prev => ({ ...prev, status: `Purchase failed: ${error.message}` }));
+      showNotification(`Purchase failed: ${error.message}`, 'error');
     } finally {
       setIsLoading('purchase', false);
     }
@@ -266,10 +276,7 @@ export const LotteryProvider = ({ children, account }) => {
   
   const handleSelectForLottery = async (ticketId) => {
     if (!contractState.isContractReady) {
-      setUiState(prev => ({
-        ...prev,
-        status: 'Contract not initialized yet. Please try again later.'
-      }));
+      showNotification('Contract not initialized yet. Please try again later.', 'warning');
       return;
     }
     
@@ -277,7 +284,6 @@ export const LotteryProvider = ({ children, account }) => {
     setIsLoading(ticketKey, true);
     setUiState(prev => ({
       ...prev,
-      status: 'Entering ticket into lottery...',
       selectedTicketId: ticketId,
       isSelectingNumbers: true
     }));
@@ -302,13 +308,12 @@ export const LotteryProvider = ({ children, account }) => {
     },
     tickets,
     uiState: {
-      status: uiState.status,
       isSelectingNumbers: uiState.isSelectingNumbers,
       selectedTicketId: uiState.selectedTicketId,
       ticketCategory: uiState.ticketCategory,
-      lotteryControlError: uiState.lotteryControlError,
       isLoading: uiState.isLoading
     },
+    notification,
     actions: {
       handleDrawWinner,
       handleCloseLottery,
@@ -317,7 +322,9 @@ export const LotteryProvider = ({ children, account }) => {
       refreshDashboardData,
       closeSelectNumbers,
       setTicketCategory
-    }
+    },
+    showNotification,
+    clearNotification
   };
   
   return <LotteryContext.Provider value={value}>{children}</LotteryContext.Provider>;

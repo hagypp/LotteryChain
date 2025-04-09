@@ -1,15 +1,14 @@
 import React, { useState } from 'react';
 import contractService from '../services/contractService';
+import { useLottery } from '../contexts/LotteryContext';
 import './SelectNumbers.css';
 const { sha3_256 } = require('js-sha3');  // Note: using sha3_256 instead of keccak_256
 
-
 const SelectNumbers = ({ onClose, ticketId, onTicketAdded }) => {
-
+    const { showNotification } = useLottery();
     const [selectedNumbers, setSelectedNumbers] = useState([]);
     const [strongestNumber, setStrongestNumber] = useState(null);
     const [isSubmitting, setIsSubmitting] = useState(false);
-    const [status, setStatus] = useState('');
     
     // Maximum of 6 numbers can be selected
     const MAX_SELECTED = 6;
@@ -54,25 +53,23 @@ const SelectNumbers = ({ onClose, ticketId, onTicketAdded }) => {
     
     const handleSubmit = async () => {
         if (selectedNumbers.length !== MAX_SELECTED) {
-            setStatus(`Please select exactly ${MAX_SELECTED} numbers.`);
+            showNotification(`Please select exactly ${MAX_SELECTED} numbers.`, 'warning');
             return;
         }
     
         if (strongestNumber === null) {
-            setStatus('Please select your strongest number (1-7).');
+            showNotification('Please select your strongest number (1-7).', 'warning');
             return;
         }
     
         try {
             setIsSubmitting(true);
-            setStatus('Entering ticket into lottery...');
+            showNotification('Entering ticket into lottery...', 'info');
     
             if (ticketId === undefined || ticketId === null || ticketId === "") {
                 throw new Error('No ticket ID provided');
             }
 
-            // const selectedNumbers = [1, 2, 3, 4, 5, 6];
-            // const strongestNumber = 7;
             // Create a string representation of the selected numbers (6 numbers) without commas
             const numbersString = [...selectedNumbers.sort((a, b) => a - b)].join('');
     
@@ -91,13 +88,13 @@ const SelectNumbers = ({ onClose, ticketId, onTicketAdded }) => {
             );
     
             if (result.success) {
-                setStatus("Ticket submitted successfully!");
+                showNotification("Ticket submitted successfully!", 'success');
                 onTicketAdded();
                 onClose();
             }
         } catch (error) {
             console.error('Full error details:', error);
-            setStatus(`Failed to enter ticket into lottery: ${error.message}`);
+            showNotification(`Failed to enter ticket into lottery: ${error.message}`, 'error');
         } finally {
             setIsSubmitting(false);
         }
@@ -169,8 +166,6 @@ const SelectNumbers = ({ onClose, ticketId, onTicketAdded }) => {
                             )}
                         </div>
                     </div>
-                    
-                    {status && <div className="selection-status">{status}</div>}
                     
                     <div className="selection-actions">
                         <button 
