@@ -3,6 +3,7 @@ import { LotteryProvider } from '../contexts/LotteryContext';
 import LotteryHeader from './LotteryHeader';
 import HardLottoGame from './HardLottoGame';
 import WinnerAnnouncement from './WinnerAnnouncement';
+import Notifications from './Notifications';
 import contractService from '../services/contractService';
 import "./Dashboard.css";
 
@@ -21,6 +22,7 @@ const DashboardContent = ({ account }) => {
       <LotteryHeader />
       <HardLottoGame account={account} />
       <WinnerAnnouncement account={account} contractService={contractService} />
+      <Notifications />
     </div>
   );
 };

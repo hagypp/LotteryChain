@@ -5,7 +5,7 @@ const LotteryHeader = () => {
   const { 
     contractState: { ticketPrice, isLotteryActive, blockStatus },
     tickets,
-    uiState: { isLoading, lotteryControlError },
+    uiState: { isLoading },
     actions: { handlePurchase, handleCloseLottery, handleDrawWinner }
   } = useLottery();
 
@@ -31,50 +31,44 @@ const LotteryHeader = () => {
       </div>
       
       <div className="block-status-consolidated">
-      <div className="block-status-header">
-        <span className="header-info-label" style={{textAlign: 'center', display: 'block', marginBottom: '0.75rem'}}>
-          BLOCK STATUS
-        </span>
-      </div>
-      <div className="block-status-content">
-        <div className="block-metric">
-          <span className="block-metric-label">UNTIL BLOCKS CLOSE</span>
-          <span className="block-metric-value">
-            {blockStatus.blocksUntilClose}
+        <div className="block-status-header">
+          <span className="header-info-label" style={{textAlign: 'center', display: 'block', marginBottom: '0.75rem'}}>
+            BLOCK STATUS
           </span>
         </div>
-        <div className="block-metric">
-          <span className="block-metric-label">UNTIL LOTTERY WINNER</span>
-          <span className="block-metric-value">
-            {blockStatus.blocksUntilDraw}
-          </span>
+        <div className="block-status-content">
+          <div className="block-metric">
+            <span className="block-metric-label">UNTIL BLOCKS CLOSE</span>
+            <span className="block-metric-value">
+              {blockStatus.blocksUntilClose}
+            </span>
+          </div>
+          <div className="block-metric">
+            <span className="block-metric-label">UNTIL LOTTERY WINNER</span>
+            <span className="block-metric-value">
+              {blockStatus.blocksUntilDraw}
+            </span>
+          </div>
         </div>
       </div>
-    </div>
       
-    <div className="button-container">
-      <button 
-        onClick={handlePurchase} 
-        disabled={isLoading.purchase}
-        className="header-purchase-button"
-      >
-        {isLoading.purchase ? "Processing..." : "BUY TICKET"}
-      </button>
-      
-      <button 
-        onClick={isLotteryActive ? handleCloseLottery : handleDrawWinner}
-        disabled={isLoading.lotteryAction}
-        className={`header-purchase-button ${isLotteryActive ? 'close-lottery' : 'draw-winner'}`}
-      >
-        {isLoading.lotteryAction ? "Processing..." : isLotteryActive ? "CLOSE LOTTERY" : "DRAW WINNER"}
-      </button>
-    </div>
-      
-      {lotteryControlError && (
-        <div className={lotteryControlError.includes("successfully") ? "success-message" : "error-message"}>
-          {lotteryControlError}
-        </div>
-      )}
+      <div className="button-container">
+        <button 
+          onClick={handlePurchase} 
+          disabled={isLoading.purchase}
+          className="header-purchase-button"
+        >
+          {isLoading.purchase ? "Processing..." : "BUY TICKET"}
+        </button>
+        
+        <button 
+          onClick={isLotteryActive ? handleCloseLottery : handleDrawWinner}
+          disabled={isLoading.lotteryAction}
+          className={`header-purchase-button ${isLotteryActive ? 'close-lottery' : 'draw-winner'}`}
+        >
+          {isLoading.lotteryAction ? "Processing..." : isLotteryActive ? "CLOSE LOTTERY" : "DRAW WINNER"}
+        </button>
+      </div>
     </div>
   );
 };
