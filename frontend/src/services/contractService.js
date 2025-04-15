@@ -529,6 +529,16 @@ async purchaseTicket() {
         }
     }
 
+    async getCurrentTotalTickets() {
+        try {
+            const contract = this.getReadContract();
+            const totalTickets = await contract.methods.getCurrentTotalTickets().call();
+            return totalTickets;
+        } catch (error) {
+            throw new Error(`Error fetching total tickets: ${error.message}`);
+        }
+    }
+
 
     async selectTicketsForLottery(ticketId, ticketHash, ticketHashWithStrong) {
         try {

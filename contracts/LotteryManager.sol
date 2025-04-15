@@ -393,5 +393,9 @@ contract LotteryManager {
         return currentRound.totalPrizePool;
     }
 
+    function getCurrentTotalTickets() external view returns (uint256) {
+        LotteryRound storage currentRound = lotteryRounds[currentLotteryRound];
+        return currentRound.totalTickets;
+    }
     receive() external payable {}
 }
