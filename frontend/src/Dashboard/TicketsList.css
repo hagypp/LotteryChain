@@ -96,9 +96,15 @@
   color: #6366F1;
 }
 
-.ticket-status.expired {
-  background: rgba(239, 68, 68, 0.2);
-  color: #EF4444;
+
+.ticket-status.won_small_prize {
+  background: rgba(59, 130, 246, 0.2); /* Blue-ish tone for small prize */
+  color: #3B82F6; /* Bright blue for text */
+}
+
+.ticket-status.won_big_prize {
+  background: rgba(234, 179, 8, 0.2); /* Gold-ish tone for big prize */
+  color: #EAB308; /* Gold for text */
 }
 
 .ticket-time, .text-sm {
