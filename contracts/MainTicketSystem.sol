@@ -162,6 +162,10 @@ contract MainTicketSystem {
     function getCurrentTotalTickets() external view returns (uint256) {
         return lotteryManager.getCurrentTotalTickets();
     }
+
+    function getCurrentRound() external view returns (uint256) {
+        return lotteryManager.getCurrentRound();
+    }
     
     receive() external payable {}
 }

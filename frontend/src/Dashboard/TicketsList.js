@@ -43,10 +43,7 @@ const TicketsList = React.memo(({ tickets, ticketCategory, setTicketCategory, is
 
     // Effect to add scroll event listener - only depends on the checkForScrollButtons function
     useEffect(() => {
-        if (DETAILED_LOGGING) {
-            console.log("useEffect triggered: Setting up scroll button checker");
-        }
-        
+
         checkForScrollButtons();
         
         const scrollContainer = scrollContainerRef.current;

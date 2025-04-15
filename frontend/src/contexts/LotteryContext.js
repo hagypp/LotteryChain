@@ -25,7 +25,8 @@ export const LotteryProvider = ({ children, account }) => {
       blocksUntilDraw: 'unknown'
     },
     currentPrizePool: '0',
-    totalTickets: '0'
+    totalTickets: '0' ,
+    currentRound: '0'
   });
   
   const [tickets, setTickets] = useState([]);
@@ -112,13 +113,14 @@ export const LotteryProvider = ({ children, account }) => {
         await contractService.init();
         
         // Get initial data in parallel
-        const [lotteryStatus, blockStatusData, price, userTickets,currentPrizePool, totalTickets] = await Promise.all([
+        const [lotteryStatus, blockStatusData, price, userTickets, currentPrizePool, totalTickets, currentRound] = await Promise.all([
           contractService.isLotteryActive(),
           contractService.getLotteryBlockStatus(),
           contractService.getTicketPrice(),
           account ? contractService.getPlayerTickets(account) : [],
           contractService.getCurrentPrizePool(),
-          contractService.getCurrentTotalTickets()
+          contractService.getCurrentTotalTickets(),
+          contractService.getCurrentRound()
         ]);
         
         setContractState({
@@ -130,7 +132,8 @@ export const LotteryProvider = ({ children, account }) => {
             blocksUntilDraw: blockStatusData.blocksUntilDraw.toString()
           },
           currentPrizePool: currentPrizePool.toString(),
-          totalTickets: totalTickets.toString()
+          totalTickets: totalTickets.toString(),
+          currentRound: currentRound.toString()
         });
         
         setTickets(userTickets);
@@ -181,12 +184,13 @@ export const LotteryProvider = ({ children, account }) => {
     }
     
     try {
-      const [price, playerTickets, blockStatusData,currentPrizePool, totalTickets] = await Promise.all([
+      const [price, playerTickets, blockStatusData, currentPrizePool, totalTickets, currentRound] = await Promise.all([
         contractService.getTicketPrice(),
         contractService.getPlayerTickets(account),
         contractService.getLotteryBlockStatus(),
         contractService.getCurrentPrizePool(),
-        contractService.getCurrentTotalTickets()
+        contractService.getCurrentTotalTickets(),
+        contractService.getCurrentRound()
       ]);
       
       setContractState(prev => ({
@@ -197,7 +201,8 @@ export const LotteryProvider = ({ children, account }) => {
           blocksUntilDraw: blockStatusData.blocksUntilDraw.toString()
         },
         currentPrizePool: currentPrizePool.toString(),
-        totalTickets: totalTickets.toString()
+        totalTickets: totalTickets.toString(),
+        currentRound: currentRound.toString()
       }));
       
       setTickets(playerTickets);
@@ -316,7 +321,8 @@ export const LotteryProvider = ({ children, account }) => {
       isContractReady: contractState.isContractReady,
       blockStatus: contractState.blockStatus,
       currentPrizePool: contractState.currentPrizePool,
-      totalTickets: contractState.totalTickets
+      totalTickets: contractState.totalTickets,
+      currentRound: contractState.currentRound
     },
     tickets,
     uiState: {

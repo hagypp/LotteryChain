@@ -4,7 +4,7 @@
   border-radius: 1rem;
   padding: 1.5rem;
   backdrop-filter: blur(8px);
-  position: relative; /* הוספת position: relative כדי שהכפתורים במיקום אבסולוטי יתמקמו נכון */
+  position: relative; 
 }
 
 .ticket-category-tabs {
@@ -152,7 +152,7 @@
 /* Fixed styles for fixed height and horizontal scrolling */
 .fixed-height-container {
   position: relative;
-  height: 380px; /* Fixed height */
+  height: 440px; /* Fixed height */
   width: 100%;
   margin-bottom: 1rem;
 }
@@ -183,7 +183,7 @@
 /* Modified tickets list for 2 rows of 4 tickets each */
 .tickets-list {
   display: grid;
-  grid-template-columns: repeat(4, 270px); 
+  grid-template-columns: repeat(4, 290px); 
   grid-template-rows: repeat(2, auto);
   grid-auto-flow: column; 
   gap: 1rem;
@@ -193,7 +193,7 @@
 
 /* Fixed width for ticket items */
 .ticket-item {
-  width: 225px;
+  width: 240px;
 }
 
 /* Improved Scroll buttons */
@@ -223,11 +223,11 @@
 }
 
 .scroll-left {
-  left: 10px; /* מיקום מתוקן */
+  left: 10px;
 }
 
 .scroll-right {
-  right: 10px; /* מיקום מתוקן */
+  right: 10px; 
 }
 
 /* Loading indicator */
