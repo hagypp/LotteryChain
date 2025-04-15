@@ -27,7 +27,9 @@ const TicketsList = React.memo(({ tickets, ticketCategory, setTicketCategory, is
     const STATUS_MAP = useMemo(() => ({
         0: 'Active',
         1: 'In Lottery',
-        2: 'USED'
+        2: 'USED',
+        3: 'WON_SMALL_PRIZE',
+        4: 'WON_BIG_PRIZE'
     }), []);
     
     // Memoize the scroll checking function
@@ -91,6 +93,10 @@ const TicketsList = React.memo(({ tickets, ticketCategory, setTicketCategory, is
                 return tickets.filter(ticket => Number(ticket.status) === 1);
             case 'USED':
                 return tickets.filter(ticket => Number(ticket.status) === 2);
+            case 'WON_SMALL_PRIZE':
+                return tickets.filter(ticket => Number(ticket.status) === 3);
+            case 'WON_BIG_PRIZE':
+                return tickets.filter(ticket => Number(ticket.status) === 4);
             default:
                 return tickets;
         }
@@ -104,7 +110,9 @@ const TicketsList = React.memo(({ tickets, ticketCategory, setTicketCategory, is
         { key: 'all', label: 'All Tickets' },
         { key: 'active', label: 'Active' },
         { key: 'inLottery', label: 'In Lottery' },
-        { key: 'USED', label: 'USED' }
+        { key: 'USED', label: 'USED' },
+        { key: 'WON_SMALL_PRIZE', label: 'WON SMALL PRIZE' },
+        { key: 'WON_BIG_PRIZE', label: 'WON BIG PRIZE' }
     ], []);
 
     // Create memoized handler for ticket category selection
@@ -190,7 +198,7 @@ const TicketsList = React.memo(({ tickets, ticketCategory, setTicketCategory, is
                         ) : (
                             <div className="empty-state">
                                 No {ticketCategory !== 'all' ? STATUS_MAP[
-                                    {'active': 0, 'inLottery': 1, 'USED': 2}[ticketCategory]
+                                    {'active': 0, 'inLottery': 1, 'USED': 2, 'WON_SMALL_PRIZE' : 3 , 'WON_BIG_PRIZE' : 4}[ticketCategory]
                                 ] || '' : ''} tickets found.
                             </div>
                         )}
