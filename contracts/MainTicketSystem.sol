@@ -36,10 +36,12 @@ contract MainTicketSystem {
         emit LotteryRoundStatusChanged(false);
     }
 
-    function canCloseLottery() private {
+    function canCloseLottery() private returns (bool) {
         if (lotteryManager.canCloseLottery()){
             closeLotteryRound(); 
-        } 
+            return true;
+        }
+        return false;
     }
 
 
@@ -81,7 +83,11 @@ contract MainTicketSystem {
         returns (bool) 
     {   
         if (isLotteryActive()) {
-            canCloseLottery();  
+            if(canCloseLottery())
+            {
+                updateBlockStatus();
+                return false;
+            } 
         } 
         // else {
         //     canDrawWinner();
@@ -149,5 +155,9 @@ contract MainTicketSystem {
         return lotteryManager.getCurrentWinners();
     }
 
+    function getCurrentPrizePool() external view returns (uint256) {
+        return lotteryManager.getCurrentPrizePool();
+    }
+    
     receive() external payable {}
 }
