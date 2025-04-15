@@ -82,16 +82,30 @@ const SelectNumbers = ({ onClose, ticketId, onTicketAdded }) => {
 
             // Send the hash to the contract
             const result = await contractService.selectTicketsForLottery(
-                ticketId,  // Pass ticketId directly instead of an array
-                numbersHash, // Send the hash of 6 numbers
-                ticketHashWithStrong // Send the hash of 7 numbers (including the strongest)
+                ticketId,
+                numbersHash,
+                ticketHashWithStrong
             );
-    
+            
+            console.log('Transaction result:', result);
+            
             if (result.success) {
-                showNotification("Ticket submitted successfully!", 'success');
+                const outcome = result.resultFromEvent;
+            
+                if (outcome === false) {
+                    showNotification("Ticket submitted failed - cant do it now .", 'error');
+                } else if (outcome === true) {
+                    showNotification("Ticket submitted successfully!", 'success');
+                } else {
+                    showNotification("Ticket submitted, but the outcome is unknown.", 'info');
+                }
+            
                 onTicketAdded();
                 onClose();
+            } else {
+                showNotification("Ticket submission failed.", 'error');
             }
+            
         } catch (error) {
             console.error('Full error details:', error);
             showNotification(`Failed to enter ticket into lottery: ${error.message}`, 'error');

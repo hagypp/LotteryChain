@@ -12,6 +12,8 @@ contract MainTicketSystem {
     event LotteryRoundStatusChanged(bool isOpen);
     event BlockStatusUpdated(uint256 blocksUntilClose, uint256 blocksUntilDraw);
 
+    event TicketSelected(address indexed user, uint256 ticketId, bool success);
+
     constructor() {
         // Deploy sub-contracts
         i_owner = msg.sender;
@@ -82,10 +84,12 @@ contract MainTicketSystem {
         external  
         returns (bool) 
     {   
+        bool success = false;
         if (isLotteryActive()) {
             if(canCloseLottery())
             {
                 updateBlockStatus();
+                emit TicketSelected(msg.sender, _ticketId, false);
                 return false;
             } 
         } 
@@ -100,7 +104,11 @@ contract MainTicketSystem {
 
         updateBlockStatus();
         // Add ticket to lottery round
-        return lotteryManager.addParticipantAndPrizePool( msg.sender, _ticketId, _ticketHash, _ticketHashWithStrong, ticketManager.getTicketPrice()); 
+        success = lotteryManager.addParticipantAndPrizePool(msg.sender, _ticketId, _ticketHash, _ticketHashWithStrong, ticketManager.getTicketPrice());
+    
+        emit TicketSelected(msg.sender, _ticketId, success);
+
+        return success;
     }
 
     function drawLotteryWinner(bytes32 keccak256HashNumbers, bytes32 keccak256HashFull) public  {
