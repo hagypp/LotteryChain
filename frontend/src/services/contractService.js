@@ -543,6 +543,7 @@ async purchaseTicket() {
     async selectTicketsForLottery(ticketId, ticketHash, ticketHashWithStrong) {
         try {
             const contract = this.validateWriteRequirements();
+    
             // Ensure proper hex formatting
             if (!ticketHash.startsWith('0x')) {
                 ticketHash = "0x" + ticketHash;
@@ -550,12 +551,32 @@ async purchaseTicket() {
             if (!ticketHashWithStrong.startsWith('0x')) {
                 ticketHashWithStrong = "0x" + ticketHashWithStrong;
             }
-            await contract.methods.selectTicketsForLottery(ticketId, ticketHash, ticketHashWithStrong).send({ from: this.account });
-            return { success: true };
+    
+            // Send transaction
+            const receipt = await contract.methods
+                .selectTicketsForLottery(ticketId, ticketHash, ticketHashWithStrong)
+                .send({ from: this.account });
+
+            console.log("Transaction receipt:", receipt);
+            // Extract the event result
+            const event = receipt.events?.TicketSelected;
+    
+            let successFromEvent = null;
+            if (event && event.returnValues) {
+                successFromEvent = event.returnValues.success;
+            }
+    
+            return {
+                success: true,
+                resultFromEvent: successFromEvent, // true, false, or null if missing
+                txHash: receipt.transactionHash,
+            };
         } catch (error) {
             throw new Error(`Error selecting tickets for lottery: ${error.message}`);
         }
     }
+    
+    
 
 }
 

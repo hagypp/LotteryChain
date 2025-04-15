@@ -202,6 +202,16 @@
     {
         "anonymous": false,
         "inputs": [
+          { "indexed": true, "name": "user", "type": "address" },
+          { "indexed": false, "name": "ticketId", "type": "uint256" },
+          { "indexed": false, "name": "success", "type": "bool" }
+        ],
+        "name": "TicketSelected",
+        "type": "event"
+      },      
+    {
+        "anonymous": false,
+        "inputs": [
             {
                 "indexed": false,
                 "internalType": "uint256",
