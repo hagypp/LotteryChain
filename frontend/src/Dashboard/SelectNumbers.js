@@ -93,7 +93,7 @@ const SelectNumbers = ({ onClose, ticketId, onTicketAdded }) => {
                 const outcome = result.resultFromEvent;
             
                 if (outcome === false) {
-                    showNotification("Ticket submitted, but was not eligible for this round.", 'warning');
+                    showNotification("Ticket submitted failed - cant do it now .", 'error');
                 } else if (outcome === true) {
                     showNotification("Ticket submitted successfully!", 'success');
                 } else {
