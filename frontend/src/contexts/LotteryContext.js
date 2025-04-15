@@ -23,7 +23,8 @@ export const LotteryProvider = ({ children, account }) => {
     blockStatus: {
       blocksUntilClose: 'unknown',
       blocksUntilDraw: 'unknown'
-    }
+    },
+    currentPrizePool: '0'
   });
   
   const [tickets, setTickets] = useState([]);
@@ -110,11 +111,12 @@ export const LotteryProvider = ({ children, account }) => {
         await contractService.init();
         
         // Get initial data in parallel
-        const [lotteryStatus, blockStatusData, price, userTickets] = await Promise.all([
+        const [lotteryStatus, blockStatusData, price, userTickets,currentPrizePool] = await Promise.all([
           contractService.isLotteryActive(),
           contractService.getLotteryBlockStatus(),
           contractService.getTicketPrice(),
-          account ? contractService.getPlayerTickets(account) : []
+          account ? contractService.getPlayerTickets(account) : [],
+          contractService.getCurrentPrizePool()
         ]);
         
         setContractState({
@@ -124,7 +126,8 @@ export const LotteryProvider = ({ children, account }) => {
           blockStatus: {
             blocksUntilClose: blockStatusData.blocksUntilClose.toString(),
             blocksUntilDraw: blockStatusData.blocksUntilDraw.toString()
-          }
+          },
+          currentPrizePool: currentPrizePool.toString()
         });
         
         setTickets(userTickets);
@@ -175,10 +178,11 @@ export const LotteryProvider = ({ children, account }) => {
     }
     
     try {
-      const [price, playerTickets, blockStatusData] = await Promise.all([
+      const [price, playerTickets, blockStatusData,currentPrizePool] = await Promise.all([
         contractService.getTicketPrice(),
         contractService.getPlayerTickets(account),
-        contractService.getLotteryBlockStatus()
+        contractService.getLotteryBlockStatus(),
+        contractService.getCurrentPrizePool()
       ]);
       
       setContractState(prev => ({
@@ -187,7 +191,8 @@ export const LotteryProvider = ({ children, account }) => {
         blockStatus: {
           blocksUntilClose: blockStatusData.blocksUntilClose.toString(),
           blocksUntilDraw: blockStatusData.blocksUntilDraw.toString()
-        }
+        },
+        currentPrizePool: currentPrizePool.toString()
       }));
       
       setTickets(playerTickets);
@@ -304,7 +309,8 @@ export const LotteryProvider = ({ children, account }) => {
       ticketPrice: contractState.ticketPrice,
       isLotteryActive: contractState.isLotteryActive,
       isContractReady: contractState.isContractReady,
-      blockStatus: contractState.blockStatus
+      blockStatus: contractState.blockStatus,
+      currentPrizePool: contractState.currentPrizePool
     },
     tickets,
     uiState: {
