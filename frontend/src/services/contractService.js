@@ -519,6 +519,16 @@ async purchaseTicket() {
         }
     }
 
+    async getCurrentPrizePool() {
+        try {
+            const contract = this.getReadContract();
+            const prizePool = await contract.methods.getCurrentPrizePool().call();
+            return prizePool;
+        } catch (error) {
+            throw new Error(`Error fetching current prize pool: ${error.message}`);
+        }
+    }
+
 
     async selectTicketsForLottery(ticketId, ticketHash, ticketHashWithStrong) {
         try {
