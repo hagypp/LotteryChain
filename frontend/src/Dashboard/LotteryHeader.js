@@ -3,7 +3,7 @@ import { useLottery } from '../contexts/LotteryContext';
 
 const LotteryHeader = () => {
   const { 
-    contractState: { ticketPrice, isLotteryActive, blockStatus },
+    contractState: { ticketPrice, isLotteryActive, blockStatus, currentPrizePool },
     tickets,
     uiState: { isLoading },
     actions: { handlePurchase, handleCloseLottery, handleDrawWinner }
@@ -27,6 +27,11 @@ const LotteryHeader = () => {
         <div className="header-info-item">
           <span className="header-info-label">ACTIVE TICKETS</span>
           <span className="header-info-value">{tickets.length}</span>
+        </div>
+
+      <div className="header-info-item">
+          <span className="header-info-label">PRIZE POLL</span>
+          <span className="header-info-value">{currentPrizePool}</span>
         </div>
       </div>
       
