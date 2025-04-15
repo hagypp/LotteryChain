@@ -557,6 +557,15 @@ async purchaseTicket() {
         }
     }
 
+    async getCurrentRound() {
+    try {
+        const contract = this.getReadContract();
+        const currentRound = await contract.methods.getCurrentRound().call();
+        return currentRound;
+    } catch (error) {
+        throw new Error(`Error fetching current round: ${error.message}`);
+    }
+}
 }
 
 const contractService = new ContractService();
