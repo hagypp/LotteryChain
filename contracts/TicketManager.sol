@@ -5,7 +5,8 @@ pragma solidity ^0.8.0;
         ACTIVE,         // Ticket is purchased but not in any lottery round 0 
         IN_LOTTERY,     // Ticket is currently in an active lottery round   1
         USED,           // Ticket was used in a past lottery round           2
-        EXPIRED         // Ticket is no longer valid                         3
+        WON_SMALL_PRIZE, // Ticket won a small prize                      3
+        WON_BIG_PRIZE    // Ticket won a big prize                        4
     }
 
     struct TicketData {
@@ -167,4 +168,23 @@ contract TicketManager {
     function setTicketPrice(uint256 _newPrice) external onlyOwner {
         ticketPrice = _newPrice;
     }
+
+
+    function markTicketAsWinner(address _player, uint256 _ticketId, bool isBigPrize) 
+    external 
+    returns (bool) {
+    TicketData[] storage tickets = playerTickets[_player];
+    uint256 length = tickets.length;
+
+    for (uint256 i; i < length; ++i) {
+        if (tickets[i].id == _ticketId) {
+            require(tickets[i].status == TicketStatus.IN_LOTTERY, "Ticket is not in the lottery");
+
+            tickets[i].status = isBigPrize ? TicketStatus.WON_BIG_PRIZE : TicketStatus.WON_SMALL_PRIZE;
+            return true;
+        }
+    }
+
+    return false;
+}
 }
