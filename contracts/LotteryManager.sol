@@ -337,8 +337,13 @@ contract LotteryManager {
         address[] memory participants,
         address[] memory smallPrizeWinners,
         address[] memory bigPrizeWinners,
-        lotteryStatus status
+        lotteryStatus status,
+        uint256 bigPrize,
+        uint256 smallPrize,
+        uint256 commission,
+        uint256 totalTickets
     ) {
+        require(_index <= currentLotteryRound && _index>=1, "Invalid lottery round index");
         LotteryRound storage round = lotteryRounds[_index];
         return (
             round.roundNumber,
@@ -346,7 +351,11 @@ contract LotteryManager {
             round.participants,
             round.smallPrizeWinners,
             round.bigPrizeWinners,
-            round.status
+            round.status,
+            round.bigPrize,
+            round.smallPrize,
+            round.commission,
+            round.totalTickets
         );
     }
 

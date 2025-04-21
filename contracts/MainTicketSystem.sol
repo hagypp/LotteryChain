@@ -143,6 +143,21 @@ contract MainTicketSystem {
         return lotteryManager.getAllLotteryRoundsInfo();
     }
 
+    function getLotteryRoundInfo(uint256 _index) external view returns (
+        uint256 roundNumber,
+        uint256 totalPrizePool,
+        address[] memory participants,
+        address[] memory smallPrizeWinners,
+        address[] memory bigPrizeWinners,
+        lotteryStatus status,
+        uint256 bigPrize,
+        uint256 smallPrize,
+        uint256 commission,
+        uint256 totalTickets
+    ) {
+        return lotteryManager.getLotteryRoundInfo(_index);
+    }
+
     function getPlayerTickets(address _player) external view returns (TicketData[] memory) {
         return ticketManager.getPlayerTickets(_player);
     }
