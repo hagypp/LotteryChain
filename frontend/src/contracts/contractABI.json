@@ -266,6 +266,70 @@
         "type": "function"
     },
     {
+        "inputs": [
+          {
+            "internalType": "uint256",
+            "name": "_index",
+            "type": "uint256"
+          }
+        ],
+        "name": "getLotteryRoundInfo",
+        "outputs": [
+          {
+            "internalType": "uint256",
+            "name": "roundNumber",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "totalPrizePool",
+            "type": "uint256"
+          },
+          {
+            "internalType": "address[]",
+            "name": "participants",
+            "type": "address[]"
+          },
+          {
+            "internalType": "address[]",
+            "name": "smallPrizeWinners",
+            "type": "address[]"
+          },
+          {
+            "internalType": "address[]",
+            "name": "bigPrizeWinners",
+            "type": "address[]"
+          },
+          {
+            "internalType": "enum lotteryStatus",
+            "name": "status",
+            "type": "uint8"
+          },
+          {
+            "internalType": "uint256",
+            "name": "bigPrize",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "smallPrize",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "commission",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "totalTickets",
+            "type": "uint256"
+          }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+      },      
+    {
         "constant": true,
         "inputs": [],
         "name": "getAllLotteryRoundsInfo",
