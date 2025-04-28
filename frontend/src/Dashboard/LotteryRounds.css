@@ -1,187 +1,572 @@
-.main {
+/* Main Layout - Matching Dashboard Style */
+.lottery-rounds-main {
   min-height: 100vh;
-  background: linear-gradient(135deg, #1a1a2e, #16213e);
+  background: linear-gradient(135deg, #1a1a2e, #16213e); /* Matching Dashboard gradient */
   color: white;
-  padding: 2rem;
-  position: relative;
-  overflow: hidden;
+  padding: 2.5rem 10rem;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
 }
 
-.main::before {
-  content: '';
-  position: absolute;
-  width: 200px;
-  height: 300px;
-  background: radial-gradient(circle, #FF6B6B 80%, transparent 100%);
-  top: -100px;
-  right: -100px;
-  opacity: 0.1;
-  animation: float 10s infinite ease-in-out;
-}
-
-.title {
-  font-size: 3.5rem;
+/* Page Title - Aligned with Dashboard */
+.lottery-rounds-title {
+  font-size: 2rem;
   text-align: center;
   margin-bottom: 1rem;
-  background: linear-gradient(45deg, #FF6B6B, #FF8E53);
-  -webkit-background-clip: text;
-  background-clip: text;
-  -webkit-text-fill-color: transparent;
-  animation: glow 2s ease-in-out infinite alternate;
+  font-weight: 700;
+  color: #FFD700;
 }
 
-.subtitle {
+.lottery-rounds-subtitle {
   text-align: center;
-  font-size: 1.5rem;
-  color: #FF8E53;
-  margin-bottom: 0.5rem;
-  font-weight: 500;
+  font-size: 1rem;
+  color: rgba(255, 255, 255, 0.8);
+  margin-bottom: 2rem;
+  font-weight: 300;
 }
 
+/* Lottery Rounds Container */
 .lottery-rounds-container {
-  max-width: 600px;
+  max-width: 1200px;
   margin: 0 auto;
 }
 
-.lottery-rounds-controls {
+/* New Side-by-Side Layout */
+.lottery-main-content {
+  display: grid;
+  grid-template-columns: minmax(300px, 1fr) 2fr;
+  gap: 1.5rem;
+  margin-bottom: 2rem;
+}
+
+@media (max-width: 1024px) {
+  .lottery-main-content {
+    grid-template-columns: 1fr;
+  }
+  
+  .lottery-rounds-main {
+    padding: 2.5rem 2rem;
+  }
+}
+
+/* Search Card - Matching Dashboard panel style */
+.lottery-rounds-search-card {
+  background: rgba(255, 255, 255, 0.03);
+  border-radius: 0.75rem;
+  padding: 1.5rem;
+  backdrop-filter: blur(8px);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  text-align: center;
   display: flex;
+  flex-direction: column;
+  align-items: center;
+  height: 100%;
+}
+
+.card-icon {
+  font-size: 2rem;
+  margin-bottom: 1rem;
+  background: linear-gradient(45deg, #3B82F6, #60A5FA);
+  border-radius: 50%;
+  width: 60px;
+  height: 60px;
+  display: flex;
+  align-items: center;
   justify-content: center;
+  box-shadow: 0 4px 6px rgba(59, 130, 246, 0.25);
+}
+
+.card-title {
+  font-size: 1.5rem;
+  color: white;
+  margin-bottom: 0.75rem;
+  font-weight: 700;
+}
+
+.card-description {
+  color: rgba(255, 255, 255, 0.7);
+  margin-bottom: 1.5rem;
+  font-size: 0.875rem;
+  line-height: 1.5;
+}
+
+/* Header with search and title in same row */
+.rounds-header-container {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1.5rem;
+  flex-wrap: wrap;
   gap: 1rem;
 }
 
-.lottery-rounds-controls input {
-  padding: 0.5rem;
-  font-size: 1rem;
-  border-radius: 10px;
-  border: 1px solid #ddd;
+.rounds-header-left {
+  flex: 1;
+  min-width: 200px;
 }
 
-.lottery-rounds-controls button {
-  padding: 0.5rem 1rem;
-  background-color: #FF6B6B;
+.rounds-header-right {
+  flex: 2;
+  display: flex;
+  justify-content: flex-end;
+}
+
+/* Search Controls */
+.rounds-search-bar {
+  max-width: 500px;
+  width: 100%;
+}
+
+.search-input-group {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.round-input {
+  padding: 0.75rem 1rem;
+  font-size: 0.875rem;
+  border-radius: 0.5rem;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(0, 0, 0, 0.15);
+  color: white;
+  transition: all 0.2s ease;
+  flex: 1;
+  min-width: 120px;
+}
+
+.round-input:focus {
+  outline: none;
+  border-color: #3B82F6;
+  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.3);
+}
+
+.search-button {
+  background: linear-gradient(45deg, #3B82F6, #60A5FA);
   color: white;
   border: none;
-  border-radius: 10px;
+  border-radius: 999px;
+  padding: 0.625rem 1.5rem;
+  font-size: 0.875rem;
+  font-weight: 600;
   cursor: pointer;
-  font-size: 1rem;
-  transition: background 0.3s ease;
+  transition: all 0.2s ease;
+  box-shadow: 0 2px 6px rgba(59, 130, 246, 0.25);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  white-space: nowrap;
 }
 
-.lottery-rounds-controls button:disabled {
-  background-color: #aaa;
+.search-button:hover:not(:disabled) {
+  transform: translateY(-1px);
+  box-shadow: 0 3px 8px rgba(59, 130, 246, 0.3);
 }
 
-.lottery-rounds-controls button:hover:not(:disabled) {
-  background-color: #FF8E53;
+.search-button:active:not(:disabled) {
+  transform: translateY(0);
+  box-shadow: 0 1px 3px rgba(59, 130, 246, 0.25);
 }
 
+.search-button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* Loader */
+.loader {
+  width: 16px;
+  height: 16px;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  border-radius: 50%;
+  border-top-color: white;
+  animation: spin 1s ease-in-out infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+/* Error and Connection Messages */
 .lottery-rounds-error {
   color: #FF6B6B;
   text-align: center;
-  margin-top: 1rem;
+  margin-top: 0.75rem;
+  padding: 0.75rem;
+  background: rgba(255, 107, 107, 0.1);
+  border-radius: 0.5rem;
+  border: 1px solid rgba(255, 107, 107, 0.2);
+  font-size: 0.75rem;
+  width: 100%;
 }
 
+.connect-wallet-message {
+  text-align: center;
+  margin-top: 1rem;
+  color: rgba(255, 255, 255, 0.7);
+  padding: 1rem;
+  background: rgba(0, 0, 0, 0.15);
+  border-radius: 0.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  width: 100%;
+  font-size: 0.875rem;
+}
+
+.wallet-icon {
+  font-size: 1.2rem;
+}
+
+/* Recent Rounds Section - Updated to match Ticket List */
+.recent-rounds-section {
+  background: rgba(255, 255, 255, 0.05); /* Match the ticket-item background */
+  border-radius: 0.75rem;
+  padding: 1.5rem;
+  backdrop-filter: blur(8px);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.recent-rounds-title {
+  font-size: 1.5rem;
+  color: #FFD700;
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.rounds-counter {
+  font-size: 0.875rem;
+  opacity: 0.8;
+  font-weight: normal;
+  background: rgba(255, 215, 0, 0.15);
+  padding: 0.25rem 0.75rem;
+  border-radius: 999px;
+}
+
+.recent-rounds-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 1rem;
+  margin-top: 1.5rem;
+}
+
+/* Round card updated to match ticket-item design */
+.recent-round-card {
+  background: rgba(255, 255, 255, 0.05); /* Match the ticket-item background */
+  border-radius: 1rem;
+  padding: 1.5rem;
+  border: 1px solid transparent;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+  transition: all 0.3s ease;
+  cursor: pointer;
+}
+
+.recent-round-card:hover {
+  background: rgba(255, 255, 255, 0.1);
+  border-color: rgba(255, 255, 255, 0.2);
+  transform: translateY(-5px); /* Same hover effect as tickets */
+  box-shadow: 0 10px 15px rgba(0, 0, 0, 0.1);
+}
+
+.round-number {
+  font-size: 1.25rem;
+  font-weight: 700;
+  margin-bottom: 0.5rem;
+  color: #FFE66D; /* Same as ticket-number */
+}
+
+.round-status {
+  display: inline-block;
+  padding: 0.25rem 0.75rem;
+  border-radius: 999px;
+  font-weight: 600;
+  font-size: 0.75rem;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  margin-bottom: 0.75rem;
+}
+
+.status-open {
+  background: rgba(52, 211, 153, 0.2); /* Matching ticket-status.active */
+  color: #34D399;
+}
+
+.status-closed {
+  background: rgba(251, 191, 36, 0.2); /* Matching ticket-status.in-lottery */
+  color: #FBD38D;
+}
+
+.status-finalized {
+  background: rgba(99, 102, 241, 0.2); /* Matching ticket-status.used */
+  color: #6366F1;
+}
+
+.round-prize,
+.round-tickets {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-top: 0.5rem;
+  color: rgba(255, 255, 255, 0.8);
+  font-size: 0.875rem;
+}
+
+.prize-icon,
+.ticket-icon {
+  font-size: 1rem;
+}
+
+.prize-value,
+.ticket-value {
+  font-weight: 600;
+}
+
+/* Modal Styles - Matching Dashboard aesthetic */
 .modal-overlay {
   position: fixed;
   top: 0;
   left: 0;
   right: 0;
   bottom: 0;
-  background: rgba(0, 0, 0, 0.7);
+  background: rgba(0, 0, 0, 0.75);
   z-index: 1000;
   display: flex;
   align-items: center;
   justify-content: center;
-  animation: fadeIn 0.3s ease-in-out;
+  backdrop-filter: blur(4px);
 }
 
 .modal-content {
-  background: rgba(255, 255, 255, 0.05);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  border-radius: 20px;
-  padding: 2rem;
+  background: linear-gradient(135deg, #1a1a2e, #16213e); /* Match main background */
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  border-radius: 0.75rem;
+  padding: 1.5rem;
   width: 90%;
-  max-width: 600px;
+  max-width: 800px;
   color: white;
-  backdrop-filter: blur(10px);
-  animation: slideUp 0.3s ease-in-out;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
+  max-height: 85vh;
+  overflow-y: auto;
 }
 
-.modal-content h2 {
-  color: #FFE66D;
-  font-size: 2rem;
-  margin-bottom: 1rem;
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1.5rem;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.modal-header h2 {
+  font-size: 1.75rem;
+  color: #FFD700;
+  margin: 0;
+}
+
+/* Prize Info Section */
+.prize-info-section {
+  margin-bottom: 1.5rem;
+}
+
+.prize-info-item {
+  background: rgba(0, 0, 0, 0.15);
+  border-radius: 0.5rem;
+  padding: 1rem;
   text-align: center;
+  margin-bottom: 1rem;
+  border: 1px solid rgba(255, 255, 255, 0.05);
 }
 
-.modal-content p {
-  margin: 0.5rem 0;
-  font-size: 1.1rem;
+.main-prize {
+  background: rgba(0, 0, 0, 0.2);
+  border: 1px solid rgba(59, 130, 246, 0.1);
 }
 
-.modal-content button {
-  margin-top: 1.5rem;
-  background: #FF6B6B;
-  color: white;
-  padding: 0.7rem 1.5rem;
-  border: none;
-  border-radius: 12px;
-  font-size: 1rem;
-  cursor: pointer;
-  transition: background 0.3s ease;
+.prize-label {
+  color: rgba(255, 255, 255, 0.7);
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  margin-bottom: 0.25rem;
+  font-weight: 600;
 }
 
-.modal-content button:hover {
-  background: #FF8E53;
+.prize-value {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #FFD700;
 }
 
-@keyframes fadeIn {
-  from { opacity: 0; }
-  to { opacity: 1; }
+.prize-info-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 1rem;
 }
 
-@keyframes slideUp {
-  from {
-    transform: translateY(40px);
-    opacity: 0;
-  }
-  to {
-    transform: translateY(0);
-    opacity: 1;
-  }
-}
-
-@keyframes glow {
-  from {
-    text-shadow: 0 0 10px #FF6B6B, 0 0 20px #FF6B6B, 0 0 30px #FF8E53;
-  }
-  to {
-    text-shadow: 0 0 20px #FF6B6B, 0 0 30px #FF6B6B, 0 0 40px #FF8E53;
-  }
-}
-
-@keyframes float {
-  0%, 100% { transform: translate(0, 0) rotate(0deg); }
-  50% { transform: translate(30px, 30px) rotate(180deg); }
-}
-
-@media (max-width: 1200px) {
-  .lottery-rounds-controls {
-    flex-direction: column;
-  }
-
-  .lottery-rounds-controls input,
-  .lottery-rounds-controls button {
-    width: 100%;
-  }
+/* Winners & Participants Sections */
+.winners-participants-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
 }
 
 @media (max-width: 768px) {
-  .title {
-    font-size: 2.5rem;
+  .winners-participants-grid {
+    grid-template-columns: 1fr;
   }
+  
+  .prize-info-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .rounds-header-container {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  
+  .rounds-header-left, 
+  .rounds-header-right {
+    width: 100%;
+  }
+  
+  .rounds-header-right {
+    justify-content: flex-start;
+  }
+  
+  .rounds-search-bar {
+    max-width: 100%;
+  }
+}
 
+.winners-section,
+.participants-section {
+  background: rgba(0, 0, 0, 0.15);
+  border-radius: 0.5rem;
+  padding: 1.25rem;
+  border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.winners-section h3,
+.participants-section h3 {
+  color: #FFD700;
+  font-size: 1.25rem;
+  margin-top: 0;
+  margin-bottom: 1rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  padding-bottom: 0.5rem;
+}
+
+.winner-category {
+  margin-bottom: 1.25rem;
+}
+
+.winner-category h4 {
+  color: #3B82F6;
+  margin-bottom: 0.75rem;
+  font-size: 1rem;
+  font-weight: 600;
+}
+
+.winners-list,
+.participants-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.winner-item,
+.participant-item {
+  background: rgba(0, 0, 0, 0.2);
+  border-radius: 999px;
+  padding: 0.375rem 0.75rem;
+  display: flex;
+  align-items: center;
+  gap: 0.375rem;
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  transition: all 0.2s ease;
+  font-size: 0.75rem;
+}
+
+.winner-item:hover,
+.participant-item:hover {
+  background: rgba(59, 130, 246, 0.1);
+  border-color: rgba(59, 130, 246, 0.2);
+}
+
+.winner-icon,
+.participant-icon {
+  font-size: 0.875rem;
+}
+
+.no-winners,
+.no-participants {
+  color: rgba(255, 255, 255, 0.5);
+  font-style: italic;
+  font-size: 0.875rem;
+}
+
+.close-modal-button {
+  display: block;
+  margin: 0 auto;
+  padding: 0.625rem 1.5rem;
+  background: linear-gradient(45deg, #3B82F6, #60A5FA);
+  color: white;
+  border: none;
+  border-radius: 999px;
+  font-size: 0.875rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: 0 2px 6px rgba(59, 130, 246, 0.25);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.close-modal-button:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 3px 8px rgba(59, 130, 246, 0.3);
+}
+
+.close-modal-button:active {
+  transform: translateY(0);
+  box-shadow: 0 1px 3px rgba(59, 130, 246, 0.25);
+}
+
+/* Responsive adjustments */
+@media (max-width: 480px) {
+  .lottery-rounds-title {
+    font-size: 1.75rem;
+  }
+  
+  .lottery-rounds-subtitle {
+    font-size: 0.875rem;
+  }
+  
+  .card-title {
+    font-size: 1.25rem;
+  }
+  
+  .recent-rounds-grid {
+    grid-template-columns: 1fr;
+  }
+  
   .modal-content {
-    width: 95%;
+    padding: 1rem;
+  }
+  
+  .modal-header h2 {
+    font-size: 1.5rem;
+  }
+  
+  .search-input-group {
+    flex-direction: column;
   }
 }
