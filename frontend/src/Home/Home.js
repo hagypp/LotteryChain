@@ -52,11 +52,6 @@ const Home = ({ onConnect }) => {
       </div>
 
       <MetaMaskConnect onConnect={onConnect} />
-
-      <footer className="footer">
-        <p>Powered by Blockchain Technology 🌐</p>
-        <p>Designed for Fun and Fairness!</p>
-      </footer>
     </div>
   );
 };

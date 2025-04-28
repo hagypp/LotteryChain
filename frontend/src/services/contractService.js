@@ -505,7 +505,32 @@ async purchaseTicket() {
             throw new Error(`Error fetching lottery rounds info: ${error.message}`);
         }
     }
-    
+
+    async getLotteryRoundInfo(roundIndex) {
+        try {
+          const contract = this.getReadContract();
+          const result = await contract.methods.getLotteryRoundInfo(roundIndex).call();
+      
+          // This is the correct way to access the named values
+          return {
+            roundNumber: Number(result.roundNumber),
+            totalPrizePool: result.totalPrizePool.toString(),
+            participants: result.participants || [],
+            smallPrizeWinners: result.smallPrizeWinners || [],
+            bigPrizeWinners: result.bigPrizeWinners || [],
+            status: Number(result.status),
+            bigPrize: result.bigPrize.toString(),
+            smallPrize: result.smallPrize.toString(),
+            commission: result.commission.toString(),
+            totalTickets: Number(result.totalTickets)
+          };
+        } catch (error) {
+          console.error(`Error fetching round ${roundIndex}:`, error);
+          throw new Error(`Error fetching round ${roundIndex}: ${error.message}`);
+        }
+      }
+      
+      
     async getCurrentWinners() {
         try {
             const contract = this.getReadContract();
