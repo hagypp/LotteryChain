@@ -17,3 +17,6 @@ node_modules
 ignition/deployments/chain-31337
 /.hypothesis
 /build
+tests/__pycache__/test_main_ticket_system.cpython-311-pytest-8.3.4.pyc
+tests/__pycache__/conftest.cpython-311-pytest-8.3.4.pyc
+.vscode/settings.json
