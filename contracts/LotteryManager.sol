@@ -288,6 +288,7 @@ contract LotteryManager {
             }
         } else if (smallPrizePool > 0) {
             // If no small prize winners, send the small prize pool to the owner
+            currentRound.commission += smallPrizePool; // Add to commission if no winners
             payable(i_owner).transfer(smallPrizePool);
         }
 
@@ -298,6 +299,7 @@ contract LotteryManager {
             }
         } else if (bigPrizePool > 0) {
             // If no big prize winners, send the big prize pool to the owner
+            currentRound.commission += bigPrizePool; // Add to commission if no winners
             payable(i_owner).transfer(bigPrizePool);
         }
 
