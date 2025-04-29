@@ -393,8 +393,32 @@
         ],
         "stateMutability": "view",
         "type": "function"
+      },
+      {
+        "anonymous": false,
+        "inputs": [
+          {
+            "indexed": false,
+            "internalType": "uint256",
+            "name": "roundNumber",
+            "type": "uint256"
+          },
+          {
+            "indexed": false,
+            "internalType": "uint256",
+            "name": "totalTickets",
+            "type": "uint256"
+          },
+          {
+            "indexed": false,
+            "internalType": "uint256",
+            "name": "prizePool",
+            "type": "uint256"
+          }
+        ],
+        "name": "TicketEnteredLottery",
+        "type": "event"
       }
-      
-        
+           
 ]
 
