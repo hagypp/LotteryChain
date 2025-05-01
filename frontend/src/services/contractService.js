@@ -508,6 +508,17 @@ async purchaseTicket() {
 
     async getLotteryRoundInfo(roundIndex) {
         try {
+
+        if (roundIndex <= 0) {
+            throw new Error("Invalid round index.");
+        }
+        const currentRound = await this.getCurrentRound();
+        if (roundIndex > currentRound) {
+            throw new Error("Round index exceeds current round.");
+        }
+        console.log("Fetching round info for index:", roundIndex);
+        console.log("Current round:", await this.getCurrentRound());
+
           const contract = this.getReadContract();
           const result = await contract.methods.getLotteryRoundInfo(roundIndex).call();
       
@@ -611,7 +622,27 @@ async purchaseTicket() {
     } catch (error) {
         throw new Error(`Error fetching current round: ${error.message}`);
     }
-}
+    }
+
+    async getFLEX_COMMISSION() {
+        try {
+            const contract = this.getReadContract();
+            const commission = await contract.methods.getFLEX_COMMISSION().call();
+            return commission;
+        } catch (error) {
+            throw new Error(`Error fetching FLEX_COMMISSION: ${error.message}`);
+        }
+    }
+
+    async getSMALL_PRIZE_PERCENTAGE() {
+        try {
+            const contract = this.getReadContract();
+            const percentage = await contract.methods.getSMALL_PRIZE_PERCENTAGE().call();
+            return percentage;
+        } catch (error) {
+            throw new Error(`Error fetching SMALL_PRIZE_PERCENTAGE: ${error.message}`);
+        }
+    }
 }
 
 const contractService = new ContractService();
