@@ -8,6 +8,12 @@ const LotteryHeader = () => {
     actions: { handlePurchase, handleCloseLottery, handleDrawWinner }
   } = useLottery();
 
+  const formatEth = (value) => {
+    if (!value) return '0';
+    // Convert Wei to ETH
+    return (Number(value) / 1e18).toFixed(6);
+  };
+
   return (
     <div className="dashboard-header-row">
       <div className="header-info-container">
@@ -22,11 +28,11 @@ const LotteryHeader = () => {
           <span className="header-info-label">LOTTERY ROUND</span>
           <span className="header-info-value">{currentRound}</span>
         </div>
-        
+      
         <div className="header-info-item">
           <span className="header-info-label">TICKET PRICE</span>
-          <span className="header-info-value">{ticketPrice} ETH</span>
-        </div>
+          <span className="header-info-value">{Number(ticketPrice).toFixed(6)} ETH</span>
+          </div>
         
         <div className="header-info-item">
           <span className="header-info-label">TICKETS IN THE LOTTERY</span>
@@ -35,7 +41,7 @@ const LotteryHeader = () => {
 
       <div className="header-info-item">
           <span className="header-info-label">PRIZE POLL</span>
-          <span className="header-info-value">{currentPrizePool}</span>
+          <span className="header-info-value">{formatEth(currentPrizePool)} ETH</span>
         </div>
       </div>
       

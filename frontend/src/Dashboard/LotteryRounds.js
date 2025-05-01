@@ -11,12 +11,27 @@ const LotteryRounds = ({ isContractReady }) => {
   const [latestRound, setLatestRound] = useState(null);
   const [recentRounds, setRecentRounds] = useState([]);
 
+  const [flexCommission, setFlexCommission] = useState(null);
+  const [smallPrizePercentage, setSmallPrizePercentage] = useState(null);
+
   // Fetch latest round on component mount if contract is ready
   useEffect(() => {
     if (isContractReady) {
       fetchLatestRoundInfo();
+      fetchStaticPercentages();
     }
   }, [isContractReady]);
+
+  const fetchStaticPercentages = async () => {
+    try {
+      const commission = await contractService.getFLEX_COMMISSION();
+      const percentage = await contractService.getSMALL_PRIZE_PERCENTAGE();
+      setFlexCommission(Number(commission));
+      setSmallPrizePercentage(Number(percentage));
+    } catch (error) {
+      console.error("Failed to fetch static percentages:", error);
+    }
+  };
 
   const fetchLatestRoundInfo = async () => {
     try {
@@ -86,14 +101,32 @@ const LotteryRounds = ({ isContractReady }) => {
     return (Number(value) / 1e18).toFixed(6);
   };
 
-  const fetchRoundByIndex = async () => {
-    if (!isContractReady || roundInput === '') return;
+  const fetchRoundByIndex = async (roundNumberInput) => {
+    // Make sure we have a valid input to work with
+    let roundNumberStr;
+    
+    // Handle both direct values and potential React events
+    if (roundNumberInput && roundNumberInput.target) {
+      // This is likely a React event object, not what we want
+      roundNumberStr = roundInput.toString();
+    } else {
+      // This should be a proper value (either direct number or from state)
+      roundNumberStr = roundNumberInput ? roundNumberInput.toString() : roundInput.toString();
+    }
 
+    if (!isContractReady || !roundNumberStr || roundNumberStr === '') {
+      return;
+    }
+  
     try {
       setIsLoading(true);
       setError(null);
-
-      const data = await contractService.getLotteryRoundInfo(roundInput);
+      
+      // Make an explicit string to avoid circular reference issues
+      const roundNumberPrimitive = String(roundNumberStr);
+      console.log('Fetching round with index:', roundNumberPrimitive);
+      
+      const data = await contractService.getLotteryRoundInfo(roundNumberPrimitive);
       console.log('Fetched round data:', data);
 
       const {
@@ -109,27 +142,54 @@ const LotteryRounds = ({ isContractReady }) => {
         totalTickets
       } = data;
 
+      const numericStatus = Number(status);
+      const totalPrize = Number(totalPrizePool);
+      
+      let calculatedCommission = commission;
+      let calculatedSmallPrize = smallPrize;
+      let calculatedBigPrize = bigPrize;
+            
+      if (numericStatus === 0 || numericStatus === 1) {
+        const commissionRate = flexCommission ?? 10; // fallback if not loaded
+        const prizePercentage = smallPrizePercentage ?? 20;
+
+        calculatedCommission = (totalPrize * commissionRate) / 100;
+        const prizePoolAfterCommission = totalPrize - calculatedCommission;
+        calculatedSmallPrize = (prizePoolAfterCommission * prizePercentage) / 100;
+        calculatedBigPrize = prizePoolAfterCommission - calculatedSmallPrize;
+      }
+
+      
       setRoundData({
         roundNumber: Number(roundNumber),
         totalPrizePool,
         participants,
         smallPrizeWinners,
         bigPrizeWinners,
-        status: Number(status),
-        bigPrize,
-        smallPrize,
-        commission,
+        status: numericStatus,
+        bigPrize: calculatedBigPrize,
+        smallPrize: calculatedSmallPrize,
+        commission: calculatedCommission,
         totalTickets
       });
+      
 
       setIsModalOpen(true);
     } catch (err) {
-      console.error(err);
+      console.error("Error fetching round:", err);
       setError('Could not fetch round data. Make sure the round exists.');
       setRoundData(null);
     } finally {
       setIsLoading(false);
     }
+  };
+
+  const handleFetchRound = () => {
+    if (!roundInput || roundInput === '') {
+      setError('Please enter a valid round number');
+      return;
+    }
+    fetchRoundByIndex(roundInput);
   };
 
   return (
@@ -157,7 +217,7 @@ const LotteryRounds = ({ isContractReady }) => {
                   disabled={!isContractReady}
                 />
                 <button 
-                  onClick={fetchRoundByIndex} 
+                  onClick={handleFetchRound} 
                   disabled={isLoading || !roundInput || !isContractReady}
                   className="search-button"
                 >
@@ -184,9 +244,10 @@ const LotteryRounds = ({ isContractReady }) => {
                 key={index} 
                 className="recent-round-card"
                 onClick={() => {
-                  setRoundInput(round.roundNumber.toString());
-                  fetchRoundByIndex();
-                }}
+                  const roundStr = round.roundNumber.toString();
+                  setRoundInput(roundStr);
+                  fetchRoundByIndex(roundStr);
+                }}                
               >
                 <div className="round-number">Round #{round.roundNumber}</div>
                 <div className={`round-status ${getStatusClass(round.status)}`}>

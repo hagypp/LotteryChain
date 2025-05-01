@@ -203,6 +203,13 @@ contract MainTicketSystem {
     function getCurrentRound() external view returns (uint256) {
         return lotteryManager.getCurrentRound();
     }
+
+    function getSMALL_PRIZE_PERCENTAGE() external view returns (uint256) {
+        return lotteryManager.getSMALL_PRIZE_PERCENTAGE();
+    }
+    function getFLEX_COMMISSION() external view returns (uint256) {
+        return lotteryManager.getFLEX_COMMISSION();
+    }
     
     receive() external payable {}
 }

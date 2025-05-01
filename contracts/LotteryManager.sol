@@ -62,6 +62,12 @@ contract LotteryManager {
         ticketManager = ITicketManager(_ticketManagerAddress);
         startNewLotteryRound();
     }
+    function getSMALL_PRIZE_PERCENTAGE() external pure returns (uint256) {
+        return SMALL_PRIZE_PERCENTAGE;
+    }
+    function getFLEX_COMMISSION() external pure returns (uint256) {
+        return FLEX_COMMISSION;
+    }
 
   function getLotteryBlockStatus() external view returns (
         uint256 blocksUntilClose,
@@ -289,8 +295,8 @@ contract LotteryManager {
         } else if (smallPrizePool > 0) {
             // If no small prize winners, send the small prize pool to the owner
             currentRound.commission += smallPrizePool; // Add to commission if no winners
-            payable(i_owner).transfer(smallPrizePool);
-        }
+            currentRound.smallPrize = 0; // Reset small prize
+            }
 
         if (bigWinnerCount > 0) {
             uint256 bigPrizePerWinner = bigPrizePool / bigWinnerCount;
@@ -300,12 +306,12 @@ contract LotteryManager {
         } else if (bigPrizePool > 0) {
             // If no big prize winners, send the big prize pool to the owner
             currentRound.commission += bigPrizePool; // Add to commission if no winners
-            payable(i_owner).transfer(bigPrizePool);
+            currentRound.bigPrize = 0; // Reset big prize
         }
 
         // Send commission to owner
-        if (commission > 0) {
-            payable(i_owner).transfer(commission);
+        if (currentRound.commission > 0) {
+            payable(i_owner).transfer(currentRound.commission);
         }
 
         // // Mark all tickets as USED
