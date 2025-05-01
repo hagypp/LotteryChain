@@ -162,11 +162,10 @@ const TicketsList = React.memo(({ tickets, ticketCategory, setTicketCategory, is
                                         <span className="ticket-time">
                                             Purchased: {new Date(Number(ticket.creationTimestamp) * 1000).toLocaleString() || 'Loading...'}
                                         </span>
-                                        {Number(ticket.lotteryRound) > 0 && (
-                                            <span className="text-sm text-gray-400">
-                                                Lottery Round: {ticket.lotteryRound.toString()}
-                                            </span>
-                                        )}
+                                        <span className="text-sm text-gray-400">
+                                        Lottery Round: {Number(ticket.lotteryRound) > 0 ? ticket.lotteryRound.toString() : '—'}
+                                        </span>
+
                                     </div>
                                     <button 
                                         onClick={() => handleSelectForLottery(ticket.id)}

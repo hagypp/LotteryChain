@@ -20,6 +20,7 @@ class ContractService {
         this.listeners = [];
         this.blockStatusListeners = [];
         this.winnersAnnouncedListeners = [];
+        this.ticketEnteredListeners = []; // New listener array for ticket entry events
 
         this.initialized = false;
     }
@@ -43,6 +44,14 @@ class ContractService {
         this.winnersAnnouncedListeners.push(callback);
         return () => {
             this.winnersAnnouncedListeners = this.winnersAnnouncedListeners.filter(listener => listener !== callback);
+        };
+    }
+
+    // New method to add ticket entered listeners
+    addTicketEnteredListener(callback) {
+        this.ticketEnteredListeners.push(callback);
+        return () => {
+            this.ticketEnteredListeners = this.ticketEnteredListeners.filter(listener => listener !== callback);
         };
     }
 
@@ -94,6 +103,24 @@ class ContractService {
         });
         window.dispatchEvent(event);
     }
+    
+    // New method to notify ticket entered listeners
+    notifyTicketEnteredListeners(roundNumber, totalTickets, prizePool) {    
+        this.ticketEnteredListeners.forEach(listener => {
+            try {
+                listener({ roundNumber, totalTickets, prizePool });
+            } catch (error) {
+                console.error("Error in ticket entered listener:", error);
+            }
+        });
+    
+        const event = new CustomEvent('ticketEntered', { 
+            detail: { roundNumber, totalTickets, prizePool },
+            bubbles: true
+        });
+        window.dispatchEvent(event);
+    }
+    
     
     // Initialization: MetaMask + WebSocket
     async init() {
@@ -248,6 +275,36 @@ class ContractService {
             winnersAnnouncedSubscription.on('error', (error) => {
                 console.error("WinnersAnnounced subscription error:", error);
             });
+
+            // For TicketEnteredLottery - updated with roundNumber
+            const ticketEnteredSubscription = await this.web3WS.eth.subscribe('logs', {
+                address: CONTRACT_ADDRESS,
+                topics: [this.web3WS.utils.sha3('TicketEnteredLottery(uint256,uint256,uint256)')]
+            });
+
+            ticketEnteredSubscription.on('data', (log) => {
+                // Decode the log data
+                const decodedLog = this.web3WS.eth.abi.decodeLog(
+                    [
+                        { indexed: false, name: 'roundNumber', type: 'uint256' },
+                        { indexed: false, name: 'totalTickets', type: 'uint256' },
+                        { indexed: false, name: 'prizePool', type: 'uint256' }
+                    ],
+                    log.data,
+                    log.topics.slice(1)
+                );
+
+                this.notifyTicketEnteredListeners(
+                    decodedLog.roundNumber.toString(),
+                    decodedLog.totalTickets.toString(),
+                    decodedLog.prizePool.toString()
+                );
+            });
+
+            ticketEnteredSubscription.on('error', (error) => {
+                console.error("TicketEnteredLottery subscription error:", error);
+            });
+
             return true;
             } catch (error) {
                 console.error("Failed to set up event listeners on WebSocketProvider:", error);
@@ -306,7 +363,7 @@ class ContractService {
         }
     }
 
-async purchaseTicket() {
+    async purchaseTicket() {
         try {
             const contract = this.validateWriteRequirements();
             const ticketPrice = await contract.methods.getTicketPrice().call();
@@ -337,10 +394,8 @@ async purchaseTicket() {
             const contract = this.validateWriteRequirements();
             
             const blockStatus = await this.getLotteryBlockStatus();
-            console.log("Block status:", blockStatus);
+    
             if (blockStatus.blocksUntilClose === "0") {
-                // Go straight to send when keysUntilClose is 0
-                console.log("Closing lottery round immediately");
                 const result = await contract.methods.closeLotteryRound().send({ from: this.account });
                 return { success: true, transactionHash: result.transactionHash };
             }
@@ -349,7 +404,6 @@ async purchaseTicket() {
             const canClose = await contract.methods.closeLotteryRound().call({ from: this.account })
                 .then(() => true)
                 .catch(err => {
-                    console.log("Call error:", err);
                     const revertReason = err.data.message.match(/reverted with reason string '([^']+)'/)?.[1] || err.message;
                     return { error: revertReason };
                 });
@@ -593,7 +647,6 @@ async purchaseTicket() {
                 .selectTicketsForLottery(ticketId, ticketHash, ticketHashWithStrong)
                 .send({ from: this.account });
 
-            console.log("Transaction receipt:", receipt);
             // Extract the event result
             const event = receipt.events?.TicketSelected;
     
@@ -611,8 +664,6 @@ async purchaseTicket() {
             throw new Error(`Error selecting tickets for lottery: ${error.message}`);
         }
     }
-    
-    
 
     async getCurrentRound() {
     try {

@@ -141,7 +141,7 @@ export const LotteryProvider = ({ children, account }) => {
         
         initializationDoneRef.current = true;
         
-        // Set up event listeners
+// Set up event listeners
         if (!listenerRegisteredRef.current) {
           const unsubscribeLotteryStatus = contractService.addLotteryStatusListener((isActive) => {
             setContractState(prev => ({
@@ -161,9 +161,21 @@ export const LotteryProvider = ({ children, account }) => {
             }));
           });
           
+          // Add ticket entered listener
+          const unsubscribeTicketEntered = contractService.addTicketEnteredListener(({ roundNumber, totalTickets, prizePool }) => {
+            setContractState(prev => ({
+              ...prev,
+              totalTickets: totalTickets,
+              currentPrizePool: prizePool,
+              currentRound: roundNumber
+            }));
+            //showNotification(`New ticket entered! Total tickets: ${totalTickets}`, 'info');
+          });
+          
           window.addEventListener('beforeunload', () => {
             unsubscribeLotteryStatus();
             unsubscribeBlockStatus();
+            unsubscribeTicketEntered();
           });
           
           listenerRegisteredRef.current = true;

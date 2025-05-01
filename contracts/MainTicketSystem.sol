@@ -11,8 +11,10 @@ contract MainTicketSystem {
 
     event LotteryRoundStatusChanged(bool isOpen);
     event BlockStatusUpdated(uint256 blocksUntilClose, uint256 blocksUntilDraw);
+    event TicketEnteredLottery(uint256 roundNumber, uint256 totalTickets, uint256 prizePool);
 
     event TicketSelected(address indexed user, uint256 ticketId, bool success);
+
 
     constructor() {
         // Deploy sub-contracts
@@ -105,15 +107,27 @@ contract MainTicketSystem {
         updateBlockStatus();
         // Add ticket to lottery round
         success = lotteryManager.addParticipantAndPrizePool(msg.sender, _ticketId, _ticketHash, _ticketHashWithStrong, ticketManager.getTicketPrice());
-    
-        emit TicketSelected(msg.sender, _ticketId, success);
 
+        if (success) {
+            emit TicketEnteredLottery(
+                lotteryManager.getCurrentRound(), 
+                lotteryManager.getCurrentTotalTickets(),
+                lotteryManager.getCurrentPrizePool() 
+        );
+        } 
+        emit TicketSelected(msg.sender, _ticketId, success);
+  
         return success;
     }
 
     function drawLotteryWinner(bytes32 keccak256HashNumbers, bytes32 keccak256HashFull) public  {
         lotteryManager.drawLotteryWinner(keccak256HashNumbers, keccak256HashFull);
         startNewLotteryRound();
+        emit TicketEnteredLottery(
+            lotteryManager.getCurrentRound(), 
+            lotteryManager.getCurrentTotalTickets(),
+            lotteryManager.getCurrentPrizePool()
+        );
     }
 
     function setTicketPrice(uint256 _newPrice) external {

@@ -40,7 +40,7 @@ const LotteryRounds = ({ isContractReady }) => {
       
       // Fetch recent rounds data
       const recentRoundsData = [];
-      const roundsToFetch = Math.min(6, Number(currentRound));
+      const roundsToFetch = Math.min(4, Number(currentRound));
       
       for (let i = Number(currentRound); i > Number(currentRound) - roundsToFetch; i--) {
         if (i >= 0) {
