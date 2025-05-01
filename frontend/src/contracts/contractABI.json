@@ -393,8 +393,32 @@
         ],
         "stateMutability": "view",
         "type": "function"
-      }
-      
-        
+      },
+      {
+        "inputs": [],
+        "name": "getSMALL_PRIZE_PERCENTAGE",
+        "outputs": [
+          {
+            "internalType": "uint256",
+            "name": "",
+            "type": "uint256"
+          }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+      },
+      {
+        "inputs": [],
+        "name": "getFLEX_COMMISSION",
+        "outputs": [
+          {
+            "internalType": "uint256",
+            "name": "",
+            "type": "uint256"
+          }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+      }  
 ]
 
