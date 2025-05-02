@@ -209,7 +209,8 @@ const LotteryRounds = ({ isContractReady }) => {
               <div className="search-input-group">
                 <input
                   type="number"
-                  min="0"
+                  min="1"
+                  max={latestRound ?? ''}
                   placeholder="Enter round number"
                   value={roundInput}
                   onChange={(e) => setRoundInput(e.target.value)}
