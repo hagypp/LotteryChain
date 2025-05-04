@@ -48,6 +48,15 @@
   text-align: center;
   min-width: 120px;
 }
+.header-info-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-top: 1rem;
+}
+.header-info-item {
+  flex: 1;
+}
 
 .header-info-label {
   color: #FFD700;
