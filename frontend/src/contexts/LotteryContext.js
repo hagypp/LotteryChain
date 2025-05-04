@@ -113,14 +113,16 @@ export const LotteryProvider = ({ children, account }) => {
         await contractService.init();
         
         // Get initial data in parallel
-        const [lotteryStatus, blockStatusData, price, userTickets, currentPrizePool, totalTickets, currentRound] = await Promise.all([
+        const [lotteryStatus, blockStatusData, price, userTickets, currentPrizePool, totalTickets, currentRound, commission, percentage] = await Promise.all([
           contractService.isLotteryActive(),
           contractService.getLotteryBlockStatus(),
           contractService.getTicketPrice(),
           account ? contractService.getPlayerTickets(account) : [],
           contractService.getCurrentPrizePool(),
           contractService.getCurrentTotalTickets(),
-          contractService.getCurrentRound()
+          contractService.getCurrentRound(),
+          contractService.getFLEX_COMMISSION(),
+          contractService.getSMALL_PRIZE_PERCENTAGE()
         ]);
         
         setContractState({
@@ -133,7 +135,9 @@ export const LotteryProvider = ({ children, account }) => {
           },
           currentPrizePool: currentPrizePool.toString(),
           totalTickets: totalTickets.toString(),
-          currentRound: currentRound.toString()
+          currentRound: currentRound.toString(),
+          commission: commission.toString(),
+          percentage: percentage.toString()
         });
         
         setTickets(userTickets);
@@ -196,13 +200,15 @@ export const LotteryProvider = ({ children, account }) => {
     }
     
     try {
-      const [price, playerTickets, blockStatusData, currentPrizePool, totalTickets, currentRound] = await Promise.all([
+      const [price, playerTickets, blockStatusData, currentPrizePool, totalTickets, currentRound, commission, percentage] = await Promise.all([
         contractService.getTicketPrice(),
         contractService.getPlayerTickets(account),
         contractService.getLotteryBlockStatus(),
         contractService.getCurrentPrizePool(),
         contractService.getCurrentTotalTickets(),
-        contractService.getCurrentRound()
+        contractService.getCurrentRound(),
+        contractService.getFLEX_COMMISSION(),
+        contractService.getSMALL_PRIZE_PERCENTAGE()
       ]);
       
       setContractState(prev => ({
@@ -214,7 +220,9 @@ export const LotteryProvider = ({ children, account }) => {
         },
         currentPrizePool: currentPrizePool.toString(),
         totalTickets: totalTickets.toString(),
-        currentRound: currentRound.toString()
+        currentRound: currentRound.toString(),
+        commission: commission.toString(),
+        percentage: percentage.toString()
       }));
       
       setTickets(playerTickets);
@@ -334,7 +342,9 @@ export const LotteryProvider = ({ children, account }) => {
       blockStatus: contractState.blockStatus,
       currentPrizePool: contractState.currentPrizePool,
       totalTickets: contractState.totalTickets,
-      currentRound: contractState.currentRound
+      currentRound: contractState.currentRound,
+      commission: contractState.commission,
+      percentage: contractState.percentage
     },
     tickets,
     uiState: {
