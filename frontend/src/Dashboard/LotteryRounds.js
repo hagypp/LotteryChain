@@ -42,7 +42,7 @@ const LotteryRounds = ({ isContractReady }) => {
       const recentRoundsData = [];
       const roundsToFetch = Math.min(4, Number(currentRound));
       
-      for (let i = Number(currentRound); i > Number(currentRound) - roundsToFetch; i--) {
+      for (let i = Number(currentRound) - 1; i > Number(currentRound) - roundsToFetch; i--) {
         if (i >= 0) {
           try {
             const roundData = await contractService.getLotteryRoundInfo(i.toString());
