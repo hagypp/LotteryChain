@@ -3,7 +3,7 @@ import { useLottery } from '../contexts/LotteryContext';
 
 const LotteryHeader = () => {
   const { 
-    contractState: { ticketPrice, isLotteryActive, blockStatus, currentPrizePool, totalTickets, currentRound  },
+    contractState: { ticketPrice, isLotteryActive, blockStatus, currentPrizePool, totalTickets, currentRound ,commission,percentage },
     uiState: { isLoading },
     actions: { handlePurchase, handleCloseLottery, handleDrawWinner }
   } = useLottery();
@@ -13,6 +13,12 @@ const LotteryHeader = () => {
     // Convert Wei to ETH
     return (Number(value) / 1e18).toFixed(6);
   };
+
+  const calculatedCommission = (currentPrizePool * commission) / 100;
+  const prizePoolAfterCommission = currentPrizePool - calculatedCommission;
+  const calculatedSmallPrize = (prizePoolAfterCommission * percentage) / 100;
+  const calculatedBigPrize = prizePoolAfterCommission - calculatedSmallPrize;
+
 
   return (
     <div className="dashboard-header-row">
@@ -38,12 +44,31 @@ const LotteryHeader = () => {
           <span className="header-info-label">TICKETS IN THE LOTTERY</span>
           <span className="header-info-value">{totalTickets}</span>
         </div>
+      </div>
+
+
+      <div className="header-info-row">
 
       <div className="header-info-item">
           <span className="header-info-label">PRIZE POLL</span>
           <span className="header-info-value">{formatEth(currentPrizePool)} ETH</span>
         </div>
-      </div>
+  <div className="header-info-item">
+    <span className="header-info-label">BIG PRIZE</span>
+    <span className="header-info-value">{formatEth(calculatedBigPrize)} ETH</span>
+  </div>
+  <div className="header-info-item">
+    <span className="header-info-label">SMALL PRIZE</span>
+    <span className="header-info-value">{formatEth(calculatedSmallPrize)} ETH</span>
+  </div>
+  <div className="header-info-item">
+    <span className="header-info-label">COMMISSION</span>
+    <span className="header-info-value">{formatEth(calculatedCommission)} ETH</span>
+  </div>
+</div>
+
+
+
       
       <div className="block-status-consolidated">
         <div className="block-status-header">
