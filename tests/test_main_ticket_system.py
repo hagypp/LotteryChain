@@ -1,5 +1,5 @@
 import pytest
-from brownie import MainTicketSystem, accounts, web3, reverts, chain
+from brownie import MainTicketSystem, accounts, web3, reverts, chain, Wei
 from brownie import exceptions
 
 
@@ -51,7 +51,31 @@ def test_ticket_purchase_auto_close(main_ticket_system):
         tx.wait(1)
     
     assert main_ticket_system.isLotteryActive() == False  # Lottery should be closed
-    
+
+def test_select_tickets_for_lottery_when_closed(main_ticket_system):
+    ticket_price = main_ticket_system.getTicketPrice()
+
+    # Purchase ticket
+    for _ in range(BLOCKS_TO_WAIT_fOR_CLOSE+1): #the last one is to close the lottery
+        tx = main_ticket_system.purchaseTicket({'from': accounts[1], 'value': ticket_price, 'gas_price': 'auto'})
+        tx.wait(1)
+    ticket_id = tx.return_value
+    assert main_ticket_system.isLotteryActive() == False  # Lottery should be closed
+    with reverts("Current lottery round is not open"):
+        main_ticket_system.closeLotteryRound({'from': accounts[0], 'gas_price': 'auto'})
+    # Attempt to select tickets for lottery when closed
+    ticket_hash = web3.keccak(text="example_hash")
+    ticket_hash_with_strong = web3.keccak(text="example_hash_with_strong")
+    with reverts("Current lottery round is closed"):
+        tx = main_ticket_system.selectTicketsForLottery(
+            ticket_id,  # Assuming ticket ID is 1
+            ticket_hash,
+            ticket_hash_with_strong,
+            {'from': accounts[1], 'gas_price': 'auto'}
+        )
+        tx.return_value == False  # Selection should be unsuccessful
+        
+
 def test_ticket_purchase_insufficient_funds(main_ticket_system):
     """Test ticket purchase with insufficient funds"""
     # Get the ticket price from the contract
@@ -62,6 +86,34 @@ def test_ticket_purchase_insufficient_funds(main_ticket_system):
         main_ticket_system.purchaseTicket({'from': accounts[1], 'value': ticket_price - 1, 'gas_price': 'auto'})
     assert main_ticket_system.getPlayerTickets(accounts[1]) == []  # No tickets should be purchased
     assert main_ticket_system.getActiveTickets({'from': accounts[1]}) == []  # No active tickets should exist
+
+
+
+def test_ticket_purchase_with_refund(main_ticket_system):
+    """Test ticket purchase with excess funds that should be refunded"""
+    ticket_price = main_ticket_system.getTicketPrice()
+    excess_amount = ticket_price * 3  # Send 3x ticket price
+    
+    account1_balance_before = accounts[1].balance()
+    
+    # Purchase ticket with excess value
+    tx = main_ticket_system.purchaseTicket({'from': accounts[1], 'value': excess_amount})
+    gas_cost = tx.gas_used * tx.gas_price
+    
+    # Verify balance after purchase
+    account1_balance_after = accounts[1].balance()
+    
+    # Should only deduct ticket price + gas, excess should be refunded
+    expected_balance = account1_balance_before - ticket_price - gas_cost
+    
+    # Allow for some deviation due to gas estimation
+    balance_diff = abs(account1_balance_after - expected_balance)
+    assert balance_diff == 0 , f"Balance diff too high: {balance_diff}"
+    
+    # Verify ticket was issued
+    player_tickets = main_ticket_system.getPlayerTickets(accounts[1])
+    assert len(player_tickets) == 1, "Player should have 1 ticket"
+
 
 def test_lottery_round_status(main_ticket_system):
     """Test lottery round status"""
@@ -569,3 +621,148 @@ def test_draw_lottery_with_same_hashes(main_ticket_system, owner_account):
     
     # Check that a new lottery round is active
     assert main_ticket_system.isLotteryActive() == True, "New round should be active"
+    
+    
+def test_concurrent_ticket_purchases(main_ticket_system):
+    """Test many users purchasing tickets simultaneously"""
+    ticket_price = main_ticket_system.getTicketPrice()
+    
+    # Track initial balances
+    initial_balances = {}
+    for i in range(1, 6):
+        initial_balances[accounts[i].address] = accounts[i].balance()
+    
+    # Simulate concurrent purchases (as close as possible in blockchain time)
+    transactions = []
+    for i in range(1, 6):
+        tx = main_ticket_system.purchaseTicket({'from': accounts[i], 'value': ticket_price})
+        transactions.append(tx)
+    
+    # Verify all transactions succeeded
+    for tx in transactions:
+        assert tx.status == 1, "Transaction failed"
+    
+    # Verify all users received tickets
+    for i in range(1, 6):
+        tickets = main_ticket_system.getPlayerTickets(accounts[i])
+        assert len(tickets) == 1, f"Account {i} should have 1 ticket"
+        
+        # Verify the contract balance increased correctly
+        expected_balance_decrease = ticket_price + transactions[i-1].gas_used * transactions[i-1].gas_price
+        actual_balance = accounts[i].balance()
+        assert abs(initial_balances[accounts[i].address] - actual_balance - expected_balance_decrease) < Wei("0.0001 ether"), "Balance didn't decrease correctly"
+
+
+
+def test_purchase_multiple_tickets_same_account(main_ticket_system):
+    """Test one user purchasing multiple tickets across different rounds"""
+    ticket_price = main_ticket_system.getTicketPrice()
+    initial_balance = accounts[1].balance()
+    
+    # First round
+    tx1 = main_ticket_system.purchaseTicket({'from': accounts[1], 'value': ticket_price})
+    ticket_id1 = tx1.return_value
+    
+    # Create hash values and select for lottery
+    ticket_hash1 = web3.keccak(text="multi_test_hash_1")
+    ticket_hash_with_strong1 = web3.keccak(text="multi_test_strong_hash_1")
+    
+    tx11 = main_ticket_system.selectTicketsForLottery(
+        ticket_id1, 
+        ticket_hash1, 
+        ticket_hash_with_strong1, 
+        {'from': accounts[1]}
+    )
+    
+    # Close lottery and draw
+    chain.mine(4)  # Mine blocks to close lottery
+    tx111=main_ticket_system.closeLotteryRound({'from': accounts[0]})
+    chain.mine(1)
+    tx1111=main_ticket_system.drawLotteryWinner(
+        web3.keccak(text="draw_hash_1"), 
+        web3.keccak(text="draw_strong_hash_1"), 
+        {'from': accounts[0]}
+    )
+    
+    # Second round
+    tx2 = main_ticket_system.purchaseTicket({'from': accounts[1], 'value': ticket_price})
+    ticket_id2 = tx2.return_value
+    
+    # Create hash values and select for lottery
+    ticket_hash2 = web3.keccak(text="multi_test_hash_2")
+    ticket_hash_with_strong2 = web3.keccak(text="multi_test_strong_hash_2")
+    
+    tx22=main_ticket_system.selectTicketsForLottery(
+        ticket_id2, 
+        ticket_hash2, 
+        ticket_hash_with_strong2, 
+        {'from': accounts[1]}
+    )
+    
+    # Verify player has tickets from different rounds
+    tickets = main_ticket_system.getPlayerTickets(accounts[1])
+    assert len(tickets) == 2, "Player should have 2 tickets from different rounds"
+    
+    # Verify the round numbers are different
+    assert tickets[0][0] != tickets[1][0], "Tickets should be in different rounds"
+    
+    # Calculate expected balance decrease (2 tickets + gas costs)
+    gas_cost1 = tx1.gas_used * tx1.gas_price
+    gas_cost11 = tx11.gas_used * tx11.gas_price
+    gas_cost111 = tx1111.gas_used * tx1111.gas_price
+    gas_cost1111= tx1111.gas_price*tx1111.gas_used
+    gas_cost2 = tx2.gas_used * tx2.gas_price
+    gas_cost22=tx22.gas_used*tx22.gas_price
+    expected_balance_decrease = 2 * ticket_price + gas_cost1 + gas_cost11 + gas_cost111 + gas_cost1111 + gas_cost2 + gas_cost22
+    
+    # Allow for any lottery winnings
+    assert accounts[1].balance() >= initial_balance - expected_balance_decrease, "Balance decreased more than expected"
+
+def test_race_conditions_ticket_selection(main_ticket_system):
+    """Test for potential race conditions during ticket selection"""
+    ticket_price = main_ticket_system.getTicketPrice()
+    
+    # Purchase two tickets with different accounts
+    tx1 = main_ticket_system.purchaseTicket({'from': accounts[1], 'value': ticket_price})
+    ticket_id1 = tx1.return_value
+    
+    tx2 = main_ticket_system.purchaseTicket({'from': accounts[2], 'value': ticket_price})
+    ticket_id2 = tx2.return_value
+    
+    # Create hash values
+    ticket_hash1 = web3.keccak(text="race_hash_1")
+    ticket_hash_with_strong1 = web3.keccak(text="race_strong_hash_1")
+    
+    ticket_hash2 = web3.keccak(text="race_hash_2")
+    ticket_hash_with_strong2 = web3.keccak(text="race_strong_hash_2")
+    
+    # First account tries to select both tickets (should fail for ticket2)
+    main_ticket_system.selectTicketsForLottery(
+        ticket_id1, 
+        ticket_hash1, 
+        ticket_hash_with_strong1, 
+        {'from': accounts[1]}
+    )
+    
+    with reverts():  # Should fail since account1 doesn't own ticket2
+        main_ticket_system.selectTicketsForLottery(
+            ticket_id2, 
+            ticket_hash2, 
+            ticket_hash_with_strong2, 
+            {'from': accounts[1]}
+        )
+    
+    # Second account selects their own ticket
+    main_ticket_system.selectTicketsForLottery(
+        ticket_id2, 
+        ticket_hash2, 
+        ticket_hash_with_strong2, 
+        {'from': accounts[2]}
+    )
+    
+    # Check tickets are assigned to correct accounts
+    tickets1 = main_ticket_system.getPlayerTickets(accounts[1])
+    tickets2 = main_ticket_system.getPlayerTickets(accounts[2])
+    
+    assert len(tickets1) == 1, "Account 1 should have 1 ticket"
+    assert len(tickets2) == 1, "Account 2 should have 1 ticket"
