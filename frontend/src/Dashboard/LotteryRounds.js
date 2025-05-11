@@ -325,7 +325,7 @@ const LotteryRounds = ({ isContractReady }) => {
                           {formatAddress(winner)}
                         </div>
                       )) : 
-                      <div className="no-winners">No winners yet</div>
+                      <div className="no-winners">No winners</div>
                     }
                   </div>
                 </div>
@@ -340,7 +340,7 @@ const LotteryRounds = ({ isContractReady }) => {
                           {formatAddress(winner)}
                         </div>
                       )) : 
-                      <div className="no-winners">No winners yet</div>
+                      <div className="no-winners">No winners</div>
                     }
                   </div>
                 </div>
