@@ -257,12 +257,6 @@ contract LotteryManager {
         //     }
         // }
 
-// Resize winner arrays
-        // assembly {
-        //     mstore(smallPrizeWinners, smallWinnerCount)
-        //     mstore(bigPrizeWinners, bigWinnerCount)
-        // }
-
         // Create correctly sized arrays
         address[] memory finalSmallPrizeWinners = new address[](smallWinnerCount);
         address[] memory finalBigPrizeWinners = new address[](bigWinnerCount);
@@ -313,15 +307,6 @@ contract LotteryManager {
         if (currentRound.commission > 0) {
             payable(i_owner).transfer(currentRound.commission);
         }
-
-        // // Mark all tickets as USED
-        // for (uint256 i = 0; i < currentRound.participants.length; i++) {
-        //     address participant = currentRound.participants[i];
-        //     uint256[] storage ticketIds = currentRound.participantTickets[participant];
-        //     for (uint256 j = 0; j < ticketIds.length; j++) {
-        //         ticketManager.markTicketAsUsed(participant, ticketIds[j]);
-        //     }
-        // }
 
         // Store winners
         currentRound.smallPrizeWinners = finalSmallPrizeWinners;
