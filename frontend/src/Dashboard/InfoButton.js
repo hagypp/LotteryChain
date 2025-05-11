@@ -20,8 +20,8 @@ const InfoButton = () => {
       </button>
 
       {isModalOpen && (
-        <div className="info-modal">
-          <div className="info-modal-content">
+        <div className="info-modal" onClick={toggleModal}>       
+          <div className="info-modal-content" onClick={(e) => e.stopPropagation()} >
             <div className="info-modal-header">
               <button 
                 className="close-button" 
@@ -87,13 +87,6 @@ const InfoButton = () => {
           </div>
 
             </div>
-            <button 
-                className="close-button-down" 
-                onClick={toggleModal}
-                aria-label="Close"
-              >
-                ✖️
-              </button>
           </div>
         </div>
       )}
