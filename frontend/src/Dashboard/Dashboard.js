@@ -7,6 +7,7 @@ import Notifications from './Notifications';
 import contractService from '../services/contractService';
 import "./Dashboard.css";
 import InfoButton from './InfoButton';
+import ExchangeButton from './ExchangeButton';
 
 const Dashboard = ({ account }) => {
   return (
@@ -22,6 +23,7 @@ const DashboardContent = ({ account }) => {
     <div className="dashboard-container">
       <LotteryHeader />
       <InfoButton />
+      <ExchangeButton />
       <HardLottoGame account={account} />
       <WinnerAnnouncement account={account} contractService={contractService} />
       <Notifications />

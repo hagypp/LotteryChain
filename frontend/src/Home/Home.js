@@ -3,6 +3,7 @@ import MetaMaskConnect from "../MetaMaskConnect/MetaMaskConnect";
 import "./Home.css"; 
 import "../MetaMaskConnect/MetaMaskConnect.css";
 import InfoButton from '../Dashboard/InfoButton';
+import ExchangeButton from "../Dashboard/ExchangeButton";
 
 const Home = ({ onConnect }) => {  
   const features = [
@@ -115,6 +116,7 @@ const Home = ({ onConnect }) => {
   </div>
 </div>
   <InfoButton />
+  <ExchangeButton/>
     </div>
   );
 };
