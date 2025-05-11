@@ -38,6 +38,10 @@ const MetaMaskConnect = ({ onConnect }) => {
     return (
         <div className="auth-nav">
 
+<button className="nav-button register" onClick={() => {
+        document.getElementById('how-to-play')?.scrollIntoView({ behavior: 'smooth' });}}>
+        👇 How to Play
+        </button>
             <button
                 onClick={connectToMetaMask}
                 disabled={isConnecting}
@@ -45,6 +49,8 @@ const MetaMaskConnect = ({ onConnect }) => {
             >
                 {isConnecting ? "Connecting..." : "Login with MetaMask"}
             </button>
+
+
             {status && <div className="status-tooltip">{status}</div>}
         </div>
     );

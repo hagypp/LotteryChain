@@ -146,27 +146,54 @@ const TicketsList = React.memo(({ tickets, ticketCategory, setTicketCategory, is
                     className="scroll-container" 
                     ref={scrollContainerRef}
                 >
-                    <div className="tickets-list">
-                        {filteredTickets.length > 0 ? (
-                            filteredTickets.map((ticket) => (
-                                <div key={ticket.id} className="ticket-item">
-                                    <div className="ticket-info">
-                                        <div className="ticket-info-header">
-                                            <span className="ticket-number">Ticket #{ticket.id.toString()}</span>
-                                            <span className={`ticket-status ${
-                                                STATUS_MAP[ticket.status]?.toLowerCase().replace(' ', '-')
-                                            }`}>
-                                                {STATUS_MAP[ticket.status]}
-                                            </span>
-                                        </div>
-                                        <span className="ticket-time">
-                                            Purchased: {new Date(Number(ticket.creationTimestamp) * 1000).toLocaleString() || 'Loading...'}
+                <div className="tickets-list">
+                    {filteredTickets.length > 0 ? (
+                        filteredTickets.map((ticket) => (
+                            <div key={ticket.id} className="ticket-item">
+                                <div className="ticket-info">
+                                    <div className="ticket-info-header">
+                                        <span className="ticket-number">Ticket #{ticket.id.toString()}</span>
+                                        <span className={`ticket-status ${
+                                            STATUS_MAP[ticket.status]?.toLowerCase().replace(' ', '-')
+                                        }`}>
+                                            {STATUS_MAP[ticket.status]}
                                         </span>
-                                        <span className="text-sm text-gray-400">
-                                        Lottery Round: {Number(ticket.lotteryRound) > 0 ? ticket.lotteryRound.toString() : '—'}
-                                        </span>
-
                                     </div>
+                                    <span className="ticket-time">
+                                        Purchased: {new Date(Number(ticket.creationTimestamp) * 1000).toLocaleString() || 'Loading...'}
+                                    </span>
+                                    <span className="text-sm text-gray-400">
+                                        Lottery Round: {Number(ticket.lotteryRound) > 0 ? ticket.lotteryRound.toString() : '—'}
+                                    </span>
+                                </div>
+                                {Number(ticket.status) === 0 ? (
+                                    <div className="tooltip-wrapper">
+                                        <button 
+                                            onClick={() => handleSelectForLottery(ticket.id)}
+                                            disabled={
+                                                isLoading[`ticket-${ticket.id}`] || 
+                                                Number(ticket.status) !== 0 || 
+                                                !isLotteryActive
+                                            }
+                                            className="lottery-button"
+                                        >
+                                            {isLoading[`ticket-${ticket.id}`] ? (
+                                                <>
+                                                    <span className="loading-indicator"></span>
+                                                    Processing...
+                                                </>
+                                            ) : !isLotteryActive ? (
+                                                'No Active Lottery'
+                                            ) : (
+                                                'Enter into Lottery'
+                                            )}
+                                        </button>
+                                        <span className="tooltip-text">
+                                            Enter this ticket into the current lottery round by selecting 6 numbers between 1–37 and 1 strong number between 1–7.<br/>
+                                            <span className="tooltip-highlight"><strong>Note : </strong> if we reach 0 blocks until close this action may close the lottery and the ticket will not enter to the current lottery round.</span>
+                                        </span>
+                                    </div>
+                                ) : (
                                     <button 
                                         onClick={() => handleSelectForLottery(ticket.id)}
                                         disabled={
@@ -183,22 +210,21 @@ const TicketsList = React.memo(({ tickets, ticketCategory, setTicketCategory, is
                                             </>
                                         ) : !isLotteryActive ? (
                                             'No Active Lottery'
-                                        ) : Number(ticket.status) === 0 ? (
-                                            'Enter into Lottery'
                                         ) : (
                                             STATUS_MAP[ticket.status]
                                         )}
                                     </button>
-                                </div>
-                            ))
-                        ) : (
-                            <div className="empty-state">
-                                No {ticketCategory !== 'all' ? STATUS_MAP[
-                                    {'active': 0, 'inLottery': 1, 'USED': 2, 'WON_SMALL_PRIZE' : 3 , 'WON_BIG_PRIZE' : 4}[ticketCategory]
-                                ] || '' : ''} tickets found.
+                                )}
                             </div>
-                        )}
-                    </div>
+                        ))
+                    ) : (
+                        <div className="empty-state">
+                            No {ticketCategory !== 'all' ? STATUS_MAP[
+                                {'active': 0, 'inLottery': 1, 'USED': 2, 'WON_SMALL_PRIZE' : 3 , 'WON_BIG_PRIZE' : 4}[ticketCategory]
+                            ] || '' : ''} tickets found.
+                        </div>
+                    )}
+                </div>
                 </div>
                 
                 {hasMoreThanEightTickets && showRightButton && (

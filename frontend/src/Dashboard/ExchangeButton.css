@@ -1,0 +1,132 @@
+.exchange-button-container {
+    position: fixed;
+    top: 160px;
+    left: 40px;
+    z-index: 100;
+}
+
+.exchange-button {
+    background: linear-gradient(45deg, #3f87a6, #ebf8e1);
+    color: #1a1a2e;
+    border: none;
+    border-radius: 50%;
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    box-shadow: 0 2px 10px rgba(63, 135, 166, 0.4);
+    transition: all 0.3s ease;
+    font-size: 20px;
+}
+
+.exchange-button:hover {
+    transform: translateY(-5px) scale(1.05);
+    box-shadow: 0 5px 15px rgba(63, 135, 166, 0.6);
+}
+
+.exchange-modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.7);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+    animation: fadeIn 0.3s ease;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+.exchange-modal-content {
+    background: linear-gradient(135deg, #1a1a2e, #16213e);
+    border-radius: 20px;
+    width: 90%;
+    max-width: 500px;
+    padding: 2rem;
+    position: relative;
+    color: #E0E0E0;
+    font-family: 'Arial', sans-serif;
+}
+
+.exchange-modal-header {
+    display: flex;
+    justify-content: flex-end;
+}
+
+.close-button {
+    background: rgba(255, 255, 255, 0.1);
+    border: none;
+    cursor: pointer;
+    color: #FF8E53;
+    width: 30px;
+    height: 30px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    transition: all 0.3s ease;
+    font-size: 16px;
+}
+
+.close-button:hover {
+    background-color: rgba(255, 107, 107, 0.2);
+    transform: rotate(90deg);
+}
+
+.exchange-modal-body .section-title {
+    font-size: 1.8rem;
+    color: #FFE66D;
+    text-align: center;
+    margin-bottom: 1.5rem;
+}
+
+.input-group {
+    display: flex;
+    flex-direction: column;
+    margin-bottom: 1.2rem;
+}
+
+.input-group label {
+    margin-bottom: 0.5rem;
+    font-weight: bold;
+    color: #FF8E53;
+}
+
+.input-group input {
+    padding: 0.6rem 1rem;
+    border-radius: 10px;
+    border: none;
+    font-size: 1rem;
+    background-color: #2f2f44;
+    color: #fff;
+}
+
+.rate-info {
+    text-align: center;
+    margin-top: 1rem;
+    font-size: 1rem;
+    color: #aaa;
+}
+
+.input-group select {
+    padding: 0.6rem 1rem;
+    border-radius: 10px;
+    border: none;
+    font-size: 1rem;
+    background-color: #2f2f44;
+    color: #fff;
+    appearance: none;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    background-repeat: no-repeat;
+    background-position: right 1rem center;
+    background-size: 1rem;
+}

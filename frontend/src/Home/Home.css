@@ -1,5 +1,5 @@
 .main {
-  min-height: 100vh;
+  /* max-height: 100vh; */
   background: linear-gradient(135deg, #1a1a2e, #16213e);
   color: white;
   padding: 2rem;
@@ -34,7 +34,7 @@
   text-align: center;
   font-size: 1.5rem;
   color: #FF8E53;
-  margin-bottom: 0.5rem;
+  margin-bottom: 0rem;
   font-weight: 500;
 }
 
@@ -56,7 +56,7 @@
   grid-template-columns: repeat(4, 1fr); /* Forces 4 columns */
   gap: 1.5rem;
   margin: 2rem 0;
-  padding: 0 1rem;
+  /* padding: 0 1rem; */
 }
 
 .feature-item {
@@ -70,7 +70,7 @@
   text-align: center;
   backdrop-filter: blur(4px);
   border: 1px solid rgba(255, 255, 255, 0.1);
-  height: 100%; /* Ensures equal height */
+  /* height: 100%; Ensures equal height */
 }
 
 .feature-item:hover {
@@ -82,6 +82,19 @@
   width: 80px;
   height: 80px;
   background: rgba(255, 255, 255, 0.1);
+  border-radius: 50%;
+  margin-bottom: 0.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 2rem;
+  color: #FF8E53;
+  transition: all 0.3s ease;
+}
+
+.feature-icon_how {
+  width: 40px;
+  height: 40px;
   border-radius: 50%;
   margin-bottom: 0.5rem;
   display: flex;
@@ -106,9 +119,9 @@
 
 .feature-description {
   color: #e1e1e1;
-  line-height: 1.5;
+  /* line-height: 1.5; */
   font-size: 1rem;
-  flex-grow: 1;
+  /* flex-grow: 1; */
 }
 
 .highlight {
@@ -175,4 +188,47 @@
 @keyframes float {
   0%, 100% { transform: translate(0, 0) rotate(0deg); }
   50% { transform: translate(30px, 30px) rotate(180deg); }
+}
+.how-to-play-section {
+  text-align: center;
+  /* max-height: 40vh; Limit height to a portion of the viewport */
+  /* overflow-y: auto; Allow scrolling within the section if needed */
+}
+
+.section-title {
+  font-size: 2rem;
+  /* margin-bottom: 2rem; */
+  color: #FFE66D;
+}
+
+.how-to-play-grid {
+  display: grid;
+  grid-template-columns: repeat(9, 1fr);
+  gap: 1.5rem;
+}
+
+@media (max-width: 992px) {
+  .how-to-play-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 600px) {
+  .how-to-play-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.step-number {
+  width: 30px;
+  height: 30px;
+  background-color: #FFE66D;
+  color: #1a1a2e;
+  font-weight: bold;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 0.5rem;
+  font-size: 1rem;
 }

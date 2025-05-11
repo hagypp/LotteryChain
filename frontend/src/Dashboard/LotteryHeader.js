@@ -1,5 +1,6 @@
 import React from 'react';
 import { useLottery } from '../contexts/LotteryContext';
+import './Dashboard.css';
 
 const LotteryHeader = () => {
   const { 
@@ -93,21 +94,38 @@ const LotteryHeader = () => {
       </div>
       
       <div className="button-container">
-        <button 
-          onClick={handlePurchase} 
-          disabled={isLoading.purchase}
-          className="header-purchase-button"
-        >
-          {isLoading.purchase ? "Processing..." : "BUY TICKET"}
-        </button>
-        
-        <button 
-          onClick={isLotteryActive ? handleCloseLottery : handleDrawWinner}
-          disabled={isLoading.lotteryAction}
-          className={`header-purchase-button ${isLotteryActive ? 'close-lottery' : 'draw-winner'}`}
-        >
-          {isLoading.lotteryAction ? "Processing..." : isLotteryActive ? "CLOSE LOTTERY" : "DRAW WINNER"}
-        </button>
+        <div className="tooltip-wrapper">
+          <button 
+            onClick={handlePurchase} 
+            disabled={isLoading.purchase}
+            className="header-purchase-button"
+          >
+            {isLoading.purchase ? "Processing..." : "BUY TICKET"}
+          </button>
+          <span className="tooltip-text">
+            Purchase a ticket for {Number(ticketPrice).toFixed(6)} ETH.<br/> 
+            <span className="tooltip-highlight"><strong>Note :</strong> buy ticket will not guarantee participation in the lottery. </span><br/>
+            <span className="tooltip-highlight"><strong>Note :</strong> if we reach 0 blocks until close this action may close the lottery. </span>
+          </span>
+        </div>
+
+        <div className="tooltip-wrapper">
+          <button 
+            onClick={isLotteryActive ? handleCloseLottery : handleDrawWinner}
+            disabled={isLoading.lotteryAction}
+            className={`header-purchase-button ${isLotteryActive ? 'close-lottery' : 'draw-winner'}`}
+          >
+            {isLoading.lotteryAction ? "Processing..." : isLotteryActive ? "CLOSE LOTTERY" : "DRAW WINNER"}
+          </button>
+          <span className="tooltip-text">
+            {isLotteryActive ? 
+              'Close the current lottery round to stop ticket purchases.' : 
+              'Draw the winner for the current lottery round.'}<br/>
+            <span className="tooltip-highlight"><strong>Note : </strong> {isLotteryActive ? 
+              'This action alow only when we reach 0 blocks until close.' : 
+              'This action alow only when we reach 0 blocks until draw.'}</span>
+          </span>
+        </div>
       </div>
     </div>
   );

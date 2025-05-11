@@ -404,3 +404,37 @@
     text-align: center;
   }
 }
+
+
+/* Tooltip styling */
+.tooltip-wrapper {
+  position: relative;
+  }
+  
+  .tooltip-text {
+  visibility: hidden;
+  width: 200px;
+  background: rgba(0, 0, 0, 0.8);
+  color: white;
+  text-align: center;
+  padding: 0.5rem;
+  border-radius: 0.5rem;
+  position: absolute;
+  z-index: 1;
+  bottom: 125%;
+  left: 50%;
+  margin-left: -100px;
+  opacity: 0;
+  transition: opacity 0.3s;
+  font-size: 0.75rem;
+  }
+  
+  .tooltip-wrapper:hover .tooltip-text {
+  visibility: visible;
+  opacity: 1;
+  }
+  
+  .tooltip-highlight {
+  color: #FF6B6B;
+  font-weight: 600;
+  }
