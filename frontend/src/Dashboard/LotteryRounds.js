@@ -13,6 +13,7 @@ const LotteryRounds = ({ isContractReady }) => {
 
   const [flexCommission, setFlexCommission] = useState(null);
   const [smallPrizePercentage, setSmallPrizePercentage] = useState(null);
+  const [miniPrizePercentage, setMiniPrizePercentage] = useState(null);
 
   // Fetch latest round on component mount if contract is ready
   useEffect(() => {
@@ -25,9 +26,11 @@ const LotteryRounds = ({ isContractReady }) => {
   const fetchStaticPercentages = async () => {
     try {
       const commission = await contractService.getFLEX_COMMISSION();
-      const percentage = await contractService.getSMALL_PRIZE_PERCENTAGE();
+      const smallPrizePercentage = await contractService.getSMALL_PRIZE_PERCENTAGE();
+      const miniPrizePercentage = await contractService.getMINI_PRIZE_PERCENTAGE();
       setFlexCommission(Number(commission));
-      setSmallPrizePercentage(Number(percentage));
+      setSmallPrizePercentage(Number(smallPrizePercentage));
+      setMiniPrizePercentage(Number(miniPrizePercentage));
     } catch (error) {
       console.error("Failed to fetch static percentages:", error);
     }
@@ -104,7 +107,7 @@ const LotteryRounds = ({ isContractReady }) => {
   const fetchRoundByIndex = async (roundNumberInput) => {
     // Make sure we have a valid input to work with
     let roundNumberStr;
-    
+  
     // Handle both direct values and potential React events
     if (roundNumberInput && roundNumberInput.target) {
       // This is likely a React event object, not what we want
@@ -113,7 +116,7 @@ const LotteryRounds = ({ isContractReady }) => {
       // This should be a proper value (either direct number or from state)
       roundNumberStr = roundNumberInput ? roundNumberInput.toString() : roundInput.toString();
     }
-
+  
     if (!isContractReady || !roundNumberStr || roundNumberStr === '') {
       return;
     }
@@ -121,62 +124,69 @@ const LotteryRounds = ({ isContractReady }) => {
     try {
       setIsLoading(true);
       setError(null);
-      
+  
       // Make an explicit string to avoid circular reference issues
       const roundNumberPrimitive = String(roundNumberStr);
       console.log('Fetching round with index:', roundNumberPrimitive);
-      
+  
       const data = await contractService.getLotteryRoundInfo(roundNumberPrimitive);
       console.log('Fetched round data:', data);
-
+  
       const {
         roundNumber,
         totalPrizePool,
-        participants,
-        smallPrizeWinners,
-        bigPrizeWinners,
+        addressArrays,
         status,
         bigPrize,
         smallPrize,
+        miniPrize,
         commission,
-        totalTickets
+        totalTickets,
       } = data;
-
+  
+      const participants = addressArrays[0] || [];
+      const smallPrizeWinners = addressArrays[1] || [];
+      const bigPrizeWinners = addressArrays[2] || [];
+      const miniPrizeWinners = addressArrays[3] || [];
+  
       const numericStatus = Number(status);
       const totalPrize = Number(totalPrizePool);
-      
+  
       let calculatedCommission = commission;
       let calculatedSmallPrize = smallPrize;
       let calculatedBigPrize = bigPrize;
-            
+      let calculatedMiniPrize = miniPrize;
+  
       if (numericStatus === 0 || numericStatus === 1) {
-        const commissionRate = flexCommission ?? 10; // fallback if not loaded
-        const prizePercentage = smallPrizePercentage ?? 20;
-
+        const commissionRate = flexCommission ?? 5; // fallback if not loaded
+        const smallPrizePercent = smallPrizePercentage ?? 30; // Use state variable
+        const miniPrizePercent = miniPrizePercentage ?? 10; // Use state variable
+  
         calculatedCommission = (totalPrize * commissionRate) / 100;
         const prizePoolAfterCommission = totalPrize - calculatedCommission;
-        calculatedSmallPrize = (prizePoolAfterCommission * prizePercentage) / 100;
-        calculatedBigPrize = prizePoolAfterCommission - calculatedSmallPrize;
+        calculatedSmallPrize = (prizePoolAfterCommission * smallPrizePercent) / 100;
+        calculatedMiniPrize = (prizePoolAfterCommission * miniPrizePercent) / 100;
+        calculatedBigPrize = prizePoolAfterCommission - calculatedSmallPrize - calculatedMiniPrize;
       }
-
-      
+  
       setRoundData({
         roundNumber: Number(roundNumber),
         totalPrizePool,
         participants,
         smallPrizeWinners,
         bigPrizeWinners,
+        miniPrizeWinners,
         status: numericStatus,
         bigPrize: calculatedBigPrize,
         smallPrize: calculatedSmallPrize,
+        miniPrize: calculatedMiniPrize,
         commission: calculatedCommission,
-        totalTickets
+        totalTickets,
       });
-      
-
+  
       setIsModalOpen(true);
     } catch (err) {
-      console.error("Error fetching round:", err);
+      console.error('Error fetching round:', err);
       setError('Could not fetch round data. Make sure the round exists.');
       setRoundData(null);
     } finally {
@@ -267,7 +277,7 @@ const LotteryRounds = ({ isContractReady }) => {
           </div>
         ) : (
           <div className="connect-wallet-message">
-            {isContractReady ? 'Loading round data...' : 'Connect wallet to view recent rounds'}
+            {/* {isContractReady ? 'Loading round data...' : 'Connect wallet to view recent rounds'} */}
           </div>
         )}
       </div>
@@ -298,6 +308,11 @@ const LotteryRounds = ({ isContractReady }) => {
                   <div className="prize-label">Small Prize</div>
                   <div className="prize-value">{formatEth(roundData.smallPrize)} ETH</div>
                 </div>
+
+                <div className="prize-info-item">
+                  <div className="prize-label">Mini Prize</div>
+                  <div className="prize-value">{formatEth(roundData.miniPrize)} ETH</div>
+                </div>
                 
                 <div className="prize-info-item">
                   <div className="prize-label">Commission</div>
@@ -321,7 +336,7 @@ const LotteryRounds = ({ isContractReady }) => {
                     {roundData.bigPrizeWinners && roundData.bigPrizeWinners.length > 0 ? 
                       roundData.bigPrizeWinners.map((winner, index) => (
                         <div key={index} className="winner-item">
-                          <span className="winner-icon">👑</span>
+                          <span className="winner-icon">🏆</span>
                           {formatAddress(winner)}
                         </div>
                       )) : 
@@ -344,6 +359,22 @@ const LotteryRounds = ({ isContractReady }) => {
                     }
                   </div>
                 </div>
+
+                <div className="winner-category">
+                  <h4>Mini Prize Winners</h4>
+                  <div className="winners-list">
+                    {roundData.miniPrizeWinners && roundData.miniPrizeWinners.length > 0 ? 
+                      roundData.miniPrizeWinners.map((winner, index) => (
+                        <div key={index} className="winner-item">
+                          <span className="winner-icon">🥉</span>
+                          {formatAddress(winner)}
+                        </div>
+                      )) : 
+                      <div className="no-winners">No winners</div>
+                    }
+                  </div>
+                </div>
+
               </div>
 
               <div className="participants-section">
@@ -356,7 +387,7 @@ const LotteryRounds = ({ isContractReady }) => {
                         {formatAddress(participant)}
                       </div>
                     )) : 
-                    <div className="no-participants">No participants yet</div>
+                    <div className="no-participants">No participants</div>
                   }
                 </div>
               </div>
