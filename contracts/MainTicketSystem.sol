@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.0;
+pragma solidity ^0.8.2;
 
 import "./TicketManager.sol";
 import "./LotteryManager.sol";
@@ -120,7 +120,8 @@ contract MainTicketSystem {
         return success;
     }
 
-    function drawLotteryWinner(bytes32 keccak256HashNumbers, bytes32 keccak256HashFull) public  {
+    function drawLotteryWinner(bytes32 keccak256HashNumbers, bytes32 keccak256HashFull) public  
+    {
         lotteryManager.drawLotteryWinner(keccak256HashNumbers, keccak256HashFull);
         startNewLotteryRound();
         emit TicketEnteredLottery(
@@ -128,10 +129,6 @@ contract MainTicketSystem {
             lotteryManager.getCurrentTotalTickets(),
             lotteryManager.getCurrentPrizePool()
         );
-    }
-
-    function setTicketPrice(uint256 _newPrice) external {
-        ticketManager.setTicketPrice(_newPrice);
     }
 
     function getActiveTickets() external view returns (uint256[] memory) {
@@ -146,26 +143,14 @@ contract MainTicketSystem {
         return ticketManager.getTicketPrice();
     }
 
-    function getAllLotteryRoundsInfo() external view returns (
-        uint256[] memory roundNumbers,
-        uint256[] memory totalPrizePools,
-        address[][] memory participantsList,
-        address[][] memory smallPrizeWinnersList,
-        address[][] memory bigPrizeWinnersList,
-        lotteryStatus[] memory statuses
-    ) {
-        return lotteryManager.getAllLotteryRoundsInfo();
-    }
-
     function getLotteryRoundInfo(uint256 _index) external view returns (
         uint256 roundNumber,
         uint256 totalPrizePool,
-        address[] memory participants,
-        address[] memory smallPrizeWinners,
-        address[] memory bigPrizeWinners,
+        address[][] memory addressArrays,
         lotteryStatus status,
         uint256 bigPrize,
         uint256 smallPrize,
+        uint256 miniPrize,
         uint256 commission,
         uint256 totalTickets
     ) {
@@ -187,7 +172,8 @@ contract MainTicketSystem {
 
     function getCurrentWinners() external view returns (
     address[] memory smallPrizeWinners,
-    address[] memory bigPrizeWinners
+    address[] memory bigPrizeWinners,
+    address[] memory miniPrizeWinners
     ) {
         return lotteryManager.getCurrentWinners();
     }
@@ -209,6 +195,12 @@ contract MainTicketSystem {
     }
     function getFLEX_COMMISSION() external view returns (uint256) {
         return lotteryManager.getFLEX_COMMISSION();
+    }
+    function getMINI_PRIZE_PERCENTAGE() external view returns (uint256) {
+        return lotteryManager.getMINI_PRIZE_PERCENTAGE();
+    }
+    function getBlocksWait() external view returns (uint256, uint256) {
+        return lotteryManager.getBlocksWait();
     }
     
     receive() external payable {}
