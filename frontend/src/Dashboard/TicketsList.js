@@ -29,7 +29,8 @@ const TicketsList = React.memo(({ tickets, ticketCategory, setTicketCategory, is
         1: 'In Lottery',
         2: 'USED',
         3: 'WON_SMALL_PRIZE',
-        4: 'WON_BIG_PRIZE'
+        4: 'WON_BIG_PRIZE',
+        5: 'WON_MINI_PRIZE',
     }), []);
     
     // Memoize the scroll checking function
@@ -94,6 +95,8 @@ const TicketsList = React.memo(({ tickets, ticketCategory, setTicketCategory, is
                 return tickets.filter(ticket => Number(ticket.status) === 3);
             case 'WON_BIG_PRIZE':
                 return tickets.filter(ticket => Number(ticket.status) === 4);
+            case 'WON_MINI_PRIZE':
+                return tickets.filter(ticket => Number(ticket.status) === 5);        
             default:
                 return tickets;
         }
@@ -109,7 +112,8 @@ const TicketsList = React.memo(({ tickets, ticketCategory, setTicketCategory, is
         { key: 'inLottery', label: 'In Lottery' },
         { key: 'USED', label: 'USED' },
         { key: 'WON_SMALL_PRIZE', label: 'WON SMALL PRIZE' },
-        { key: 'WON_BIG_PRIZE', label: 'WON BIG PRIZE' }
+        { key: 'WON_BIG_PRIZE', label: 'WON BIG PRIZE' },
+        { key: 'WON_MINI_PRIZE', label: 'WON MINI PRIZE' },
     ], []);
 
     // Create memoized handler for ticket category selection
@@ -220,7 +224,7 @@ const TicketsList = React.memo(({ tickets, ticketCategory, setTicketCategory, is
                     ) : (
                         <div className="empty-state">
                             No {ticketCategory !== 'all' ? STATUS_MAP[
-                                {'active': 0, 'inLottery': 1, 'USED': 2, 'WON_SMALL_PRIZE' : 3 , 'WON_BIG_PRIZE' : 4}[ticketCategory]
+                                {'active': 0, 'inLottery': 1, 'USED': 2, 'WON_SMALL_PRIZE' : 3 , 'WON_BIG_PRIZE' : 4, 'WON_MINI_PRIZE' : 5}[ticketCategory]
                             ] || '' : ''} tickets found.
                         </div>
                     )}
