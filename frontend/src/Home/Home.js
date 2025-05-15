@@ -4,6 +4,7 @@ import "./Home.css";
 import "../MetaMaskConnect/MetaMaskConnect.css";
 import InfoButton from '../Dashboard/InfoButton';
 // import ExchangeButton from "../Dashboard/ExchangeButton";
+import HowToPlay from "./HowToPlay"; 
 
 const Home = ({ onConnect }) => {  
   const features = [
@@ -78,8 +79,16 @@ const Home = ({ onConnect }) => {
       icon: "💸",
       title: "Automatic Payout",
       description: "The prize pool is transparent from the start. If you win, the smart contract sends your prize directly to your wallet."
+  
+  // Function to connect the user to MetaMask
+  const handleStartPlaying = () => {
+    // Find the MetaMaskConnect component and trigger its connectToMetaMask function
+    const metamaskButton = document.querySelector(".nav-button.register");
+    if (metamaskButton) {
+      metamaskButton.click();
     }
-  ];
+  };
+  
   return (
     <div className="main">
       <h1 className="title">🎰 Lottery Chain Game</h1>
@@ -103,25 +112,24 @@ const Home = ({ onConnect }) => {
         </div>
       </div>
 
-      <MetaMaskConnect onConnect={onConnect} />
-
-
-<div className="how-to-play-section" id = "how-to-play">
-  <h2 className="section-title">🧾 How to Play</h2>
-  <div className="how-to-play-grid">
-  {steps.map((step, index) => (
-  <div key={index} className="feature-item">
-    <div className="step-number">{index + 1}</div> {/* <-- Add this */}
-    <div className="feature-icon_how">{step.icon}</div>
-    <h3 className="feature-title">{step.title}</h3>
-    <p className="feature-description">{step.description}</p>
-  </div>
-))}
-
-  </div>
-</div>
-  <InfoButton />
-  {/* <ExchangeButton/> */}
+      <div className="cta-container">
+        <MetaMaskConnect onConnect={onConnect} />
+      </div>
+    
+      <HowToPlay />
+      
+      {/* Bottom CTA Button */}
+      <div className="bottom-cta-container">
+        <p className="ready-text">Ready to try your luck?</p>
+        <button onClick={handleStartPlaying} className="start-game-button">
+          Start Playing Now! 
+        </button>
+      </div>
+      
+      <div className="floating-buttons">
+        <InfoButton />
+//         <ExchangeButton />
+      </div>
     </div>
   );
 };

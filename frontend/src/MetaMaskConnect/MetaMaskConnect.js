@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import contractService from "../services/contractService";
 import "./MetaMaskConnect.css";
@@ -6,7 +6,20 @@ import "./MetaMaskConnect.css";
 const MetaMaskConnect = ({ onConnect }) => {
     const [status, setStatus] = useState("");
     const [isConnecting, setIsConnecting] = useState(false);
+    const [showStatus, setShowStatus] = useState(false);
     const navigate = useNavigate();
+
+    // Hide status message after 5 seconds
+    useEffect(() => {
+        let timer;
+        if (status) {
+            setShowStatus(true);
+            timer = setTimeout(() => {
+                setShowStatus(false);
+            }, 5000);
+        }
+        return () => clearTimeout(timer);
+    }, [status]);
 
     // Function to connect the user to MetaMask and register them
     const connectToMetaMask = async () => {
@@ -34,24 +47,29 @@ const MetaMaskConnect = ({ onConnect }) => {
         }
     };
 
+    // Scroll to how-to-play section
+    const scrollToHowToPlay = () => {
+        document.getElementById('how-to-play')?.scrollIntoView({ behavior: 'smooth' });
+    };
 
     return (
         <div className="auth-nav">
-
-<button className="nav-button register" onClick={() => {
-        document.getElementById('how-to-play')?.scrollIntoView({ behavior: 'smooth' });}}>
-        👇 How to Play
-        </button>
+            <button 
+                className="nav-button how-to-play" 
+                onClick={scrollToHowToPlay}
+            >
+                <span className="button-icon">👇</span> How to Play
+            </button>
+            
             <button
                 onClick={connectToMetaMask}
                 disabled={isConnecting}
-                className="nav-button register"
+                className={`nav-button register ${!isConnecting ? "pulse-animation" : ""}`}
             >
-                {isConnecting ? "Connecting..." : "Login with MetaMask"}
+                {isConnecting ? "Connecting..." : "Start Playing Now"}
             </button>
 
-
-            {status && <div className="status-tooltip">{status}</div>}
+            {showStatus && <div className="status-tooltip">{status}</div>}
         </div>
     );
 };

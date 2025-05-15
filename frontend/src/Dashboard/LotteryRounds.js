@@ -10,6 +10,7 @@ const LotteryRounds = ({ isContractReady }) => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [latestRound, setLatestRound] = useState(null);
   const [recentRounds, setRecentRounds] = useState([]);
+  const [isDataLoaded, setIsDataLoaded] = useState(false);
 
   const [flexCommission, setFlexCommission] = useState(null);
   const [smallPrizePercentage, setSmallPrizePercentage] = useState(null);
@@ -62,8 +63,10 @@ const LotteryRounds = ({ isContractReady }) => {
       }
       
       setRecentRounds(recentRoundsData);
+      setIsDataLoaded(true); // Mark data as loaded regardless of results
     } catch (err) {
       console.error("Failed to fetch latest round:", err);
+      setIsDataLoaded(true); // Still mark as loaded even if there's an error
     }
   };
 
@@ -276,8 +279,10 @@ const LotteryRounds = ({ isContractReady }) => {
             ))}
           </div>
         ) : (
-          <div className="connect-wallet-message">
-            {/* {isContractReady ? 'Loading round data...' : 'Connect wallet to view recent rounds'} */}
+          <div className={isContractReady && isDataLoaded ? "no-lotteries-message" : "connect-wallet-message"}>
+            {!isContractReady ? 'Connect wallet to view recent rounds' : 
+             !isDataLoaded ? 'Loading round data...' : 
+             'No lotteries found'}
           </div>
         )}
       </div>
