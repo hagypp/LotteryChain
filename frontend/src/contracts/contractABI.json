@@ -132,19 +132,6 @@
         "type": "function"
     },
     {
-        "inputs": [
-            {
-                "internalType": "uint256",
-                "name": "_newPrice",
-                "type": "uint256"
-            }
-        ],
-        "name": "setTicketPrice",
-        "outputs": [],
-        "stateMutability": "nonpayable",
-        "type": "function"
-    },
-    {
         "constant": true,
         "inputs": [],
         "name": "isLotteryActive",
@@ -266,69 +253,82 @@
         "type": "function"
     },
     {
-        "inputs": [
-          {
-            "internalType": "uint256",
-            "name": "_index",
-            "type": "uint256"
-          }
-        ],
-        "name": "getLotteryRoundInfo",
+        "constant": true,
+        "inputs": [],
+        "name": "getBlocksWait",
         "outputs": [
-          {
-            "internalType": "uint256",
-            "name": "roundNumber",
-            "type": "uint256"
-          },
-          {
-            "internalType": "uint256",
-            "name": "totalPrizePool",
-            "type": "uint256"
-          },
-          {
-            "internalType": "address[]",
-            "name": "participants",
-            "type": "address[]"
-          },
-          {
-            "internalType": "address[]",
-            "name": "smallPrizeWinners",
-            "type": "address[]"
-          },
-          {
-            "internalType": "address[]",
-            "name": "bigPrizeWinners",
-            "type": "address[]"
-          },
-          {
-            "internalType": "enum lotteryStatus",
-            "name": "status",
-            "type": "uint8"
-          },
-          {
-            "internalType": "uint256",
-            "name": "bigPrize",
-            "type": "uint256"
-          },
-          {
-            "internalType": "uint256",
-            "name": "smallPrize",
-            "type": "uint256"
-          },
-          {
-            "internalType": "uint256",
-            "name": "commission",
-            "type": "uint256"
-          },
-          {
-            "internalType": "uint256",
-            "name": "totalTickets",
-            "type": "uint256"
-          }
+            {
+                "name": "BLOCKS_TO_WAIT_fOR_CLOSE",
+                "type": "uint256"
+            },
+            {
+                "name": "BLOCKS_TO_WAIT_fOR_DRAW",
+                "type": "uint256"
+            }
         ],
+        "payable": false,
         "stateMutability": "view",
         "type": "function"
-      },      
+    },
+    {
+      "inputs": [
+          {
+              "internalType": "uint256",
+              "name": "_index",
+              "type": "uint256"
+          }
+      ],
+      "name": "getLotteryRoundInfo",
+      "outputs": [
+          {
+              "internalType": "uint256",
+              "name": "roundNumber",
+              "type": "uint256"
+          },
+          {
+              "internalType": "uint256",
+              "name": "totalPrizePool",
+              "type": "uint256"
+          },
+          {
+              "internalType": "address[][]",
+              "name": "addressArrays",
+              "type": "address[][]"
+          },
+          {
+              "internalType": "enum LotteryManager.lotteryStatus",
+              "name": "status",
+              "type": "uint8"
+          },
+          {
+              "internalType": "uint256",
+              "name": "bigPrize",
+              "type": "uint256"
+          },
+          {
+              "internalType": "uint256",
+              "name": "smallPrize",
+              "type": "uint256"
+          },
+          {
+              "internalType": "uint256",
+              "name": "miniPrize",
+              "type": "uint256"
+          },
+          {
+              "internalType": "uint256",
+              "name": "commission",
+              "type": "uint256"
+          },
+          {
+              "internalType": "uint256",
+              "name": "totalTickets",
+              "type": "uint256"
+          }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+  },      
     {
         "constant": true,
         "inputs": [],
@@ -352,6 +352,10 @@
           },
           {
             "name": "bigPrizeWinnersList",
+            "type": "address[][]"
+          },
+          {
+            "name": "miniPrizeWinnersList",
             "type": "address[][]"
           },
           {
@@ -397,6 +401,19 @@
       {
         "inputs": [],
         "name": "getSMALL_PRIZE_PERCENTAGE",
+        "outputs": [
+          {
+            "internalType": "uint256",
+            "name": "",
+            "type": "uint256"
+          }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+      },
+      {
+        "inputs": [],
+        "name": "getMINI_PRIZE_PERCENTAGE",
         "outputs": [
           {
             "internalType": "uint256",
