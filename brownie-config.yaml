@@ -4,7 +4,10 @@ dependencies:
 
 compiler:
   solc:
-    version: 0.8.0
+    optimize: true
+    runs: 1000
+    version: 0.8.20
+    viaIR: true
     remappings:
       - "@openzeppelin=OpenZeppelin/openzeppelin-contracts@4.8.0"
 

@@ -482,18 +482,6 @@ class ContractService {
         }
     }
 
-    async setTicketPrice(newPrice) {
-        try {
-            const contract = this.validateWriteRequirements();
-            const web3 = this.getWeb3();
-            const weiPrice = web3.utils.toWei(newPrice.toString(), 'ether');
-            await contract.methods.setTicketPrice(weiPrice).send({ from: this.account });
-            return { success: true };
-        } catch (error) {
-            throw new Error(`Error setting ticket price: ${error.message}`);
-        }
-    }
-
     async getPlayerTickets(playerAddress) {
         try {
             const contract = this.getReadContract();
@@ -575,17 +563,16 @@ class ContractService {
 
           const contract = this.getReadContract();
           const result = await contract.methods.getLotteryRoundInfo(roundIndex).call();
-      
+          console.log("Result from contract:", result);
           // This is the correct way to access the named values
           return {
             roundNumber: Number(result.roundNumber),
             totalPrizePool: result.totalPrizePool.toString(),
-            participants: result.participants || [],
-            smallPrizeWinners: result.smallPrizeWinners || [],
-            bigPrizeWinners: result.bigPrizeWinners || [],
+            addressArrays: result.addressArrays || [], 
             status: Number(result.status),
             bigPrize: result.bigPrize.toString(),
             smallPrize: result.smallPrize.toString(),
+            miniPrize: result.miniPrize.toString(),
             commission: result.commission.toString(),
             totalTickets: Number(result.totalTickets)
           };
@@ -692,6 +679,29 @@ class ContractService {
             return percentage;
         } catch (error) {
             throw new Error(`Error fetching SMALL_PRIZE_PERCENTAGE: ${error.message}`);
+        }
+    }
+
+    async getMINI_PRIZE_PERCENTAGE() {
+        try {
+            const contract = this.getReadContract();
+            const percentage = await contract.methods.getMINI_PRIZE_PERCENTAGE().call();
+            return percentage;
+        } catch (error) {
+            throw new Error(`Error fetching getMINI_PRIZE_PERCENTAGE: ${error.message}`);
+        }
+    }
+
+    async getBlocksWait()
+    {
+        try {
+            const contract = this.getReadContract();
+            const result = await contract.methods.getBlocksWait().call();
+            return {
+                BLOCKS_TO_WAIT_fOR_CLOSE: result.BLOCKS_TO_WAIT_fOR_CLOSE.toString(),
+                BLOCKS_TO_WAIT_fOR_DRAW: result.BLOCKS_TO_WAIT_fOR_DRAW.toString()};
+        } catch (error) {
+            throw new Error(`Error fetching getBlocksWait: ${error.message}`);
         }
     }
 }

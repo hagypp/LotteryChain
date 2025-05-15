@@ -294,6 +294,11 @@
   font-weight: 500;
 }
 
+.how-to-play-grid {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 1.5rem;
+  
 .step-description {
   color: #e1e1e1;
   font-size: 0.9rem;

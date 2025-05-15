@@ -107,6 +107,11 @@
   color: #EAB308; /* Gold for text */
 }
 
+.ticket-status.won_mini_prize {
+  background: rgba(238, 52, 213, 0.2); /* Gold-ish tone for big prize */
+  color: #e4ace0; /* Gold for text */
+}
+
 .ticket-time, .text-sm {
   color: #94a3b8;
   font-size: 0.875rem;

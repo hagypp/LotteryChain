@@ -1,12 +1,13 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.0;
+pragma solidity ^0.8.2;
 
     enum TicketStatus {
         ACTIVE,         // Ticket is purchased but not in any lottery round 0 
         IN_LOTTERY,     // Ticket is currently in an active lottery round   1
         USED,           // Ticket was used in a past lottery round           2
         WON_SMALL_PRIZE, // Ticket won a small prize                      3
-        WON_BIG_PRIZE    // Ticket won a big prize                        4
+        WON_BIG_PRIZE,    // Ticket won a big prize                        4
+        WON_MINI_PRIZE   // 5 New status for mini prize
     }
 
     struct TicketData {
@@ -85,19 +86,18 @@ contract TicketManager {
         return false;
     }
 
-    // Mark the ticket as used
-    function markTicketAsUsed(address _player, uint256 _ticketId) 
+    function markTicketAsStatus(address _player, uint256 _ticketId, TicketStatus _status) 
         external 
         returns (bool) 
     {
         TicketData[] storage tickets = playerTickets[_player];
         uint256 length = tickets.length;
 
-        for (uint256 i; i < length; ++i) { // Use ++i and cache length for gas optimization
+        for (uint256 i; i < length; ++i) { // Use preloaded length and ++i for gas optimization
             if (tickets[i].id == _ticketId) {
                 require(tickets[i].status == TicketStatus.IN_LOTTERY, "Ticket is not in the lottery");
 
-                tickets[i].status = TicketStatus.USED;
+                tickets[i].status = _status;
                 return true;
             }
         }
@@ -163,28 +163,4 @@ contract TicketManager {
     function getTicketPrice() external view returns (uint256) {
         return ticketPrice;
     }
-
-    // Set a new ticket price
-    function setTicketPrice(uint256 _newPrice) external onlyOwner {
-        ticketPrice = _newPrice;
-    }
-
-
-    function markTicketAsWinner(address _player, uint256 _ticketId, bool isBigPrize) 
-    external 
-    returns (bool) {
-    TicketData[] storage tickets = playerTickets[_player];
-    uint256 length = tickets.length;
-
-    for (uint256 i; i < length; ++i) {
-        if (tickets[i].id == _ticketId) {
-            require(tickets[i].status == TicketStatus.IN_LOTTERY, "Ticket is not in the lottery");
-
-            tickets[i].status = isBigPrize ? TicketStatus.WON_BIG_PRIZE : TicketStatus.WON_SMALL_PRIZE;
-            return true;
-        }
-    }
-
-    return false;
-}
 }
