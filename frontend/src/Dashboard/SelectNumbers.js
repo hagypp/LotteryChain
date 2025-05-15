@@ -86,9 +86,7 @@ const SelectNumbers = ({ onClose, ticketId, onTicketAdded }) => {
                 numbersHash,
                 ticketHashWithStrong
             );
-            
-            console.log('Transaction result:', result);
-            
+                        
             if (result.success) {
                 const outcome = result.resultFromEvent;
             
