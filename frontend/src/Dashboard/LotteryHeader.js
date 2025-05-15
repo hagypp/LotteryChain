@@ -4,7 +4,7 @@ import './Dashboard.css';
 
 const LotteryHeader = () => {
   const { 
-    contractState: { ticketPrice, isLotteryActive, blockStatus, currentPrizePool, totalTickets, currentRound ,commission,percentage },
+    contractState: { ticketPrice, isLotteryActive, blockStatus, currentPrizePool, totalTickets, currentRound ,commission,percentage_small, percentage_mini},
     uiState: { isLoading },
     actions: { handlePurchase, handleCloseLottery, handleDrawWinner }
   } = useLottery();
@@ -16,10 +16,12 @@ const LotteryHeader = () => {
   };
 
   const calculatedCommission = (currentPrizePool * commission) / 100;
-  const prizePoolAfterCommission = currentPrizePool - calculatedCommission;
-  const calculatedSmallPrize = (prizePoolAfterCommission * percentage) / 100;
-  const calculatedBigPrize = prizePoolAfterCommission - calculatedSmallPrize;
+  const calculatedMiniPrize = (currentPrizePool * percentage_mini) / 100;
+  const calculatedSmallPrize = (currentPrizePool * percentage_small) / 100;
+  const calculatedBigPrize = currentPrizePool - calculatedCommission - calculatedSmallPrize - calculatedMiniPrize;
 
+
+  
 
   return (
     <div className="dashboard-header-row">
@@ -61,6 +63,10 @@ const LotteryHeader = () => {
   <div className="header-info-item">
     <span className="header-info-label">SMALL PRIZE</span>
     <span className="header-info-value">{formatEth(calculatedSmallPrize)} ETH</span>
+  </div>
+  <div className="header-info-item">
+    <span className="header-info-label">MINI PRIZE</span>
+    <span className="header-info-value">{formatEth(calculatedMiniPrize)} ETH</span>
   </div>
   <div className="header-info-item">
     <span className="header-info-label">COMMISSION</span>
