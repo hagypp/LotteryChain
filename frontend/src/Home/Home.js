@@ -3,7 +3,7 @@ import MetaMaskConnect from "../MetaMaskConnect/MetaMaskConnect";
 import "./Home.css"; 
 import "../MetaMaskConnect/MetaMaskConnect.css";
 import InfoButton from '../Dashboard/InfoButton';
-import ExchangeButton from "../Dashboard/ExchangeButton";
+// import ExchangeButton from "../Dashboard/ExchangeButton";
 
 const Home = ({ onConnect }) => {  
   const features = [
@@ -37,12 +37,12 @@ const Home = ({ onConnect }) => {
     {
       icon: "🎟️",
       title: "Buy Ticket",
-      description: "You can buy tickets any time, but only enter them into the lottery when it's open"
+      description: "You can buy tickets any time"
     },
     {
       icon: "🔢",
       title: "Choose Numbers",
-      description: "Pick 6 numbers between 1–37 and 1 strong number between 1–7 and your ticket is ready!"
+      description: "Pick 6 numbers between 1–37 and 1 strong number between 1–7 and your ticket is ready! you can choose numbers only when the lottery is open"
     },
     {
       icon: "⏳",
@@ -62,12 +62,17 @@ const Home = ({ onConnect }) => {
     {
       icon: "🏆",
       title: "Win Big",
-      description: "Match all 6 numbers and the strong number to win the big prize! If multiple winners exist, the prize is divided equally among them."
+      description: "Match all 6 numbers and the strong number to win the big prize !"
     },
     {
       icon: "🥈",
       title: "Small Prize",
-      description: "Match 6 numbers (without the strong number) to win a smaller prize. If multiple winners exist, the prize is divided equally among them."
+      description: "Match 6 numbers (without the strong number) to win the small prize !"
+    },
+    {
+      icon: "🥉",
+      title: "mini Prize",
+      description: "In every round, a mini prize is awarded, even if no one guesses the winning numbers. This prize is distributed randomly among players who did not win any other prize. The distribution uses a softmax function to assign higher chances to tickets that have been purchased earlier."
     },
     {
       icon: "💸",
@@ -77,7 +82,7 @@ const Home = ({ onConnect }) => {
   ];
   return (
     <div className="main">
-      <h1 className="title">🎰 Lottery Ticket Game</h1>
+      <h1 className="title">🎰 Lottery Chain Game</h1>
       <p className="subtitle">Experience the Future of Fair Gaming</p>
 
       <div className="explanation-text">
@@ -116,7 +121,7 @@ const Home = ({ onConnect }) => {
   </div>
 </div>
   <InfoButton />
-  <ExchangeButton/>
+  {/* <ExchangeButton/> */}
     </div>
   );
 };
