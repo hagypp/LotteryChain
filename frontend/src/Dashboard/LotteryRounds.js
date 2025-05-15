@@ -104,7 +104,7 @@ const LotteryRounds = ({ isContractReady }) => {
   const formatEth = (value) => {
     if (!value) return '0';
     // Convert Wei to ETH
-    return (Number(value) / 1e18).toFixed(6);
+    return (Number(value) / 1e18).toFixed(2);
   };
 
   const fetchRoundByIndex = async (roundNumberInput) => {
