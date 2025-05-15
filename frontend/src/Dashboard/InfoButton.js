@@ -1,13 +1,61 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import './InfoButton.css';
+import contractService from '../services/contractService';
+
 
 const InfoButton = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [contractData, setContractData] = useState({
+    BLOCKS_TO_WAIT_FOR_CLOSE: null,
+    BLOCKS_TO_WAIT_FOR_DRAW: null,
+    commission: null,
+    percentage_small: null,
+    percentage_mini: null,
+    percentage_big: null,
+  });
 
   const toggleModal = () => {
     setIsModalOpen(!isModalOpen);
   };
 
+  // Fetch contract data on mount
+  useEffect(() => {
+    const fetchContractData = async () => {
+      try {
+        // Fetch block wait data
+        const blockData = await contractService.getBlocksWait();
+        // Fetch commission and prize percentages
+        const [commission, percentage_small, percentage_mini] = await Promise.all([
+          contractService.getFLEX_COMMISSION(),
+          contractService.getSMALL_PRIZE_PERCENTAGE(),
+          contractService.getMINI_PRIZE_PERCENTAGE(),
+        ]);
+        // Calculate percentage_big
+        const commissionNum = Number(commission);
+        const smallNum = Number(percentage_small);
+        const miniNum = Number(percentage_mini);
+        const percentage_big = commission && percentage_small && percentage_mini ? 100 - commissionNum - smallNum - miniNum : null;
+        setContractData({
+          BLOCKS_TO_WAIT_FOR_CLOSE: blockData.BLOCKS_TO_WAIT_fOR_CLOSE ?? null,
+          BLOCKS_TO_WAIT_FOR_DRAW: blockData.BLOCKS_TO_WAIT_fOR_DRAW ?? null,
+          commission: commission ? commission.toString() : null,
+          percentage_small: percentage_small ? percentage_small.toString() : null,
+          percentage_mini: percentage_mini ? percentage_mini.toString() : null,
+          percentage_big: percentage_mini&&percentage_small&&commission ? percentage_big.toString() : null,
+        });
+      } catch (err) {
+        setContractData({
+          BLOCKS_TO_WAIT_FOR_CLOSE: null,
+          BLOCKS_TO_WAIT_FOR_DRAW: null,
+          commission: null,
+          percentage_small: null,
+          percentage_mini: null,
+          percentage_big: null,
+        });
+      }
+    };
+    fetchContractData();
+  }, []);
 
   return (
     <div className="info-button-container">
@@ -43,7 +91,8 @@ const InfoButton = () => {
                 When a new lottery round begins, the smart contract records the current block number as the starting point.
               </li>
               <li><strong>Entry Window (BLOCKS_TO_WAIT_FOR_CLOSE)</strong><br />
-                From the starting block, users have a limited number of blocks (defined by BLOCKS_TO_WAIT_FOR_CLOSE) to enter the lottery by selecting 6 numbers between 1–37 and 1 strong number between 1–7.
+                From the starting block, users have a limited number of blocks defined by BLOCKS_TO_WAIT_FOR_CLOSE {contractData.BLOCKS_TO_WAIT_FOR_CLOSE !== null 
+                      ? `= ${contractData.BLOCKS_TO_WAIT_FOR_CLOSE})` : ''} to enter the lottery by selecting 6 numbers between 1–37 and 1 strong number between 1–7.
               </li>
               <li><strong>Lottery Closing</strong><br />
                 Once the current block exceeds the entry period, the lottery can be closed. This can be done:
@@ -53,10 +102,23 @@ const InfoButton = () => {
                 </ul>
               </li>
               <li><strong>Draw Window (BLOCKS_TO_WAIT_FOR_DRAW)</strong><br />
-                After the lottery is closed, there is a second waiting period (defined by BLOCKS_TO_WAIT_FOR_DRAW) before the draw. Once this period has passed, anyone can trigger the draw to pick the winning numbers.
+                After the lottery is closed, there is a second waiting period (defined by BLOCKS_TO_WAIT_FOR_DRAW  {contractData.BLOCKS_TO_WAIT_FOR_DRAW !== null 
+                      ? `= ${contractData.BLOCKS_TO_WAIT_FOR_DRAW})` : ''}  before the draw. Once this period has passed, anyone can trigger the draw to pick the winning numbers.
               </li>
               <li><strong>Prize Distribution</strong><br />
-                Winners are determined based on how many numbers they matched, and prizes are paid automatically by the smart contract. The prize pool is transparent from the start, with a fee deducted for the smart contract owner. Players who correctly guess all 6 numbers and the strong number win the big prize, while those who guess only the 6 numbers win a smaller prize. If multiple winners exist for a prize tier, the prize is divided equally among them.
+                Winners are determined based on how many numbers they matched, and prizes are paid automatically by the smart contract. The prize pool is transparent from the start, with a fee deducted for the smart contract owner  
+                <strong>{contractData.commission !== null ? ` (${(contractData.commission)}% of the prize pool)` : ''}</strong>
+                . Players who correctly guess all 6 numbers and the <strong>strong number</strong> win the <strong>big prize</strong> 
+                <strong>{contractData.percentage_big !== null ? ` (${(contractData.percentage_big)}% of the prize pool)` : ''}</strong>
+                       , while those who guess only the 6 numbers win a <strong>small prize</strong> 
+                       <strong>{contractData.percentage_small !== null ? ` (${(contractData.percentage_small)}% of the prize pool)` : ''}</strong>
+                       . If multiple winners exist for a prize tier, the prize is divided equally among them.
+                    <p>
+                    <strong>Mini Prize : </strong>
+                      In every round, a <strong>mini prize</strong> is awarded, even if no one guesses the winning numbers. This prize is distributed among players who did not win any other prize 
+                      <strong>{contractData.percentage_mini !== null ? ` (${(contractData.percentage_mini)}% of the prize pool)` : ''}</strong>
+                      . The distribution uses a <strong>softmax function</strong> to assign higher chances to tickets that have been purchased earlier (based on the timestamp when the ticket was purchased).
+                    </p>
               </li>
             </ol>
 
