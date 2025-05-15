@@ -1,5 +1,6 @@
+/* Main section styles remain the same */
 .main {
-  /* max-height: 100vh; */
+  min-height: 100vh;
   background: linear-gradient(135deg, #1a1a2e, #16213e);
   color: white;
   padding: 2rem;
@@ -34,12 +35,12 @@
   text-align: center;
   font-size: 1.5rem;
   color: #FF8E53;
-  margin-bottom: 0rem;
+  margin-bottom: 0.5rem;
   font-weight: 500;
 }
 
 .explanation-text {
-  max-width: 1200px;
+  max-width: 1300px;
   margin: 0 auto;
   padding: 1rem;
 }
@@ -47,8 +48,8 @@
 .explanation-text > p {
   text-align: center;
   margin-bottom: 0.2rem;
-  font-size: 1.3rem;
-  line-height: 1.6;
+  font-size: 1.0rem;
+  line-height: 1.0;
 }
 
 .features-grid {
@@ -56,7 +57,7 @@
   grid-template-columns: repeat(4, 1fr); /* Forces 4 columns */
   gap: 1.5rem;
   margin: 2rem 0;
-  /* padding: 0 1rem; */
+  padding: 0 1rem;
 }
 
 .feature-item {
@@ -70,7 +71,7 @@
   text-align: center;
   backdrop-filter: blur(4px);
   border: 1px solid rgba(255, 255, 255, 0.1);
-  /* height: 100%; Ensures equal height */
+  height: 100%; /* Ensures equal height */
 }
 
 .feature-item:hover {
@@ -82,19 +83,6 @@
   width: 80px;
   height: 80px;
   background: rgba(255, 255, 255, 0.1);
-  border-radius: 50%;
-  margin-bottom: 0.5rem;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 2rem;
-  color: #FF8E53;
-  transition: all 0.3s ease;
-}
-
-.feature-icon_how {
-  width: 40px;
-  height: 40px;
   border-radius: 50%;
   margin-bottom: 0.5rem;
   display: flex;
@@ -119,9 +107,9 @@
 
 .feature-description {
   color: #e1e1e1;
-  /* line-height: 1.5; */
+  line-height: 1.5;
   font-size: 1rem;
-  /* flex-grow: 1; */
+  flex-grow: 1;
 }
 
 .highlight {
@@ -189,46 +177,256 @@
   0%, 100% { transform: translate(0, 0) rotate(0deg); }
   50% { transform: translate(30px, 30px) rotate(180deg); }
 }
-.how-to-play-section {
-  text-align: center;
-  /* max-height: 40vh; Limit height to a portion of the viewport */
-  /* overflow-y: auto; Allow scrolling within the section if needed */
+
+
+/* Added decorative element similar to main section */
+.how-to-play-section::before {
+  content: '';
+  position: absolute;
+  background: radial-gradient(circle, #FF8E53 80%, transparent 100%);
+  bottom: -100px;
+  left: -80px;
+
 }
 
-.section-title {
-  font-size: 2rem;
-  /* margin-bottom: 2rem; */
-  color: #FFE66D;
+
+/* Flow line that connects all steps */
+.flow-line {
+  position: absolute;
+  top: 70px;
+  left: 0;
+  width: 100%;
+  height: 2px;
+  background: linear-gradient(90deg, 
+    rgba(255, 107, 107, 0.1), 
+    rgba(255, 107, 107, 0.8) 20%, 
+    rgba(255, 142, 83, 0.8) 80%, 
+    rgba(255, 142, 83, 0.1)
+  );
+  z-index: 1;
 }
 
-.how-to-play-grid {
-  display: grid;
-  grid-template-columns: repeat(9, 1fr);
-  gap: 1.5rem;
+.steps-container {
+  display: flex;
+  flex-wrap: nowrap;
+  justify-content: space-between;
+  position: relative;
+  z-index: 2;
+  overflow-x: auto;
+  padding: 0 20px;
+  -ms-overflow-style: none;  /* IE and Edge */
+  scrollbar-width: none;  /* Firefox */
 }
 
-@media (max-width: 992px) {
-  .how-to-play-grid {
-    grid-template-columns: repeat(2, 1fr);
-  }
+.steps-container::-webkit-scrollbar {
+  display: none; /* Chrome, Safari, Opera */
 }
 
-@media (max-width: 600px) {
-  .how-to-play-grid {
-    grid-template-columns: 1fr;
-  }
+/* Individual step styling - matched to feature items */
+.process-step {
+  flex: 0 0 auto;
+  margin: 0 10px;
+  width: 180px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  position: relative;
+  transition: all 0.3s ease;
+  padding: 10px;
 }
 
-.step-number {
-  width: 30px;
-  height: 30px;
-  background-color: #FFE66D;
-  color: #1a1a2e;
-  font-weight: bold;
+.step-node {
+  width: 60px;
+  height: 60px;
+  background: rgba(255, 255, 255, 0.07);
   border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
-  margin-bottom: 0.5rem;
-  font-size: 1rem;
+  margin-bottom: 15px;
+  position: relative;
+  z-index: 3;
+  backdrop-filter: blur(4px);
+  border: 2px solid rgba(255, 107, 107, 0.3);
+  box-shadow: 0 0 15px rgba(255, 107, 107, 0.15);
+  transition: all 0.3s ease;
+}
+
+.step-number {
+  position: absolute;
+  top: -5px;
+  right: -5px;
+  width: 22px;
+  height: 22px;
+  background: linear-gradient(135deg, #FF6B6B, #FF8E53);
+  color: white;
+  border-radius: 50%;
+  font-size: 0.8rem;
+  font-weight: bold;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.step-icon {
+  font-size: 1.8rem;
+  color: #FF8E53;
+}
+
+.step-content {
+  text-align: center;
+  background: rgba(255, 255, 255, 0.05);
+  padding: 15px 10px;
+  border-radius: 12px;
+  backdrop-filter: blur(4px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  transition: all 0.3s ease;
+  height: 120px;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+}
+
+.step-title {
+  color: #FFE66D;
+  font-size: 1.1rem;
+  margin-bottom: 8px;
+  font-weight: 500;
+}
+
+.step-description {
+  color: #e1e1e1;
+  font-size: 0.9rem;
+  line-height: 1.4;
+}
+
+/* Hover effects - matched to feature item hover */
+.process-step:hover .step-node {
+  transform: translateY(-5px);
+  border-color: rgba(255, 107, 107, 0.7);
+  box-shadow: 0 0 20px rgba(255, 107, 107, 0.3);
+}
+
+.process-step:hover .step-content {
+  background: rgba(255, 255, 255, 0.08);
+  transform: translateY(-5px);
+  box-shadow: 0 10px 30px rgba(255, 107, 107, 0.1);
+}
+
+/* Navigation buttons - styled to match overall theme */
+.flow-nav {
+  display: flex;
+  justify-content: center;
+  margin-top: 30px;
+}
+
+.nav-button {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 107, 107, 0.2);
+  color: #FFE66D;
+  padding: 8px 20px;
+  margin: 0 15px;
+  border-radius: 20px;
+  cursor: pointer;
+  font-size: 0.9rem;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  backdrop-filter: blur(4px);
+}
+
+.nav-button:hover {
+  background: rgba(255, 107, 107, 0.15);
+  border-color: #FF6B6B;
+  transform: translateY(-2px);
+  box-shadow: 0 5px 15px rgba(255, 107, 107, 0.2);
+}
+
+.nav-button svg {
+  margin: 0 5px;
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+  .flow-line {
+    display: none;
+  }
+  
+  .steps-container {
+    flex-direction: column;
+    align-items: center;
+    overflow-x: visible;
+    padding: 0;
+  }
+  
+  .process-step {
+    margin: 20px 0;
+    width: 90%;
+    max-width: 280px;
+  }
+  
+  .step-content {
+    height: auto;
+    min-height: 100px;
+  }
+  
+  /* Vertical line for mobile */
+  .elegant-flow::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 50%;
+    height: 100%;
+    width: 2px;
+    background: linear-gradient(180deg, 
+      rgba(255, 107, 107, 0.1), 
+      rgba(255, 107, 107, 0.8) 10%, 
+      rgba(255, 142, 83, 0.8) 90%, 
+      rgba(255, 142, 83, 0.1)
+    );
+    z-index: 1;
+  }
+}
+
+/* Bottom CTA Button Styles */
+.bottom-cta-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+.ready-text {
+  font-size: 1.5rem;
+  text-align: center;
+  color: #FFE66D;
+  font-weight: 600;
+}
+
+.start-game-button {
+  background: linear-gradient(135deg, #FF6B6B, #FF8E53);
+  color: white;
+  padding: 1rem 2.5rem;
+  border: none;
+  border-radius: 30px;
+  font-weight: 700;
+  font-size: 1.3rem;
+  cursor: pointer;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  position: relative;
+  overflow: hidden;
+  box-shadow: 0 10px 25px rgba(255, 107, 107, 0.35);
+  animation: pulse 2s infinite;
+}
+
+.start-game-button:hover {
+  transform: translateY(-5px) scale(1.03);
+  box-shadow: 0 15px 30px rgba(255, 107, 107, 0.45);
+}
+
+.start-game-button:active {
+  transform: translateY(-2px);
+  box-shadow: 0 5px 15px rgba(255, 107, 107, 0.3);
 }

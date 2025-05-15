@@ -1,95 +1,3 @@
-/* Main Layout - Matching Dashboard Style */
-.lottery-rounds-main {
-  min-height: 100vh;
-  background: linear-gradient(135deg, #1a1a2e, #16213e); /* Matching Dashboard gradient */
-  color: white;
-  padding: 2.5rem 10rem;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-}
-
-/* Page Title - Aligned with Dashboard */
-.lottery-rounds-title {
-  font-size: 2rem;
-  text-align: center;
-  margin-bottom: 1rem;
-  font-weight: 700;
-  color: #FFD700;
-}
-
-.lottery-rounds-subtitle {
-  text-align: center;
-  font-size: 1rem;
-  color: rgba(255, 255, 255, 0.8);
-  margin-bottom: 2rem;
-  font-weight: 300;
-}
-
-/* Lottery Rounds Container */
-.lottery-rounds-container {
-  max-width: 1200px;
-  margin: 0 auto;
-}
-
-/* New Side-by-Side Layout */
-.lottery-main-content {
-  display: grid;
-  grid-template-columns: minmax(300px, 1fr) 2fr;
-  gap: 1.5rem;
-  margin-bottom: 2rem;
-}
-
-@media (max-width: 1024px) {
-  .lottery-main-content {
-    grid-template-columns: 1fr;
-  }
-  
-  .lottery-rounds-main {
-    padding: 2.5rem 2rem;
-  }
-}
-
-/* Search Card - Matching Dashboard panel style */
-.lottery-rounds-search-card {
-  background: rgba(255, 255, 255, 0.03);
-  border-radius: 0.75rem;
-  padding: 1.5rem;
-  backdrop-filter: blur(8px);
-  border: 1px solid rgba(255, 255, 255, 0.05);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-  text-align: center;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  height: 100%;
-}
-
-.card-icon {
-  font-size: 2rem;
-  margin-bottom: 1rem;
-  background: linear-gradient(45deg, #3B82F6, #60A5FA);
-  border-radius: 50%;
-  width: 60px;
-  height: 60px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  box-shadow: 0 4px 6px rgba(59, 130, 246, 0.25);
-}
-
-.card-title {
-  font-size: 1.5rem;
-  color: white;
-  margin-bottom: 0.75rem;
-  font-weight: 700;
-}
-
-.card-description {
-  color: rgba(255, 255, 255, 0.7);
-  margin-bottom: 1.5rem;
-  font-size: 0.875rem;
-  line-height: 1.5;
-}
-
 /* Header with search and title in same row */
 .rounds-header-container {
   display: flex;
@@ -109,6 +17,47 @@
   flex: 2;
   display: flex;
   justify-content: flex-end;
+}
+
+/* Recent Rounds Section - Updated to match Ticket List */
+.recent-rounds-section {
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 0.75rem;
+  padding: 1.5rem;
+  backdrop-filter: blur(8px);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  height: 250px;
+}
+
+.no-lotteries-message {
+  grid-column: 1 / -1;
+  text-align: center;
+  color: #94a3b8;
+  padding: 2rem;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  border-radius: 1rem;
+  margin-top: 1.5rem;
+}
+
+.recent-rounds-title {
+  font-size: 1.5rem;
+  color: #FFD700;
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.rounds-counter {
+  font-size: 0.875rem;
+  opacity: 0.8;
+  font-weight: normal;
+  background: rgba(255, 215, 0, 0.15);
+  padding: 0.25rem 0.75rem;
+  border-radius: 999px;
 }
 
 /* Search Controls */
@@ -217,38 +166,7 @@
   font-size: 0.875rem;
 }
 
-.wallet-icon {
-  font-size: 1.2rem;
-}
-
-/* Recent Rounds Section - Updated to match Ticket List */
-.recent-rounds-section {
-  background: rgba(255, 255, 255, 0.05); /* Match the ticket-item background */
-  border-radius: 0.75rem;
-  padding: 1.5rem;
-  backdrop-filter: blur(8px);
-  border: 1px solid rgba(255, 255, 255, 0.05);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-}
-
-.recent-rounds-title {
-  font-size: 1.5rem;
-  color: #FFD700;
-  margin: 0;
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-}
-
-.rounds-counter {
-  font-size: 0.875rem;
-  opacity: 0.8;
-  font-weight: normal;
-  background: rgba(255, 215, 0, 0.15);
-  padding: 0.25rem 0.75rem;
-  border-radius: 999px;
-}
-
+/* Recent rounds grid */
 .recent-rounds-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
@@ -258,7 +176,7 @@
 
 /* Round card updated to match ticket-item design */
 .recent-round-card {
-  background: rgba(255, 255, 255, 0.05); /* Match the ticket-item background */
+  background: rgba(255, 255, 255, 0.05);
   border-radius: 1rem;
   padding: 1.5rem;
   border: 1px solid transparent;
@@ -270,7 +188,7 @@
 .recent-round-card:hover {
   background: rgba(255, 255, 255, 0.1);
   border-color: rgba(255, 255, 255, 0.2);
-  transform: translateY(-5px); /* Same hover effect as tickets */
+  transform: translateY(-5px);
   box-shadow: 0 10px 15px rgba(0, 0, 0, 0.1);
 }
 
@@ -278,7 +196,7 @@
   font-size: 1.25rem;
   font-weight: 700;
   margin-bottom: 0.5rem;
-  color: #FFE66D; /* Same as ticket-number */
+  color: #FFE66D;
 }
 
 .round-status {
@@ -293,17 +211,17 @@
 }
 
 .status-open {
-  background: rgba(52, 211, 153, 0.2); /* Matching ticket-status.active */
+  background: rgba(52, 211, 153, 0.2);
   color: #34D399;
 }
 
 .status-closed {
-  background: rgba(251, 191, 36, 0.2); /* Matching ticket-status.in-lottery */
+  background: rgba(251, 191, 36, 0.2);
   color: #FBD38D;
 }
 
 .status-finalized {
-  background: rgba(99, 102, 241, 0.2); /* Matching ticket-status.used */
+  background: rgba(99, 102, 241, 0.2);
   color: #6366F1;
 }
 
@@ -343,7 +261,7 @@
 }
 
 .modal-content {
-  background: linear-gradient(135deg, #1a1a2e, #16213e); /* Match main background */
+  background: linear-gradient(135deg, #1a1a2e, #16213e);
   border: 1px solid rgba(255, 255, 255, 0.05);
   border-radius: 0.75rem;
   padding: 1.5rem;
@@ -416,34 +334,6 @@
   grid-template-columns: 1fr 1fr;
   gap: 1rem;
   margin-bottom: 1.5rem;
-}
-
-@media (max-width: 768px) {
-  .winners-participants-grid {
-    grid-template-columns: 1fr;
-  }
-  
-  .prize-info-grid {
-    grid-template-columns: 1fr;
-  }
-  
-  .rounds-header-container {
-    flex-direction: column;
-    align-items: stretch;
-  }
-  
-  .rounds-header-left, 
-  .rounds-header-right {
-    width: 100%;
-  }
-  
-  .rounds-header-right {
-    justify-content: flex-start;
-  }
-  
-  .rounds-search-bar {
-    max-width: 100%;
-  }
 }
 
 .winners-section,
@@ -541,19 +431,41 @@
 }
 
 /* Responsive adjustments */
+@media (max-width: 1024px) {
+  .lottery-main-content {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 768px) {
+  .winners-participants-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .prize-info-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .rounds-header-container {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  
+  .rounds-header-left, 
+  .rounds-header-right {
+    width: 100%;
+  }
+  
+  .rounds-header-right {
+    justify-content: flex-start;
+  }
+  
+  .rounds-search-bar {
+    max-width: 100%;
+  }
+}
+
 @media (max-width: 480px) {
-  .lottery-rounds-title {
-    font-size: 1.75rem;
-  }
-  
-  .lottery-rounds-subtitle {
-    font-size: 0.875rem;
-  }
-  
-  .card-title {
-    font-size: 1.25rem;
-  }
-  
   .recent-rounds-grid {
     grid-template-columns: 1fr;
   }

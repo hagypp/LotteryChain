@@ -1,0 +1,131 @@
+.section-title {
+    font-size: 3rem;
+    text-align: center;
+    margin-top: 4rem;
+    margin-bottom: 1rem;
+    background: linear-gradient(45deg, #FF6B6B, #FF8E53);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+    animation: glow 2s ease-in-out infinite alternate;
+    font-weight: 600;
+  }
+  
+  .elegant-flow {
+    position: relative;
+    margin: 2rem 0;
+    padding: 2rem 0;
+  }
+  
+  /* Flow line that connects all steps */
+  .flow-line {
+    position: absolute;
+    top: 70px;
+    left: 0;
+    width: 100%;
+    height: 2px;
+    background: linear-gradient(90deg, 
+      rgba(255, 107, 107, 0.1), 
+      rgba(255, 107, 107, 0.8) 20%, 
+      rgba(255, 142, 83, 0.8) 80%, 
+      rgba(255, 142, 83, 0.1)
+    );
+    z-index: 1;
+  }
+  
+  .steps-container {
+    display: flex;
+    flex-wrap: nowrap;
+    justify-content: space-between;
+    position: relative;
+    z-index: 2;
+    overflow-x: auto;
+    padding: 0 20px;
+    -ms-overflow-style: none;  /* IE and Edge */
+    scrollbar-width: none;  /* Firefox */
+    scroll-snap-type: x mandatory;
+  }
+  
+  .steps-container::-webkit-scrollbar {
+    display: none; /* Chrome, Safari, Opera */
+  }
+  
+  /* Individual step styling */
+  .process-step {
+    flex: 0 0 auto;
+    margin: 0 10px;
+    width: 200px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    position: relative;
+    transition: all 0.3s ease;
+    padding: 10px;
+    scroll-snap-align: center;
+  }
+  
+  
+  .step-node {
+    width: 70px;
+    height: 70px;
+    background: rgba(255, 255, 255, 0.07);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 15px;
+    position: relative;
+    z-index: 3;
+    backdrop-filter: blur(4px);
+    border: 2px solid rgba(255, 107, 107, 0.3);
+    box-shadow: 0 0 15px rgba(255, 107, 107, 0.15);
+    transition: all 0.3s ease;
+  }
+  
+  .step-number {
+    position: absolute;
+    top: -5px;
+    right: -5px;
+    width: 25px;
+    height: 25px;
+    background: linear-gradient(135deg, #FF6B6B, #FF8E53);
+    color: white;
+    border-radius: 50%;
+    font-size: 0.9rem;
+    font-weight: bold;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  
+  .step-icon {
+    font-size: 2rem;
+  }
+  
+  .step-content {
+    text-align: center;
+    background: rgba(255, 255, 255, 0.05);
+    padding: 15px 10px;
+    border-radius: 12px;
+    backdrop-filter: blur(4px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    transition: all 0.3s ease;
+    height: 160px;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-start;
+    width: 100%;
+  }
+  
+  .step-title {
+    color: #FF8E53;
+    font-size: 1.1rem;
+    margin-bottom: 8px;
+    font-weight: 500;
+  }
+  
+  .step-description {
+    color: #e1e1e1;
+    font-size: 1.1rem;
+    line-height: 1.4;
+  }

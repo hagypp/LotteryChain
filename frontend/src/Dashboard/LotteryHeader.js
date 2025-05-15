@@ -4,15 +4,15 @@ import './Dashboard.css';
 
 const LotteryHeader = () => {
   const { 
-    contractState: { ticketPrice, isLotteryActive, blockStatus, currentPrizePool, totalTickets, currentRound ,commission,percentage },
+    contractState: { ticketPrice, isLotteryActive, blockStatus, currentPrizePool, totalTickets, currentRound, commission, percentage },
     uiState: { isLoading },
     actions: { handlePurchase, handleCloseLottery, handleDrawWinner }
   } = useLottery();
 
   const formatEth = (value) => {
-    if (!value) return '0';
+    if (!value) return '0.00';
     // Convert Wei to ETH
-    return (Number(value) / 1e18).toFixed(6);
+    return (Number(value) / 1e18).toFixed(2);
   };
 
   const calculatedCommission = (currentPrizePool * commission) / 100;
@@ -38,7 +38,7 @@ const LotteryHeader = () => {
       
         <div className="header-info-item">
           <span className="header-info-label">TICKET PRICE</span>
-          <span className="header-info-value">{Number(ticketPrice).toFixed(6)} ETH</span>
+          <span className="header-info-value">{Number(ticketPrice).toFixed(2)} ETH</span>
           </div>
         
         <div className="header-info-item">
@@ -50,23 +50,23 @@ const LotteryHeader = () => {
 
       <div className="header-info-row">
 
-      <div className="header-info-item">
+        <div className="header-info-item">
           <span className="header-info-label">PRIZE POLL</span>
           <span className="header-info-value">{formatEth(currentPrizePool)} ETH</span>
         </div>
-  <div className="header-info-item">
-    <span className="header-info-label">BIG PRIZE</span>
-    <span className="header-info-value">{formatEth(calculatedBigPrize)} ETH</span>
-  </div>
-  <div className="header-info-item">
-    <span className="header-info-label">SMALL PRIZE</span>
-    <span className="header-info-value">{formatEth(calculatedSmallPrize)} ETH</span>
-  </div>
-  <div className="header-info-item">
-    <span className="header-info-label">COMMISSION</span>
-    <span className="header-info-value">{formatEth(calculatedCommission)} ETH</span>
-  </div>
-</div>
+        <div className="header-info-item">
+          <span className="header-info-label">BIG PRIZE</span>
+          <span className="header-info-value">{formatEth(calculatedBigPrize)} ETH</span>
+        </div>
+        <div className="header-info-item">
+          <span className="header-info-label">SMALL PRIZE</span>
+          <span className="header-info-value">{formatEth(calculatedSmallPrize)} ETH</span>
+        </div>
+        <div className="header-info-item">
+          <span className="header-info-label">COMMISSION</span>
+          <span className="header-info-value">{formatEth(calculatedCommission)} ETH</span>
+        </div>
+      </div>
 
 
 
@@ -103,7 +103,7 @@ const LotteryHeader = () => {
             {isLoading.purchase ? "Processing..." : "BUY TICKET"}
           </button>
           <span className="tooltip-text">
-            Purchase a ticket for {Number(ticketPrice).toFixed(6)} ETH.<br/> 
+            Purchase a ticket for {Number(ticketPrice).toFixed(2)} ETH.<br/> 
             <span className="tooltip-highlight"><strong>Note :</strong> buy ticket will not guarantee participation in the lottery. </span><br/>
             <span className="tooltip-highlight"><strong>Note :</strong> if we reach 0 blocks until close this action may close the lottery. </span>
           </span>
