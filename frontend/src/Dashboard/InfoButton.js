@@ -91,8 +91,8 @@ const InfoButton = () => {
                 When a new lottery round begins, the smart contract records the current block number as the starting point.
               </li>
               <li><strong>Entry Window (BLOCKS_TO_WAIT_FOR_CLOSE)</strong><br />
-                From the starting block, users have a limited number of blocks defined by BLOCKS_TO_WAIT_FOR_CLOSE {contractData.BLOCKS_TO_WAIT_FOR_CLOSE !== null 
-                      ? `= ${contractData.BLOCKS_TO_WAIT_FOR_CLOSE})` : ''} to enter the lottery by selecting 6 numbers between 1–37 and 1 strong number between 1–7.
+                From the starting block, users have a limited number of blocks defined by <strong>BLOCKS_TO_WAIT_FOR_CLOSE {contractData.BLOCKS_TO_WAIT_FOR_CLOSE !== null 
+                      ? `= ${contractData.BLOCKS_TO_WAIT_FOR_CLOSE}` : ''} </strong>) to enter the lottery by selecting 6 numbers between 1–37 and 1 strong number between 1–7.
               </li>
               <li><strong>Lottery Closing</strong><br />
                 Once the current block exceeds the entry period, the lottery can be closed. This can be done:
@@ -102,8 +102,8 @@ const InfoButton = () => {
                 </ul>
               </li>
               <li><strong>Draw Window (BLOCKS_TO_WAIT_FOR_DRAW)</strong><br />
-                After the lottery is closed, there is a second waiting period (defined by BLOCKS_TO_WAIT_FOR_DRAW  {contractData.BLOCKS_TO_WAIT_FOR_DRAW !== null 
-                      ? `= ${contractData.BLOCKS_TO_WAIT_FOR_DRAW})` : ''}  before the draw. Once this period has passed, anyone can trigger the draw to pick the winning numbers.
+                     After the lottery is closed, there is a second waiting period (defined by <strong>BLOCKS_TO_WAIT_FOR_DRAW {contractData.BLOCKS_TO_WAIT_FOR_DRAW !== null 
+                      ? `= ${contractData.BLOCKS_TO_WAIT_FOR_DRAW}` : ''}</strong> ) before the draw. Once this period has passed, anyone can trigger the draw to pick the winning numbers.
               </li>
               <li><strong>Prize Distribution</strong><br />
                 Winners are determined based on how many numbers they matched, and prizes are paid automatically by the smart contract. The prize pool is transparent from the start, with a fee deducted for the smart contract owner  
