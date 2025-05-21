@@ -12,6 +12,7 @@ contract MainTicketSystem {
     event LotteryRoundStatusChanged(bool isOpen);
     event BlockStatusUpdated(uint256 blocksUntilClose, uint256 blocksUntilDraw);
     event TicketEnteredLottery(uint256 roundNumber, uint256 totalTickets, uint256 prizePool);
+    
 
     event TicketSelected(address indexed user, uint256 ticketId, bool success);
 

@@ -44,7 +44,7 @@ const LotteryRounds = ({ isContractReady }) => {
       
       // Fetch recent rounds data
       const recentRoundsData = [];
-      const roundsToFetch = Math.min(4, Number(currentRound));
+      const roundsToFetch = Math.min(5, Number(currentRound));
       
       for (let i = Number(currentRound) - 1; i > Number(currentRound) - roundsToFetch; i--) {
         if (i >= 0) {
@@ -130,10 +130,8 @@ const LotteryRounds = ({ isContractReady }) => {
   
       // Make an explicit string to avoid circular reference issues
       const roundNumberPrimitive = String(roundNumberStr);
-      console.log('Fetching round with index:', roundNumberPrimitive);
   
       const data = await contractService.getLotteryRoundInfo(roundNumberPrimitive);
-      console.log('Fetched round data:', data);
   
       const {
         roundNumber,
