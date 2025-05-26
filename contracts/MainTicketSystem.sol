@@ -7,7 +7,7 @@ import "./LotteryManager.sol";
 contract MainTicketSystem {
     TicketManager private ticketManager;
     LotteryManager private lotteryManager;
-    address private immutable i_owner;
+    // address private immutable i_owner;
 
     event LotteryRoundStatusChanged(bool isOpen);
     event BlockStatusUpdated(uint256 blocksUntilClose, uint256 blocksUntilDraw);
@@ -18,7 +18,7 @@ contract MainTicketSystem {
 
     constructor() {
         // Deploy sub-contracts
-        i_owner = msg.sender;
+        // i_owner = msg.sender;
         ticketManager = new TicketManager(1 ether);
         lotteryManager = new LotteryManager(address(ticketManager));
     }
@@ -68,7 +68,8 @@ contract MainTicketSystem {
         require(success, "Failed to forward Ether to LotteryManager");
 
         if (msg.value > ticketPrice) {
-            payable(msg.sender).transfer(msg.value - ticketPrice);
+            (bool sent, ) = msg.sender.call{value: msg.value - ticketPrice}("");
+            require(sent, "Refund failed");
         }
 
         if (isLotteryActive()) {
@@ -85,7 +86,10 @@ contract MainTicketSystem {
     function selectTicketsForLottery(uint256 _ticketId, bytes32 _ticketHash, bytes32 _ticketHashWithStrong) 
         external  
         returns (bool) 
-    {   
+    {
+        require(_ticketHash != bytes32(0), "Ticket hash cannot be empty");
+        require(_ticketHashWithStrong != bytes32(0), "Strong ticket hash cannot be empty");
+   
         bool success = false;
         if (isLotteryActive()) {
             if(canCloseLottery())
@@ -122,6 +126,8 @@ contract MainTicketSystem {
 
     function drawLotteryWinner(bytes32 keccak256HashNumbers, bytes32 keccak256HashFull) public  
     {
+        require(keccak256HashNumbers != bytes32(0), "Ticket hash cannot be empty");
+        require(keccak256HashFull != bytes32(0), "Strong ticket hash cannot be empty");
         lotteryManager.drawLotteryWinner(keccak256HashNumbers, keccak256HashFull);
         startNewLotteryRound();
         emit TicketEnteredLottery(
@@ -204,4 +210,17 @@ contract MainTicketSystem {
     }
     
     receive() external payable {}
+
+    // fallback() external payable {
+    // revert("Unsupported function call");
+    // }
+
+    // Function to claimPrize from the contract
+    function claimPrize(address user) external {
+        lotteryManager.claimPrize(user);
+    }
+
+    function getPendingPrize(address user) external view returns (uint256) {
+        return lotteryManager.getPendingPrize(user);
+    }
 }
