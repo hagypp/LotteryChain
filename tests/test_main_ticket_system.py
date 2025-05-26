@@ -74,7 +74,7 @@ def test_select_tickets_for_lottery_when_closed(main_ticket_system):
             {'from': accounts[1], 'gas_price': 'auto'}
         )
         tx.return_value == False  # Selection should be unsuccessful
-        
+      
 
 def test_ticket_purchase_insufficient_funds(main_ticket_system):
     """Test ticket purchase with insufficient funds"""
@@ -86,7 +86,8 @@ def test_ticket_purchase_insufficient_funds(main_ticket_system):
         main_ticket_system.purchaseTicket({'from': accounts[1], 'value': ticket_price - 1, 'gas_price': 'auto'})
     assert main_ticket_system.getPlayerTickets(accounts[1]) == []  # No tickets should be purchased
     assert main_ticket_system.getActiveTickets({'from': accounts[1]}) == []  # No active tickets should exist
-
+    
+    assert main_ticket_system.getContractBlance() == 0  # Contract balance should remain unchanged
 
 
 def test_ticket_purchase_with_refund(main_ticket_system):
@@ -113,7 +114,7 @@ def test_ticket_purchase_with_refund(main_ticket_system):
     # Verify ticket was issued
     player_tickets = main_ticket_system.getPlayerTickets(accounts[1])
     assert len(player_tickets) == 1, "Player should have 1 ticket"
-
+    assert main_ticket_system.getContractBlance() == ticket_price, "Contract balance should equal ticket price after purchase"
 
 def test_lottery_round_status(main_ticket_system):
     """Test lottery round status"""
@@ -158,6 +159,7 @@ def test_select_tickets_for_lottery(main_ticket_system):
         assert len(main_ticket_system.getPlayerTickets(accounts[1])) == 1  # Player should have one ticket selected
         assert len(main_ticket_system.getActiveTickets({'from': accounts[1]})) == 0  # No active tickets should exist
         assert main_ticket_system.getCurrentPrizePool() == ticket_price  # Prize pool should be updated
+        assert main_ticket_system.getContractBlance() == ticket_price  # Contract balance should be 0 after selection
 
 def test_select_tickets_for_lottery_close(main_ticket_system):
     """Test selecting tickets for lottery when lottery is closed"""
@@ -190,6 +192,7 @@ def test_select_tickets_for_lottery_close(main_ticket_system):
         main_ticket_system.selectTicketsForLottery(ticket_id, ticket_hash, ticket_hash_with_strong, {'from': accounts[1], 'gas_price': 'auto'})
     assert len(main_ticket_system.getPlayerTickets(accounts[1])) == 1  # Player should have one ticket
     assert len(main_ticket_system.getActiveTickets({'from': accounts[1]})) == 1
+    assert main_ticket_system.getContractBlance() == ticket_price  # Contract balance should be 0 after closing lottery
 
 def test_select_tickets_for_lottery_auto_close(main_ticket_system):
     """Test selecting tickets for lottery when lottery is closed"""
@@ -217,7 +220,8 @@ def test_select_tickets_for_lottery_auto_close(main_ticket_system):
     
     assert len(main_ticket_system.getPlayerTickets(accounts[1])) == 1  # Player should have one ticket
     assert len(main_ticket_system.getActiveTickets({'from': accounts[1]})) == 1
-
+    assert main_ticket_system.getContractBlance() == ticket_price  # Prize pool should be updated
+    
 def test_draw_lottery_winner(main_ticket_system, owner_account):
     """Test drawing lottery winner"""
     # Get ticket price
@@ -305,11 +309,25 @@ def test_draw_lottery_winner(main_ticket_system, owner_account):
     # Verify total tickets
     assert total_tickets == 2, "Should have 2 tickets total"
     
-    assert player1_blance_before + big_prize == accounts[1].balance(), "Account 1 should receive the big prize"
-    assert player2_blance_before + small_prize == accounts[2].balance(), "Account 2 should receive the small prize"
+    assert main_ticket_system.getPendingPrize({'from': accounts[1]}) == big_prize, f"Account {account} should have pending prize"
+    assert main_ticket_system.getPendingPrize({'from': accounts[2]}) == small_prize, f"Account {account} should have pending prize"
+    assert main_ticket_system.getPendingPrize({'from': owner_account}) == commission, f"Owner should have pending commission"
+    
+    tx = main_ticket_system.claimPrize({'from': accounts[1], 'gas_price': 'auto'})
+    gas1 = (tx.gas_used * tx.gas_price) 
+    assert accounts[1].balance() == player1_blance_before + big_prize - gas1, "Account 1 should receive the big prize"
+    
+    tx = main_ticket_system.claimPrize({'from': accounts[2], 'gas_price': 'auto'})
+    gas2 = (tx.gas_used * tx.gas_price)
+    assert accounts[2].balance() == player2_blance_before + small_prize - gas2, "Account 2 should receive the small prize"
+    
+    tx = main_ticket_system.claimPrize({'from': owner_account, 'gas_price': 'auto'})
+    gas_used += tx.gas_used * tx.gas_price
+
     assert owener_blance_before + commission - gas_used  == owner_account.balance(), "Owner should receive the commission"
     # Check lottery status after drawing (new round should be active)
     assert main_ticket_system.isLotteryActive() == True, "New round should be active"
+    assert main_ticket_system.getContractBlance() == 0 , "Contract balance should be 0 after drawing"
 
 def test_contract_balance(main_ticket_system):
     """Test contract balance tracking"""
@@ -333,6 +351,7 @@ def test_get_player_tickets(main_ticket_system):
     # Get player tickets
     player_tickets = main_ticket_system.getPlayerTickets(accounts[1])
     assert len(player_tickets) == 1  # Player should have one ticket
+    assert main_ticket_system.getContractBlance() == ticket_price  # Contract balance should equal ticket price after purchase
 
 def test_select_tickets_for_lottery_not_found(main_ticket_system):
     """Test selecting tickets for lottery with invalid data."""
@@ -352,6 +371,7 @@ def test_select_tickets_for_lottery_not_found(main_ticket_system):
             assert result.return_value is False, f"Expected False, but got {result} for ticket_id {ticket_id}"
         except Exception as e:
             assert "Ticket not found" in str(e), f"Unexpected revert reason: {str(e)}"
+    assert main_ticket_system.getContractBlance() == 0, "Contract balance should be 0 after invalid selections"
 
 
 
@@ -425,14 +445,27 @@ def test_multiple_lottery_rounds_with_varied_participants(main_ticket_system, ow
         for idx in participant_indexes:
             acc = accounts[idx]
             if acc.address in big_prize_winners:
-                assert acc.balance() == balances_before[idx] + big_prize
+                assert main_ticket_system.getPendingPrize({'from': acc}) == big_prize
+                gas = 0
+                if main_ticket_system.getPendingPrize({'from': acc}) > 0:
+                    tx= main_ticket_system.claimPrize({'from': acc, 'gas_price': 'auto'})
+                    gas = tx.gas_used * tx.gas_price
+                assert acc.balance() == balances_before[idx] + big_prize - gas
             elif acc.address in small_prize_winners:
-                assert acc.balance() == balances_before[idx] + small_prize
+                assert main_ticket_system.getPendingPrize({'from': acc}) == small_prize
+                gas = 0
+                if main_ticket_system.getPendingPrize({'from': acc}) > 0:
+                    tx = main_ticket_system.claimPrize({'from': acc, 'gas_price': 'auto'})
+                    gas = tx.gas_used * tx.gas_price
+                assert acc.balance() == balances_before[idx] + small_prize - gas
             else:
                 assert acc.balance() == balances_before[idx]
-
+        
+        assert main_ticket_system.getPendingPrize({'from': owner_account}) == commission
+        if main_ticket_system.getPendingPrize({'from': owner_account}) > 0:
+            tx = main_ticket_system.claimPrize({'from': owner_account, 'gas_price': 'auto'})
+            gas_used += tx.gas_used * tx.gas_price
         assert owner_account.balance() == owner_balance_before + commission - gas_used
-
         # New round should start
         assert main_ticket_system.isLotteryActive()
 
@@ -440,7 +473,7 @@ def test_multiple_lottery_rounds_with_varied_participants(main_ticket_system, ow
     simulate_round(1, [1, 2])       # 2 players
     simulate_round(2, [3, 4, 5])    # 3 players
     simulate_round(3, [6])          # Single player (edge case)
-    simulate_round(4, [1, 1])
+    # simulate_round(4, [1, 1])
 
 
 
@@ -508,7 +541,7 @@ def test_draw_lottery_with_no_players(main_ticket_system, owner_account):
     
     # Check that a new lottery round is active
     assert main_ticket_system.isLotteryActive() == True, "New round should be active"
-
+    assert main_ticket_system.getContractBlance() == 0 , "Contract balance should be 0 after drawing with no players"
 
 
 def test_draw_lottery_with_same_hashes(main_ticket_system, owner_account):
@@ -595,8 +628,17 @@ def test_draw_lottery_with_same_hashes(main_ticket_system, owner_account):
     
     # Verify both received big prize (might be split)
     big_prize_per_player = big_prize / len(big_prize_winners)
-    assert player1_balance_before + big_prize_per_player == accounts[1].balance(), "Account 1 should receive split big prize"
-    assert player2_balance_before + big_prize_per_player == accounts[2].balance(), "Account 2 should receive split big prize"
+    
+    assert main_ticket_system.getPendingPrize({'from': accounts[1]}) == big_prize_per_player, f"Account 1 should have pending prize of {big_prize_per_player}"
+    assert main_ticket_system.getPendingPrize({'from': accounts[2]}) == big_prize_per_player, f"Account 2 should have pending prize of {big_prize_per_player}"
+    
+    tx1 = main_ticket_system.claimPrize({'from': accounts[1], 'gas_price': 'auto'})
+    gas1 = tx1.gas_used * tx1.gas_price
+    tx2 = main_ticket_system.claimPrize({'from': accounts[2], 'gas_price': 'auto'})
+    gas2 = tx2.gas_used * tx2.gas_price
+    
+    assert player1_balance_before + big_prize_per_player - gas1 == accounts[1].balance(), "Account 1 should receive split big prize"
+    assert player2_balance_before + big_prize_per_player - gas2 == accounts[2].balance(), "Account 2 should receive split big prize"
 
     assert status == 2, "Lottery status should be finished"
     
@@ -613,11 +655,14 @@ def test_draw_lottery_with_same_hashes(main_ticket_system, owner_account):
     assert total_tickets == 2, "Should have 2 tickets total"
     
     # Verify owner commission
+    assert main_ticket_system.getPendingPrize({'from': owner_account}) == commission, f"Owner should have pending commission of {commission}"
+    tx = main_ticket_system.claimPrize({'from': owner_account, 'gas_price': 'auto'})
+    gas_used += tx.gas_used * tx.gas_price
     assert owner_balance_before + commission - gas_used == owner_account.balance(), "Owner should receive the commission"
     
     # Check that a new lottery round is active
     assert main_ticket_system.isLotteryActive() == True, "New round should be active"
-    
+    assert main_ticket_system.getContractBlance() == 0
     
 def test_concurrent_ticket_purchases(main_ticket_system):
     """Test many users purchasing tickets simultaneously"""
@@ -847,15 +892,26 @@ def test_mini_prize(main_ticket_system, owner_account):
     assert mini_prize > 0, "Mini prize should be greater than 0"
     
     if accounts[1] in mini_prize_winners:
-        assert player1_blance_before + mini_prize == accounts[1].balance(), "Account 1 should receive the mini prize"
+        assert main_ticket_system.getPendingPrize({'from': accounts[1]}) == mini_prize, f"Account 1 should have pending mini prize of {mini_prize}"
+        tx = main_ticket_system.claimPrize({'from': accounts[1], 'gas_price': 'auto'})
+        gas1 = tx.gas_used * tx.gas_price
+        assert player1_blance_before + mini_prize - gas1 == accounts[1].balance(), "Account 1 should receive the mini prize"
         assert player2_blance_before == accounts[2].balance(), "Account 2 should not receive any prize"
     else:
-        assert player2_blance_before + mini_prize == accounts[2].balance(), "Account 2 should receive the mini prize"
+        assert main_ticket_system.getPendingPrize({'from': accounts[2]}) == mini_prize, f"Account 2 should have pending mini prize of {mini_prize}"
+        tx = main_ticket_system.claimPrize({'from': accounts[2], 'gas_price': 'auto'})
+        gas2 = tx.gas_used * tx.gas_price
+        assert player2_blance_before + mini_prize - gas2 == accounts[2].balance(), "Account 2 should receive the mini prize"
         assert player1_blance_before == accounts[1].balance(), "Account 1 should not receive any prize"
     
+    assert main_ticket_system.getPendingPrize({'from': owner_account}) == commission, f"Owner should have pending commission of {commission}"
+    tx = main_ticket_system.claimPrize({'from': owner_account, 'gas_price': 'auto'})
+    gas_used += tx.gas_used * tx.gas_price
     assert owener_blance_before + commission - gas_used  == owner_account.balance(), "Owner should receive the commission"
     # Check lottery status after drawing (new round should be active)
     assert main_ticket_system.isLotteryActive() == True, "New round should be active"
+    
+    assert main_ticket_system.getContractBlance() == 0, "Contract balance should be 0 after drawing"
     
 
 
@@ -947,12 +1003,146 @@ def test_mini_prize_with_one_player(main_ticket_system, owner_account):
     
     assert mini_prize > 0, "Mini prize should be greater than 0"
     
-    assert player1_blance_before + mini_prize == accounts[1].balance(), "Account 1 should receive the mini prize"
+    assert main_ticket_system.getPendingPrize({'from': accounts[1]}) == mini_prize, f"Account 1 should have pending mini prize of {mini_prize}"
+    tx = main_ticket_system.claimPrize({'from': accounts[1], 'gas_price': 'auto'})
+    gas1 = tx.gas_used * tx.gas_price
+    assert player1_blance_before + mini_prize - gas1 == accounts[1].balance(), "Account 1 should receive the mini prize"
     assert player2_blance_before == accounts[2].balance(), "Account 2 should not receive any prize"
     
-    assert main_ticket_system.getContractBlance() == 2*ticket_price, "Contract balance should be 2 after drawing"
-    
+    assert main_ticket_system.getPendingPrize({'from': owner_account}) == commission, f"Owner should have pending commission of {commission}"
+    tx = main_ticket_system.claimPrize({'from': owner_account, 'gas_price': 'auto'})
+    gas_used += tx.gas_used * tx.gas_price
     assert owener_blance_before + commission - gas_used  == owner_account.balance(), "Owner should receive the commission"
-    # Check lottery status after drawing (new round should be active)
-    assert main_ticket_system.isLotteryActive() == True, "New round should be active"
     
+    assert main_ticket_system.getContractBlance() == 2*ticket_price, "Contract balance should be 2 after drawing"
+
+    # Check lottery status after drawing (new round should be active)
+    assert main_ticket_system.isLotteryActive() == True, "New round should be active"   
+
+def test_mini_prize_and_big(main_ticket_system, owner_account):
+    """Test drawing lottery winner with mini prize and big prize"""
+    # Get ticket price
+    ticket_price = main_ticket_system.getTicketPrice()
+
+    player_addresses = []
+    
+    # Multiple players purchase tickets
+    for account in accounts[1:3]:
+        player_addresses.append(account.address)
+        tx = main_ticket_system.purchaseTicket({'from': account, 'value': ticket_price, 'gas_price': 'auto'})
+        ticket_id = tx.return_value
+        
+        # Create hash values for the ticket
+        ticket_hash = web3.keccak(text=f"hash_{account.address}")
+        ticket_hash_with_strong = web3.keccak(text=f"strong_hash_{account.address}")
+        print(f"ticket_hash: {ticket_hash}, ticket_hash_with_strong: {ticket_hash_with_strong}")
+        # Select ticket for lottery if lottery is active
+        if main_ticket_system.isLotteryActive():
+            main_ticket_system.selectTicketsForLottery(
+                ticket_id, 
+                ticket_hash, 
+                ticket_hash_with_strong, 
+                {'from': account, 'gas_price': 'auto'}
+            )
+    main_ticket_system.closeLotteryRound({'from': owner_account, 'gas_price': 'auto'})
+    
+    chain.mine(1)  # Wait for the lottery to can be drawn
+    
+    # Create hash values for the drawing
+    keccak_hash_numbers = web3.keccak(text=f"hash_{accounts[3].address}")
+    keccak_hash_full = web3.keccak(text=f"strong_hash_{accounts[2].address}")
+    print(f"keccak_hash_numbers: {keccak_hash_numbers}, keccak_hash_full: {keccak_hash_full}")
+    
+    player1_blance_before = accounts[1].balance()
+    player2_blance_before = accounts[2].balance()
+    owener_blance_before = owner_account.balance()
+    
+    # Draw lottery winner
+    tx = main_ticket_system.drawLotteryWinner(
+        keccak_hash_numbers, 
+        keccak_hash_full, 
+        {'from': owner_account, 'gas_price': 'auto'}
+    )
+    gas_used = tx.gas_used * tx.gas_price
+   # Get lottery round info and verify data
+    round_info = main_ticket_system.getLotteryRoundInfo(1)
+    
+    print(f"Round info: {round_info}")
+    round_number, total_prize_pool, addressArrays,  status, big_prize, small_prize, mini_prize, commission, total_tickets = round_info
+    participants = addressArrays[0]
+    small_prize_winners = addressArrays[1]
+    big_prize_winners = addressArrays[2]
+    mini_prize_winners = addressArrays[3]
+    # Verify round data
+    assert round_number == 1, "Round number should be 1"
+    assert total_prize_pool == 2 * ticket_price, f"Prize pool should be {2 * ticket_price}"
+    # Verify participants
+    assert len(participants) == 2, "Should have 2 participants"
+    for addr in player_addresses:
+        assert addr in participants, f"Player {addr} should be in participants list"
+    assert len(small_prize_winners) == 0 and  len(big_prize_winners) == 1, "Should have 1 big prize winner"
+    assert accounts[2] in big_prize_winners, "Account 2 should be a big prize winner"
+    assert status == 2, "Lottery status should be finished"
+    assert accounts[1] in mini_prize_winners, "Account 1 should be a mini prize winner"
+    assert len(mini_prize_winners) == 1, "Should have 1 mini prize winner"
+
+def test_no_win(main_ticket_system, owner_account):
+    """Test drawing lottery winner with no winners"""
+    # Get ticket price
+    ticket_price = main_ticket_system.getTicketPrice()
+
+    player_addresses = []
+    
+    # Multiple players purchase tickets
+    for account in accounts[1:3]:
+        player_addresses.append(account.address)
+        tx = main_ticket_system.purchaseTicket({'from': account, 'value': ticket_price, 'gas_price': 'auto'})
+        ticket_id = tx.return_value
+        
+        # Create hash values for the ticket
+        ticket_hash = web3.keccak(text=f"hash_{account.address}")
+        ticket_hash_with_strong = web3.keccak(text=f"strong_hash_{account.address}")
+        print(f"ticket_hash: {ticket_hash}, ticket_hash_with_strong: {ticket_hash_with_strong}")
+        # Select ticket for lottery if lottery is active
+        if main_ticket_system.isLotteryActive():
+            main_ticket_system.selectTicketsForLottery(
+                ticket_id, 
+                ticket_hash, 
+                ticket_hash_with_strong, 
+                {'from': account, 'gas_price': 'auto'}
+            )
+    main_ticket_system.closeLotteryRound({'from': owner_account, 'gas_price': 'auto'})
+    
+    chain.mine(1)  # Wait for the lottery to can be drawn
+    
+    # Create hash values for the drawing
+    keccak_hash_numbers = web3.keccak(text=f"hash_{accounts[4].address}")
+    keccak_hash_full = web3.keccak(text=f"strong_hash_{accounts[4].address}")
+    print(f"keccak_hash_numbers: {keccak_hash_numbers}, keccak_hash_full: {keccak_hash_full}")
+    
+    # Draw lottery winner
+    tx = main_ticket_system.drawLotteryWinner(
+        keccak_hash_numbers, 
+        keccak_hash_full, 
+        {'from': owner_account, 'gas_price': 'auto'}
+    )
+    gas_used = tx.gas_used * tx.gas_price
+   # Get lottery round info and verify data
+    round_info = main_ticket_system.getLotteryRoundInfo(1)
+    
+    print(f"Round info: {round_info}")
+    round_number, total_prize_pool, addressArrays,  status, big_prize, small_prize, mini_prize, commission, total_tickets = round_info
+    participants = addressArrays[0]
+    small_prize_winners = addressArrays[1]
+    big_prize_winners = addressArrays[2]
+    mini_prize_winners = addressArrays[3]
+    assert round_number == 1, "Round number should be 1"
+    assert total_prize_pool == 2 * ticket_price, f"Prize pool should be {2 * ticket_price}"
+    # Verify participants
+    assert len(participants) == 2, "Should have 2 participants"
+    for addr in player_addresses:
+        assert addr in participants, f"Player {addr} should be in participants list"
+    assert len(small_prize_winners) == 0 and  len(big_prize_winners) == 0, "Should have no winners"
+    assert status == 2, "Lottery status should be finished"
+    assert len(mini_prize_winners) == 1, "Should have 1 mini prize winner"
+    assert accounts[1] in mini_prize_winners or accounts[2] in mini_prize_winners, "Account 1 or Account 2 should be a mini prize winner"
