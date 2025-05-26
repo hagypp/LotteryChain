@@ -1,12 +1,16 @@
 import React from 'react';
+import { useState } from 'react';
 import { useLottery } from '../contexts/LotteryContext';
 import './Dashboard.css';
+import contractService from '../services/contractService';
 
 const LotteryHeader = () => {
   const { 
     contractState: { ticketPrice, isLotteryActive, blockStatus, currentPrizePool, totalTickets, currentRound ,commission,percentage_small, percentage_mini},
     uiState: { isLoading },
-    actions: { handlePurchase, handleCloseLottery, handleDrawWinner }
+    actions: { handlePurchase, handleCloseLottery, handleDrawWinner },
+    showNotification,
+    account
   } = useLottery();
 
   const formatEth = (value) => {
@@ -15,11 +19,55 @@ const LotteryHeader = () => {
     return (Number(value) / 1e18).toFixed(2);
   };
 
-  const calculatedCommission = (currentPrizePool * commission) / 100;
-  const calculatedMiniPrize = (currentPrizePool * percentage_mini) / 100;
-  const calculatedSmallPrize = (currentPrizePool * percentage_small) / 100;
-  const calculatedBigPrize = currentPrizePool - calculatedCommission - calculatedSmallPrize - calculatedMiniPrize;
+const calculatedCommission = (currentPrizePool * commission) / 100;
+const prizePoolAfterCommission = currentPrizePool - calculatedCommission;
+const calculatedMiniPrize = (prizePoolAfterCommission * percentage_mini) / 100;
+const calculatedSmallPrize = (prizePoolAfterCommission * percentage_small) / 100;
+const calculatedBigPrize = prizePoolAfterCommission - calculatedSmallPrize - calculatedMiniPrize;
 
+const [pendingPrize, setPendingPrize] = useState('0');
+const [isCheckingPrize, setIsCheckingPrize] = useState(false);
+const [isClaimingPrize, setIsClaimingPrize] = useState(false);
+
+const checkPendingPrize = async () => {
+    if (!account) {
+      showNotification('No account connected. Please connect your wallet.', 'error');
+      return;
+    }
+
+    try {
+      setIsCheckingPrize(true);
+      const prize = await contractService.getPendingPrize(account); // Pass account
+      setPendingPrize(prize);
+      showNotification(`Pending prize: ${formatEth(prize)} ETH`, 'info');
+    } catch (error) {
+      console.error("Failed to fetch pending prize:", error.message);
+      showNotification(`Failed to fetch pending prize: ${error.message}`, 'error');
+    } finally {
+      setIsCheckingPrize(false);
+    }
+  };
+
+  const claimPrize = async () => {
+    if (!account) {
+      showNotification('No account connected. Please connect your wallet.', 'error');
+      return;
+    }
+
+    try {
+      setIsClaimingPrize(true);
+      showNotification('Claiming prize...', 'info');
+      const result = await contractService.claimPrize(account); // Pass account
+      const transactionHash = result.transactionHash;
+      showNotification(`Prize claimed successfully! Transaction Hash: ${transactionHash}`, 'success');
+      setPendingPrize('0');
+    } catch (error) {
+      console.error("Failed to claim prize:", error.message);
+      showNotification(`Failed to claim prize: ${error.message}`, 'error');
+    } finally {
+      setIsClaimingPrize(false);
+    }
+  };
 
   
 
@@ -130,6 +178,32 @@ const LotteryHeader = () => {
               'This action alow only when we reach 0 blocks until draw.'}</span>
           </span>
         </div>
+
+        <div className="tooltip-wrapper">
+          {Number(pendingPrize) > 0 ? (
+            <button 
+              onClick={claimPrize}
+              disabled={isClaimingPrize}
+              className="header-claim-button"
+            >
+              {isClaimingPrize ? "Claiming..." : `CLAIM ${formatEth(pendingPrize)} ETH`}
+            </button>
+          ) : (
+            <button 
+              onClick={checkPendingPrize}
+              disabled={isCheckingPrize}
+              className="header-claim-button"
+            >
+              {isCheckingPrize ? "Checking..." : "CHECK PRIZE"}
+            </button>
+          )}
+          <span className="tooltip-text">
+            {Number(pendingPrize) > 0 ? 
+              'Claim your prize from the current lottery round.' : 
+              'Check if you have any unclaimed prize.'}
+          </span>
+        </div>
+
       </div>
     </div>
   );
