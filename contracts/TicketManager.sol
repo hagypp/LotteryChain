@@ -27,18 +27,14 @@ contract TicketManager {
 
     mapping(address => TicketData[]) private playerTickets;
     uint256 private totalTicketsSold;
-    address private immutable i_owner;
+    // address private immutable i_owner;
     uint256 private ticketPrice;
 
     constructor(uint256 _initialTicketPrice) {
-        i_owner = msg.sender;
+        // i_owner = msg.sender;
         ticketPrice = _initialTicketPrice;
     }
 
-    modifier onlyOwner() {
-        require(msg.sender == i_owner, "Only the contract owner can call this function");
-        _;
-    }
 
     // Purchase a ticket and store the time of purchase
     function purchaseTicket(address _buyer) external payable returns (uint256) {
