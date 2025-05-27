@@ -244,6 +244,17 @@
   background: #60A5FA;
 }
 
+.mini-prize {
+  background: linear-gradient(45deg, rgba(139, 92, 246, 0.2), rgba(167, 139, 250, 0.3));
+  color: #A78BFA;
+  border: 2px solid rgba(139, 92, 246, 0.3);
+  box-shadow: 0 0 20px rgba(139, 92, 246, 0.3);
+}
+
+.mini-prize::before {
+  background: #A78BFA;
+}
+
 /* Round info */
 .round-info {
   font-size: 1rem;
@@ -324,6 +335,26 @@
 
 .big-prize-button:hover {
   box-shadow: 0 8px 25px rgba(245, 158, 11, 0.5);
+}
+
+/* Small prize button styling (explicitly defined for clarity) */
+.small-prize-button {
+  background: linear-gradient(45deg, #3B82F6, #60A5FA);
+  box-shadow: 0 5px 15px rgba(59, 130, 246, 0.4);
+}
+
+.small-prize-button:hover {
+  box-shadow: 0 8px 25px rgba(59, 130, 246, 0.5);
+}
+
+/* Mini prize button styling */
+.mini-prize-button {
+  background: linear-gradient(45deg, #8B5CF6, #A78BFA);
+  box-shadow: 0 5px 15px rgba(139, 92, 246, 0.4);
+}
+
+.mini-prize-button:hover {
+  box-shadow: 0 8px 25px rgba(139, 92, 246, 0.5);
 }
 
 /* Checkbox styling */

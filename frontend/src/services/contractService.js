@@ -88,17 +88,17 @@ class ContractService {
     }
 
 
-    notifyWinnersAnnouncedListeners(smallPrizeWinners, bigPrizeWinners) {    
+    notifyWinnersAnnouncedListeners(smallPrizeWinners, bigPrizeWinners, miniPrizeWinners) {    
         this.winnersAnnouncedListeners.forEach(listener => {
             try {
-                listener({ smallPrizeWinners, bigPrizeWinners });
+                listener({ smallPrizeWinners, bigPrizeWinners, miniPrizeWinners });
             } catch (error) {
                 console.error("Error in winners announced listener:", error);
             }
         });
 
         const event = new CustomEvent('winnersAnnounced', { 
-            detail: { smallPrizeWinners, bigPrizeWinners },
+            detail: { smallPrizeWinners, bigPrizeWinners, miniPrizeWinners },
             bubbles: true
         });
         window.dispatchEvent(event);
@@ -253,22 +253,24 @@ class ContractService {
             // For WinnersAnnounced
             const winnersAnnouncedSubscription = await this.web3WS.eth.subscribe('logs', {
                 address: CONTRACT_ADDRESS,
-                topics: [this.web3WS.utils.sha3('WinnersAnnounced(address[],address[])')]
+                topics: [this.web3WS.utils.sha3('WinnersAnnounced(address[],address[],address[])')] // שינוי לכלול גם miniPrizeWinners
             });
             
             winnersAnnouncedSubscription.on('data', async (log) => {
                 const decodedLog = this.web3WS.eth.abi.decodeLog(
                     [
                         { indexed: false, name: 'smallPrizeWinners', type: 'address[]' },
-                        { indexed: false, name: 'bigPrizeWinners', type: 'address[]' }
+                        { indexed: false, name: 'bigPrizeWinners', type: 'address[]' },
+                        { indexed: false, name: 'miniPrizeWinners', type: 'address[]' } // הוספת miniPrizeWinners
                     ],
                     log.data,
                     log.topics.slice(1)
                 );
-
+            
                 this.notifyWinnersAnnouncedListeners(
                     decodedLog.smallPrizeWinners, 
-                    decodedLog.bigPrizeWinners
+                    decodedLog.bigPrizeWinners,
+                    decodedLog.miniPrizeWinners // העברת miniPrizeWinners להודעה
                 );
             });
             
@@ -442,7 +444,7 @@ class ContractService {
                     .send({ from: this.account });
                 
                 const winners = await this.getCurrentWinners();
-                this.notifyWinnersAnnouncedListeners(winners.smallPrizeWinners, winners.bigPrizeWinners);
+                this.notifyWinnersAnnouncedListeners(winners.smallPrizeWinners, winners.bigPrizeWinners,winners.miniPrizeWinners);
                 
                 return { success: true, result: tx };
             }
@@ -589,7 +591,8 @@ class ContractService {
             const winners = await contract.methods.getCurrentWinners().call();
             return {
                 smallPrizeWinners: winners[0],
-                bigPrizeWinners: winners[1]
+                bigPrizeWinners: winners[1],
+                miniPrizeWinners: winners[2],
             };
         } catch (error) {
             throw new Error(`Error fetching winners: ${error.message}`);

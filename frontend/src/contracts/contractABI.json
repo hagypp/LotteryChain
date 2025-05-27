@@ -216,25 +216,6 @@
         "type": "event"
     },
     {
-        "anonymous": false,
-        "inputs": [
-            {
-                "indexed": false,
-                "internalType": "address[]",
-                "name": "smallPrizeWinners",
-                "type": "address[]"
-            },
-            {
-                "indexed": false,
-                "internalType": "address[]",
-                "name": "bigPrizeWinners",
-                "type": "address[]"
-            }
-        ],
-        "name": "WinnersAnnounced",
-        "type": "event"
-    },
-    {
         "constant": true,
         "inputs": [],
         "name": "getLotteryBlockStatus",
@@ -379,6 +360,11 @@
             {
                 "internalType": "address[]",
                 "name": "bigPrizeWinners",
+                "type": "address[]"
+            },
+            {
+                "internalType": "address[]",
+                "name": "miniPrizeWinners",
                 "type": "address[]"
             }
         ],
