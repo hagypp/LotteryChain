@@ -707,6 +707,24 @@ class ContractService {
             throw new Error(`Error fetching getBlocksWait: ${error.message}`);
         }
     }
+    async getPendingPrize(playerAddress) {
+        try {
+            const contract = this.getReadContract();
+            const pendingPrize = await contract.methods.getPendingPrize(playerAddress).call();
+            return pendingPrize;
+        } catch (error) {
+            throw new Error(`Error fetching pending prize: ${error.message}`);
+        }
+    }
+    async claimPrize(playerAddress) {
+        try {
+            const contract = this.validateWriteRequirements();
+            const result = await contract.methods.claimPrize(playerAddress).send({ from: this.account });
+            return { success: true, transactionHash: result.transactionHash };
+        } catch (error) {
+            throw new Error(`Error claiming prize: ${error.message}`);
+        }
+    }
 }
 
 const contractService = new ContractService();

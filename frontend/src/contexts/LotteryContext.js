@@ -360,6 +360,7 @@ export const LotteryProvider = ({ children, account }) => {
       isLoading: uiState.isLoading
     },
     notification,
+    account,
     actions: {
       handleDrawWinner,
       handleCloseLottery,

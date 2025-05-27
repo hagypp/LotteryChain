@@ -438,3 +438,37 @@
   color: #FF6B6B;
   font-weight: 600;
   }
+
+  /* Exchange Modal Button */
+.header-claim-button, .header-claim-button:disabled {
+  background-color: #EAB308; /* Solid amber/yellow */
+  border: none;
+  border-radius: 999px;
+  padding: 0.625rem 1.5rem;
+  color: white;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: 0 2px 6px rgba(234, 179, 8, 0.25); /* shadow matches the color */
+  font-size: 0.875rem;
+  outline: none;
+  min-width: 140px;
+}
+
+
+.header-claim-button:hover:not(:disabled) {
+  transform: translateY(-1px);
+  box-shadow: 0 3px 8px rgba(234, 179, 8, 0.3);
+}
+
+.header-claim-button:active:not(:disabled) {
+  transform: translateY(0);
+  box-shadow: 0 1px 3px rgba(234, 179, 8, 0.25);
+}
+
+.header-claim-button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}

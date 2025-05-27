@@ -1,12 +1,12 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import contractService from '../services/contractService';
 import './LotteryRounds.css';
+import { useLottery } from '../contexts/LotteryContext';
 
 const LotteryRounds = ({ isContractReady }) => {
   const [roundInput, setRoundInput] = useState('');
   const [roundData, setRoundData] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [latestRound, setLatestRound] = useState(null);
   const [recentRounds, setRecentRounds] = useState([]);
@@ -16,15 +16,9 @@ const LotteryRounds = ({ isContractReady }) => {
   const [smallPrizePercentage, setSmallPrizePercentage] = useState(null);
   const [miniPrizePercentage, setMiniPrizePercentage] = useState(null);
 
-  // Fetch latest round on component mount if contract is ready
-  useEffect(() => {
-    if (isContractReady) {
-      fetchLatestRoundInfo();
-      fetchStaticPercentages();
-    }
-  }, [isContractReady]);
-
-  const fetchStaticPercentages = async () => {
+  const {showNotification} = useLottery();
+  
+  const fetchStaticPercentages = useCallback(async () => {
     try {
       const commission = await contractService.getFLEX_COMMISSION();
       const smallPrizePercentage = await contractService.getSMALL_PRIZE_PERCENTAGE();
@@ -33,11 +27,11 @@ const LotteryRounds = ({ isContractReady }) => {
       setSmallPrizePercentage(Number(smallPrizePercentage));
       setMiniPrizePercentage(Number(miniPrizePercentage));
     } catch (error) {
-      console.error("Failed to fetch static percentages:", error);
+      showNotification("Failed to fetch static percentages", 'error');
     }
-  };
+  }, [showNotification]);
 
-  const fetchLatestRoundInfo = async () => {
+  const fetchLatestRoundInfo = useCallback(async () => {
     try {
       const currentRound = await contractService.getCurrentRound();
       setLatestRound(Number(currentRound));
@@ -57,7 +51,7 @@ const LotteryRounds = ({ isContractReady }) => {
               totalTickets: roundData.totalTickets
             });
           } catch (err) {
-            console.error(`Error fetching round ${i}:`, err);
+            showNotification(`Failed to fetch round #${i}`, 'error');
           }
         }
       }
@@ -65,10 +59,18 @@ const LotteryRounds = ({ isContractReady }) => {
       setRecentRounds(recentRoundsData);
       setIsDataLoaded(true); // Mark data as loaded regardless of results
     } catch (err) {
-      console.error("Failed to fetch latest round:", err);
+      showNotification("Failed to fetch latest round information", 'error');
       setIsDataLoaded(true); // Still mark as loaded even if there's an error
     }
-  };
+  }, [showNotification]);
+
+  // Fetch latest round on component mount if contract is ready
+  useEffect(() => {
+    if (isContractReady) {
+      fetchLatestRoundInfo();
+      fetchStaticPercentages();
+    }
+  }, [isContractReady, fetchLatestRoundInfo, fetchStaticPercentages]);
 
   const getStatusText = (status) => {
     switch (status) {
@@ -102,7 +104,7 @@ const LotteryRounds = ({ isContractReady }) => {
   };
 
   const formatEth = (value) => {
-    if (!value) return '0';
+    if (!value) return '0.00';
     // Convert Wei to ETH
     return (Number(value) / 1e18).toFixed(2);
   };
@@ -126,13 +128,10 @@ const LotteryRounds = ({ isContractReady }) => {
   
     try {
       setIsLoading(true);
-      setError(null);
-  
       // Make an explicit string to avoid circular reference issues
       const roundNumberPrimitive = String(roundNumberStr);
   
       const data = await contractService.getLotteryRoundInfo(roundNumberPrimitive);
-  
       const {
         roundNumber,
         totalPrizePool,
@@ -187,8 +186,7 @@ const LotteryRounds = ({ isContractReady }) => {
   
       setIsModalOpen(true);
     } catch (err) {
-      console.error('Error fetching round:', err);
-      setError('Could not fetch round data. Make sure the round exists.');
+      showNotification('Could not fetch round data. Make sure the round exists.', 'error');
       setRoundData(null);
     } finally {
       setIsLoading(false);
@@ -197,7 +195,7 @@ const LotteryRounds = ({ isContractReady }) => {
 
   const handleFetchRound = () => {
     if (!roundInput || roundInput === '') {
-      setError('Please enter a valid round number');
+      showNotification('Please enter a valid round number', 'error');
       return;
     }
     fetchRoundByIndex(roundInput);
@@ -243,7 +241,6 @@ const LotteryRounds = ({ isContractReady }) => {
                   )}
                 </button>
               </div>
-              {error && <div className="lottery-rounds-error">{error}</div>}
             </div>
           </div>
         </div>

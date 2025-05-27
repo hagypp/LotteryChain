@@ -59,6 +59,9 @@ contract LotteryManager {
     uint256 private constant FLEX_COMMISSION = 5;       // commission for owner
     uint256 private constant MINI_PRIZE_PERCENTAGE = 10; //mini prize
 
+    // Mapping to store pending prizes for winners (address => prize amount)
+    mapping(address => uint256) private pendingPrizes;
+
     constructor(address _ticketManagerAddress) 
     {
         i_owner = tx.origin;
@@ -192,7 +195,7 @@ contract LotteryManager {
     // Calculate weight for a single participant
     function calculateParticipantWeight(address participant, uint256 maxTime,LotteryRound storage round) private view returns (uint256) {
         uint256[] storage ticketIds = round.participantTickets[participant];
-        uint256 totalHoldTime = 0;
+        uint256 totalHoldTime = 1;
         
         for (uint256 j = 0; j < ticketIds.length; j++) {
             (,, uint256 creationTimestamp,,,,) = ticketManager.getTicketData(participant, ticketIds[j]);
@@ -366,22 +369,25 @@ contract LotteryManager {
         if(eligibleCount == 0) {
             return 0; // No eligible participants for mini prize
         }
-
+            bool winnerSelected = false;
             uint256[] memory weights = calculateSoftmaxWeights(round);
             uint256 randomValue = uint256(keccak256(abi.encodePacked(keccak256HashNumbers, keccak256HashFull))) % SCALE_FACTOR;
             uint256 cumulativeWeight = 0;
 
             for (uint256 i = 0; i < eligibleCount; i++) 
             {
-                if (weights[i] > 0) {
+                if (weights[i] > 0) 
+                {
                     cumulativeWeight += weights[i];
-                    if (randomValue < cumulativeWeight) {
-                        round.miniPrizeWinners[miniWinnerCount] = eligibleParticipants[i];
-                        miniWinnerCount++;
+                    if (randomValue < cumulativeWeight) 
+                    {
                         uint256[] storage ticketIds = round.participantTickets[eligibleParticipants[i]];
                         for (uint256 j = 0; j < ticketIds.length; j++) {
                             (, , , TicketStatus status, , ,) = ticketManager.getTicketData(eligibleParticipants[i], ticketIds[j]);
                             if (status == TicketStatus.IN_LOTTERY) {
+                                round.miniPrizeWinners[miniWinnerCount] = eligibleParticipants[i];
+                                miniWinnerCount++;
+                                winnerSelected = true;
                                 ticketManager.markTicketAsStatus(eligibleParticipants[i], ticketIds[j], TicketStatus.WON_MINI_PRIZE);
                                 break;
                             }
@@ -389,6 +395,21 @@ contract LotteryManager {
                         break;
                     }
                 }
+        }
+        // Fallback: If no winner selected due to zero weights, pick randomly
+        if (!winnerSelected && eligibleCount > 0) {
+            uint256 randomIndex = uint256(keccak256(abi.encodePacked(keccak256HashNumbers, keccak256HashFull, block.timestamp))) % eligibleCount;
+            uint256[] storage ticketIds = round.participantTickets[eligibleParticipants[randomIndex]];
+            for (uint256 j = 0; j < ticketIds.length; j++) {
+                (, , , TicketStatus status, , ,) = ticketManager.getTicketData(eligibleParticipants[randomIndex], ticketIds[j]);
+                if (status == TicketStatus.IN_LOTTERY) 
+                {
+                    round.miniPrizeWinners[miniWinnerCount] = eligibleParticipants[randomIndex];
+                    miniWinnerCount++;
+                    ticketManager.markTicketAsStatus(eligibleParticipants[randomIndex], ticketIds[j], TicketStatus.WON_MINI_PRIZE);
+                    break;
+                }
+            }
         }
         return miniWinnerCount;
     }
@@ -431,6 +452,7 @@ contract LotteryManager {
         uint256 miniWinnerCount
     ) private {
         uint256 totalPrizePool = round.totalPrizePool;
+        require(address(this).balance >= totalPrizePool, "Prize pool mismatch");
         uint256 commission = (totalPrizePool * FLEX_COMMISSION) / 100;
         uint256 miniPrizePool = (totalPrizePool * MINI_PRIZE_PERCENTAGE) / 100;
         uint256 smallPrizePool = (totalPrizePool * SMALL_PRIZE_PERCENTAGE) / 100;
@@ -444,7 +466,8 @@ contract LotteryManager {
         if (smallWinnerCount > 0) {
             uint256 smallPrizePerWinner = smallPrizePool / smallWinnerCount;
             for (uint256 i = 0; i < smallWinnerCount; i++) {
-                payable(round.smallPrizeWinners[i]).transfer(smallPrizePerWinner);
+                // payable(round.smallPrizeWinners[i]).transfer(smallPrizePerWinner);
+                pendingPrizes[round.smallPrizeWinners[i]] += smallPrizePerWinner;
             }
         } else if (smallPrizePool > 0) {
             round.commission += smallPrizePool;
@@ -454,7 +477,8 @@ contract LotteryManager {
         if (bigWinnerCount > 0) {
             uint256 bigPrizePerWinner = bigPrizePool / bigWinnerCount;
             for (uint256 i = 0; i < bigWinnerCount; i++) {
-                payable(round.bigPrizeWinners[i]).transfer(bigPrizePerWinner);
+                // payable(round.bigPrizeWinners[i]).transfer(bigPrizePerWinner);
+                pendingPrizes[round.bigPrizeWinners[i]] += bigPrizePerWinner;
             }
         } else if (bigPrizePool > 0) {
             round.commission += bigPrizePool;
@@ -464,7 +488,8 @@ contract LotteryManager {
         if (miniWinnerCount > 0) {
             uint256 miniPrizePerWinner = miniPrizePool / miniWinnerCount;
             for (uint256 i = 0; i < miniWinnerCount; i++) {
-                payable(round.miniPrizeWinners[i]).transfer(miniPrizePerWinner);
+                // payable(round.miniPrizeWinners[i]).transfer(miniPrizePerWinner);
+                pendingPrizes[round.miniPrizeWinners[i]] += miniPrizePerWinner;
             }
         } else if (miniPrizePool > 0) {
             round.commission += miniPrizePool;
@@ -472,7 +497,8 @@ contract LotteryManager {
         }
 
         if (round.commission > 0) {
-            payable(i_owner).transfer(round.commission);
+            // payable(i_owner).transfer(round.commission);
+            pendingPrizes[i_owner] += round.commission;
         }
     }
 
@@ -549,6 +575,21 @@ contract LotteryManager {
             }
         }
     }
+
+    function claimPrize(address winner) external {
+        uint256 prizeAmount = pendingPrizes[winner];
+        require(prizeAmount > 0, "No prize to claim");
+        require(address(this).balance >= prizeAmount, "Insufficient contract balance");
+
+        pendingPrizes[winner] = 0;
+        (bool success, ) = winner.call{value: prizeAmount}("");
+        require(success, "Prize transfer failed");
+    }
+
+    function getPendingPrize(address winner) external view returns (uint256) {
+        return pendingPrizes[winner];
+    }
+
 
 
     function getCurrentRound() external view returns (uint256) {
