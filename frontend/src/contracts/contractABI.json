@@ -311,44 +311,6 @@
       "type": "function"
   },      
     {
-        "constant": true,
-        "inputs": [],
-        "name": "getAllLotteryRoundsInfo",
-        "outputs": [
-          {
-            "name": "roundNumbers",
-            "type": "uint256[]"
-          },
-          {
-            "name": "totalPrizePools",
-            "type": "uint256[]"
-          },
-          {
-            "name": "participantsList",
-            "type": "address[][]"
-          },
-          {
-            "name": "smallPrizeWinnersList",
-            "type": "address[][]"
-          },
-          {
-            "name": "bigPrizeWinnersList",
-            "type": "address[][]"
-          },
-          {
-            "name": "miniPrizeWinnersList",
-            "type": "address[][]"
-          },
-          {
-            "name": "Statuses",
-            "type": "uint8[]"
-          }
-        ],
-        "payable": false,
-        "stateMutability": "view",
-        "type": "function"
-      },
-    {
         "inputs": [],
         "name": "getCurrentWinners",
         "outputs": [

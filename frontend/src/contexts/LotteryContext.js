@@ -39,10 +39,15 @@ export const LotteryProvider = ({ children, account }) => {
     ticketCategory: 'all',
     isLoading: {
       purchase: false,
-      lotteryAction: false
+      lotteryAction: false,
+      checkPrize: false,
+      claimPrize: false
       // Ticket-specific loading states will be added dynamically
     }
   });
+  
+  // New state for pending prize
+  const [pendingPrize, setPendingPrize] = useState('0');
   
   // New notification state
   const [notification, setNotification] = useState(null);
@@ -92,6 +97,13 @@ export const LotteryProvider = ({ children, account }) => {
       notificationTimeoutRef.current = null;
     }
     setNotification(null);
+  }, []);
+
+  // Format ETH utility function
+  const formatEth = useCallback((value) => {
+    if (!value) return '0.00';
+    // Convert Wei to ETH
+    return (Number(value) / 1e18).toFixed(2);
   }, []);
   
   // Clean up notification timeout on unmount
@@ -149,7 +161,7 @@ export const LotteryProvider = ({ children, account }) => {
         
         initializationDoneRef.current = true;
         
-// Set up event listeners
+        // Set up event listeners
         if (!listenerRegisteredRef.current) {
           const unsubscribeLotteryStatus = contractService.addLotteryStatusListener((isActive) => {
             setContractState(prev => ({
@@ -244,6 +256,62 @@ export const LotteryProvider = ({ children, account }) => {
     }
   }, [contractState.isContractReady, account, refreshDashboardData]);
   
+  // Prize management functions
+  const checkPendingPrize = useCallback(async () => {
+    if (!account) {
+      showNotification('No account connected. Please connect your wallet.', 'error');
+      return;
+    }
+
+    try {
+      setIsLoading('checkPrize', true);
+      const prize = await contractService.getPendingPrize(account);
+      setPendingPrize(prize);
+      showNotification(`Pending prize: ${formatEth(prize)} ETH`, 'info');
+    } catch (error) {
+      console.error("Failed to fetch pending prize:", error.message);
+      showNotification(`Failed to fetch pending prize: ${error.message}`, 'error');
+    } finally {
+      setIsLoading('checkPrize', false);
+    }
+  }, [account, showNotification, formatEth, setIsLoading]);
+
+// More robust approach - wait for transaction confirmation
+const claimPrize = useCallback(async () => {
+  if (!account) {
+    showNotification('No account connected. Please connect your wallet.', 'error');
+    return;
+  }
+
+  try {
+    setIsLoading('claimPrize', true);
+    showNotification('Claiming prize...', 'info');
+    const result = await contractService.claimPrize(account);
+    const transactionHash = result.transactionHash;
+    
+    // Wait for transaction confirmation
+    showNotification('Waiting for transaction confirmation...', 'info');
+    const web3 = contractService.getWeb3();
+    const receipt = await web3.eth.getTransactionReceipt(transactionHash);
+    
+    if (receipt && receipt.status) {
+      showNotification(`Prize claimed successfully! Transaction Hash: ${transactionHash}`, 'success');
+      setPendingPrize('0');
+      
+      // Small delay to ensure event processing, then refresh
+      setTimeout(async () => {
+        await refreshDashboardData();
+      }, 500);
+    }
+    
+  } catch (error) {
+    console.error("Failed to claim prize:", error.message);
+    showNotification(`Failed to claim prize: ${error.message}`, 'error');
+  } finally {
+    setIsLoading('claimPrize', false);
+  }
+}, [account, showNotification, setIsLoading, refreshDashboardData]);
+  
   // Lottery action handlers
   const handleDrawWinner = async () => {
     setIsLoading('lotteryAction', true);
@@ -313,6 +381,31 @@ export const LotteryProvider = ({ children, account }) => {
       setIsLoading('purchase', false);
     }
   };
+
+  const handleClaimPrize = async (userAddress) => {
+    if (!contractState.isContractReady) {
+      showNotification('Contract not initialized yet. Please try again later.', 'warning');
+      return;
+    }
+
+    setIsLoading('claimPrize', true);
+    showNotification('Claiming prize...', 'info');
+
+    try {
+      const result = await contractService.claimPrize(userAddress);
+      
+      if (result.success) {
+        // Refresh dashboard data to get updated block status and other info
+        await refreshDashboardData();
+        showNotification('Prize claimed successfully!', 'success');
+      }
+    } catch (error) {
+      console.error('Claim prize failed:', error);
+      showNotification(`Claim prize failed: ${error.message}`, 'error');
+    } finally {
+      setIsLoading('claimPrize', false);
+    }
+  };
   
   const handleSelectForLottery = async (ticketId) => {
     if (!contractState.isContractReady) {
@@ -361,17 +454,22 @@ export const LotteryProvider = ({ children, account }) => {
     },
     notification,
     account,
+    pendingPrize,
     actions: {
       handleDrawWinner,
       handleCloseLottery,
       handlePurchase,
       handleSelectForLottery,
+      handleClaimPrize,
       refreshDashboardData,
       closeSelectNumbers,
-      setTicketCategory
+      setTicketCategory,
+      checkPendingPrize,
+      claimPrize
     },
     showNotification,
-    clearNotification
+    clearNotification,
+    formatEth
   };
   
   return <LotteryContext.Provider value={value}>{children}</LotteryContext.Provider>;
