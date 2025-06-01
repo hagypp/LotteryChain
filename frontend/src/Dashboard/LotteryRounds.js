@@ -110,6 +110,7 @@ const LotteryRounds = ({ isContractReady }) => {
   };
 
   const fetchRoundByIndex = async (roundNumberInput) => {
+    
     // Make sure we have a valid input to work with
     let roundNumberStr;
   
@@ -188,7 +189,9 @@ const LotteryRounds = ({ isContractReady }) => {
     } catch (err) {
       showNotification('Could not fetch round data. Make sure the round exists.', 'error');
       setRoundData(null);
-    } finally {
+    } finally 
+    {
+      fetchLatestRoundInfo(); // Refresh the latest round info after fetching
       setIsLoading(false);
     }
   };
@@ -254,7 +257,7 @@ const LotteryRounds = ({ isContractReady }) => {
                 className="recent-round-card"
                 onClick={() => {
                   const roundStr = round.roundNumber.toString();
-                  setRoundInput(roundStr);
+                  // setRoundInput(roundStr);
                   fetchRoundByIndex(roundStr);
                 }}                
               >
