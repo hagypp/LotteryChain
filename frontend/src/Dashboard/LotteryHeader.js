@@ -1,75 +1,38 @@
 import React from 'react';
-import { useState } from 'react';
 import { useLottery } from '../contexts/LotteryContext';
 import './Dashboard.css';
-import contractService from '../services/contractService';
 
 const LotteryHeader = () => {
   const { 
-    contractState: { ticketPrice, isLotteryActive, blockStatus, currentPrizePool, totalTickets, currentRound ,commission,percentage_small, percentage_mini},
+    contractState: { 
+      ticketPrice, 
+      isLotteryActive, 
+      blockStatus, 
+      currentPrizePool, 
+      totalTickets, 
+      currentRound,
+      commission,
+      percentage_small, 
+      percentage_mini
+    },
     uiState: { isLoading },
-    actions: { handlePurchase, handleCloseLottery, handleDrawWinner },
-    showNotification,
-    account
+    actions: { 
+      handlePurchase, 
+      handleCloseLottery, 
+      handleDrawWinner,
+      checkPendingPrize,
+      claimPrize
+    },
+    pendingPrize,
+    formatEth
   } = useLottery();
 
-  const formatEth = (value) => {
-    if (!value) return '0.00';
-    // Convert Wei to ETH
-    return (Number(value) / 1e18).toFixed(2);
-  };
-
-const calculatedCommission = (currentPrizePool * commission) / 100;
-const prizePoolAfterCommission = currentPrizePool - calculatedCommission;
-const calculatedMiniPrize = (prizePoolAfterCommission * percentage_mini) / 100;
-const calculatedSmallPrize = (prizePoolAfterCommission * percentage_small) / 100;
-const calculatedBigPrize = prizePoolAfterCommission - calculatedSmallPrize - calculatedMiniPrize;
-
-const [pendingPrize, setPendingPrize] = useState('0');
-const [isCheckingPrize, setIsCheckingPrize] = useState(false);
-const [isClaimingPrize, setIsClaimingPrize] = useState(false);
-
-const checkPendingPrize = async () => {
-    if (!account) {
-      showNotification('No account connected. Please connect your wallet.', 'error');
-      return;
-    }
-
-    try {
-      setIsCheckingPrize(true);
-      const prize = await contractService.getPendingPrize(account); // Pass account
-      setPendingPrize(prize);
-      showNotification(`Pending prize: ${formatEth(prize)} ETH`, 'info');
-    } catch (error) {
-      console.error("Failed to fetch pending prize:", error.message);
-      showNotification(`Failed to fetch pending prize: ${error.message}`, 'error');
-    } finally {
-      setIsCheckingPrize(false);
-    }
-  };
-
-  const claimPrize = async () => {
-    if (!account) {
-      showNotification('No account connected. Please connect your wallet.', 'error');
-      return;
-    }
-
-    try {
-      setIsClaimingPrize(true);
-      showNotification('Claiming prize...', 'info');
-      const result = await contractService.claimPrize(account); // Pass account
-      const transactionHash = result.transactionHash;
-      showNotification(`Prize claimed successfully! Transaction Hash: ${transactionHash}`, 'success');
-      setPendingPrize('0');
-    } catch (error) {
-      console.error("Failed to claim prize:", error.message);
-      showNotification(`Failed to claim prize: ${error.message}`, 'error');
-    } finally {
-      setIsClaimingPrize(false);
-    }
-  };
-
-  
+  // Calculate prize distributions
+  const calculatedCommission = (currentPrizePool * commission) / 100;
+  const prizePoolAfterCommission = currentPrizePool - calculatedCommission;
+  const calculatedMiniPrize = (prizePoolAfterCommission * percentage_mini) / 100;
+  const calculatedSmallPrize = (prizePoolAfterCommission * percentage_small) / 100;
+  const calculatedBigPrize = prizePoolAfterCommission - calculatedSmallPrize - calculatedMiniPrize;
 
   return (
     <div className="dashboard-header-row">
@@ -89,7 +52,7 @@ const checkPendingPrize = async () => {
         <div className="header-info-item">
           <span className="header-info-label">TICKET PRICE</span>
           <span className="header-info-value">{Number(ticketPrice).toFixed(2)} ETH</span>
-          </div>
+        </div>
         
         <div className="header-info-item">
           <span className="header-info-label">TICKETS IN THE LOTTERY</span>
@@ -97,31 +60,28 @@ const checkPendingPrize = async () => {
         </div>
       </div>
 
-
       <div className="header-info-row">
-
         <div className="header-info-item">
           <span className="header-info-label">PRIZE POLL</span>
           <span className="header-info-value">{formatEth(currentPrizePool)} ETH</span>
         </div>
-  <div className="header-info-item">
-    <span className="header-info-label">BIG PRIZE</span>
-    <span className="header-info-value">{formatEth(calculatedBigPrize)} ETH</span>
-  </div>
-  <div className="header-info-item">
-    <span className="header-info-label">SMALL PRIZE</span>
-    <span className="header-info-value">{formatEth(calculatedSmallPrize)} ETH</span>
-  </div>
-  <div className="header-info-item">
-    <span className="header-info-label">MINI PRIZE</span>
-    <span className="header-info-value">{formatEth(calculatedMiniPrize)} ETH</span>
-  </div>
-  <div className="header-info-item">
-    <span className="header-info-label">COMMISSION</span>
-    <span className="header-info-value">{formatEth(calculatedCommission)} ETH</span>
-  </div>
-</div>
-
+        <div className="header-info-item">
+          <span className="header-info-label">BIG PRIZE</span>
+          <span className="header-info-value">{formatEth(calculatedBigPrize)} ETH</span>
+        </div>
+        <div className="header-info-item">
+          <span className="header-info-label">SMALL PRIZE</span>
+          <span className="header-info-value">{formatEth(calculatedSmallPrize)} ETH</span>
+        </div>
+        <div className="header-info-item">
+          <span className="header-info-label">MINI PRIZE</span>
+          <span className="header-info-value">{formatEth(calculatedMiniPrize)} ETH</span>
+        </div>
+        <div className="header-info-item">
+          <span className="header-info-label">COMMISSION</span>
+          <span className="header-info-value">{formatEth(calculatedCommission)} ETH</span>
+        </div>
+      </div>
       
       <div className="block-status-consolidated">
         <div className="block-status-header">
@@ -183,18 +143,18 @@ const checkPendingPrize = async () => {
           {Number(pendingPrize) > 0 ? (
             <button 
               onClick={claimPrize}
-              disabled={isClaimingPrize}
+              disabled={isLoading.claimPrize}
               className="header-claim-button"
             >
-              {isClaimingPrize ? "Claiming..." : `CLAIM ${formatEth(pendingPrize)} ETH`}
+              {isLoading.claimPrize ? "Claiming..." : `CLAIM ${formatEth(pendingPrize)} ETH`}
             </button>
           ) : (
             <button 
               onClick={checkPendingPrize}
-              disabled={isCheckingPrize}
+              disabled={isLoading.checkPrize}
               className="header-claim-button"
             >
-              {isCheckingPrize ? "Checking..." : "CHECK PRIZE"}
+              {isLoading.checkPrize ? "Checking..." : "CHECK PRIZE"}
             </button>
           )}
           <span className="tooltip-text">
@@ -203,7 +163,6 @@ const checkPendingPrize = async () => {
               'Check if you have any unclaimed prize.'}
           </span>
         </div>
-
       </div>
     </div>
   );

@@ -40,13 +40,6 @@ class ContractService {
         };
     }
 
-    addWinnersAnnouncedListener(callback) {
-        this.winnersAnnouncedListeners.push(callback);
-        return () => {
-            this.winnersAnnouncedListeners = this.winnersAnnouncedListeners.filter(listener => listener !== callback);
-        };
-    }
-
     // New method to add ticket entered listeners
     addTicketEnteredListener(callback) {
         this.ticketEnteredListeners.push(callback);
@@ -181,7 +174,6 @@ class ContractService {
                 this.web3 = this.web3WS;
             }
             
-            // Only proceed to set up event listeners if we got this far
             await this.setupEventListeners();
             
             return true;
@@ -207,9 +199,8 @@ class ContractService {
                 topics: [this.web3WS.utils.sha3('BlockStatusUpdated(uint256,uint256)')]
             });
             
-            
+
             blockStatusSubscription.on('data', (log) => {
-                // Decode the log data
                 const decodedLog = this.web3WS.eth.abi.decodeLog(
                     [
                         { indexed: false, name: 'blocksUntilClose', type: 'uint256' },
@@ -218,7 +209,8 @@ class ContractService {
                     log.data,
                     log.topics.slice(1)
                 );
-            
+
+             
                 this.notifyBlockStatusListeners(
                     decodedLog.blocksUntilClose, 
                     decodedLog.blocksUntilDraw
@@ -248,34 +240,6 @@ class ContractService {
             
             lotteryStatusSubscription.on('error', (error) => {
                 console.error("LotteryRoundStatusChanged subscription error:", error);
-            });
-
-            // For WinnersAnnounced
-            const winnersAnnouncedSubscription = await this.web3WS.eth.subscribe('logs', {
-                address: CONTRACT_ADDRESS,
-                topics: [this.web3WS.utils.sha3('WinnersAnnounced(address[],address[],address[])')] // שינוי לכלול גם miniPrizeWinners
-            });
-            
-            winnersAnnouncedSubscription.on('data', async (log) => {
-                const decodedLog = this.web3WS.eth.abi.decodeLog(
-                    [
-                        { indexed: false, name: 'smallPrizeWinners', type: 'address[]' },
-                        { indexed: false, name: 'bigPrizeWinners', type: 'address[]' },
-                        { indexed: false, name: 'miniPrizeWinners', type: 'address[]' } // הוספת miniPrizeWinners
-                    ],
-                    log.data,
-                    log.topics.slice(1)
-                );
-            
-                this.notifyWinnersAnnouncedListeners(
-                    decodedLog.smallPrizeWinners, 
-                    decodedLog.bigPrizeWinners,
-                    decodedLog.miniPrizeWinners // העברת miniPrizeWinners להודעה
-                );
-            });
-            
-            winnersAnnouncedSubscription.on('error', (error) => {
-                console.error("WinnersAnnounced subscription error:", error);
             });
 
             // For TicketEnteredLottery - updated with roundNumber
@@ -379,18 +343,8 @@ class ContractService {
         }
     }
 
-    async openLotteryRound() {
-        try {
-            const contract = this.validateWriteRequirements();
-            const result = await contract.methods.startNewLotteryRound().send({ from: this.account });
-            return { success: true, transactionHash: result.transactionHash };
-        } catch (error) {
-            throw new Error(`Error starting a new lottery round: ${error.message}`);
-        }
-    }
 
-    async closeLotteryRound() 
-    {
+    async closeLotteryRound()  {
         try 
         {
             const contract = this.validateWriteRequirements();
@@ -443,9 +397,6 @@ class ContractService {
                 const tx = await contract.methods.drawLotteryWinner(keccak256HashNumbers, keccak256HashFull)
                     .send({ from: this.account });
                 
-                const winners = await this.getCurrentWinners();
-                this.notifyWinnersAnnouncedListeners(winners.smallPrizeWinners, winners.bigPrizeWinners,winners.miniPrizeWinners);
-                
                 return { success: true, result: tx };
             }
             
@@ -473,8 +424,6 @@ class ContractService {
             const tx = await contract.methods.drawLotteryWinner(keccak256HashNumbers, keccak256HashFull)
                 .send({ from: this.account });
             
-            const winners = await this.getCurrentWinners();
-            this.notifyWinnersAnnouncedListeners(winners.smallPrizeWinners, winners.bigPrizeWinners);
             
             return { success: true, result: tx };
         } catch (error) {
@@ -507,49 +456,6 @@ class ContractService {
         }
     }
 
-    async getAllLotteryRoundsInfo() {
-        try {
-            const contract = this.getReadContract();
-            
-            const result = await contract.methods.getAllLotteryRoundsInfo().call();
-            
-            // Ensure we have at least the basic required structure
-            const processedResult = {
-                roundNumbers: [],
-                totalPrizePools: [],
-                participantsList: [],
-                smallPrizeWinnersList: [],
-                bigPrizeWinnersList: [],
-                statuses: []
-            };
-    
-            // Safely access and process data
-            if (result.roundNumbers && result.roundNumbers.length > 0) {
-                processedResult.roundNumbers = result.roundNumbers.map(num => num.toString());
-                processedResult.totalPrizePools = result.totalPrizePools.map(pool => pool.toString());
-                processedResult.statuses = result.Statuses ? result.Statuses.map(status => status.toString()) : [];
-                
-                // Safely process lists with fallback to empty arrays
-                processedResult.participantsList = result.participantsList 
-                    ? result.participantsList.map(list => Array.isArray(list) ? list : []) 
-                    : [];
-                
-                processedResult.smallPrizeWinnersList = result.smallPrizeWinnersList
-                    ? result.smallPrizeWinnersList.map(list => Array.isArray(list) ? list : [])
-                    : [];
-                
-                processedResult.bigPrizeWinnersList = result.bigPrizeWinnersList
-                    ? result.bigPrizeWinnersList.map(list => Array.isArray(list) ? list : [])
-                    : [];
-            }
-    
-            return processedResult;
-        } catch (error) {
-            console.error("Error in getAllLotteryRoundsInfo:", error);
-            throw new Error(`Error fetching lottery rounds info: ${error.message}`);
-        }
-    }
-
     async getLotteryRoundInfo(roundIndex) {
         try {
 
@@ -560,13 +466,9 @@ class ContractService {
         if (roundIndex > currentRound) {
             throw new Error("Round index exceeds current round.");
         }
-        console.log("Fetching round info for index:", roundIndex);
-        console.log("Current round:", await this.getCurrentRound());
-
           const contract = this.getReadContract();
           const result = await contract.methods.getLotteryRoundInfo(roundIndex).call();
-          console.log("Result from contract:", result);
-          // This is the correct way to access the named values
+       
           return {
             roundNumber: Number(result.roundNumber),
             totalPrizePool: result.totalPrizePool.toString(),
@@ -656,14 +558,14 @@ class ContractService {
     }
 
     async getCurrentRound() {
-    try {
-        const contract = this.getReadContract();
-        const currentRound = await contract.methods.getCurrentRound().call();
-        return currentRound;
-    } catch (error) {
-        throw new Error(`Error fetching current round: ${error.message}`);
-    }
-    }
+        try {
+            const contract = this.getReadContract();
+            const currentRound = await contract.methods.getCurrentRound().call();
+            return currentRound;
+        } catch (error) {
+            throw new Error(`Error fetching current round: ${error.message}`);
+        }
+        }
 
     async getFLEX_COMMISSION() {
         try {

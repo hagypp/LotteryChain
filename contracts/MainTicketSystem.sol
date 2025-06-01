@@ -219,6 +219,7 @@ contract MainTicketSystem {
     // Function to claimPrize from the contract
     function claimPrize(address user) external {
         lotteryManager.claimPrize(user);
+        updateBlockStatus();
     }
 
     function getPendingPrize(address user) external view returns (uint256) {
