@@ -119,6 +119,10 @@ const InfoButton = () => {
                       <strong>{contractData.percentage_mini !== null ? ` (${(contractData.percentage_mini)}% of the prize pool)` : ''}</strong>
                       . The distribution uses a <strong>softmax function</strong> to assign higher chances to tickets that have been purchased earlier (based on the timestamp when the ticket was purchased).
                     </p>
+                      <p>
+                    <strong>Claim Prize : </strong>
+                      Players can check their pending prizes and claim them at any time after the draw.
+                    </p>
               </li>
             </ol>
 
