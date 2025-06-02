@@ -42,6 +42,9 @@ struct LotteryRound {
     uint256 commission;
 
     uint256 totalTickets;
+
+    uint8[6] randomNumbers;
+    uint8 strongNumber;
 }
 
 contract LotteryManager {
@@ -504,12 +507,15 @@ contract LotteryManager {
 
     function drawLotteryWinner(
         bytes32 keccak256HashNumbers,
-        bytes32 keccak256HashFull
+        bytes32 keccak256HashFull,
+        uint8[6] memory randomNumbers,
+        uint8 strongNumber
     ) external returns (address[] memory, address[] memory, address[] memory) {
         require(canDrawWinner(), "Wait for some time to draw the winner");
         LotteryRound storage currentRound = lotteryRounds[currentLotteryRound];
         require(currentRound.status == lotteryStatus.CLOSED, "Lottery round already finalized");
-
+        currentRound.randomNumbers = randomNumbers;
+        currentRound.strongNumber = strongNumber;
         if (currentRound.participants.length == 0) {
             address[] memory emptyArray = new address[](0);
             currentRound.smallPrizeWinners = emptyArray;
@@ -609,7 +615,9 @@ contract LotteryManager {
         uint256 smallPrize,
         uint256 miniPrize,
         uint256 commission,
-        uint256 totalTickets
+        uint256 totalTickets,
+        uint8[6] memory randomNumbers,
+        uint8 strongNumber
     ) {
         require(_index <= currentLotteryRound && _index >= 1, "Invalid lottery round index");
         LotteryRound storage round = lotteryRounds[_index];
@@ -628,7 +636,9 @@ contract LotteryManager {
             round.smallPrize,
             round.miniPrize,
             round.commission,
-            round.totalTickets
+            round.totalTickets,
+            round.randomNumbers,
+            round.strongNumber
         );
     }
 

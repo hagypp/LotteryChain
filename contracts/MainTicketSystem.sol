@@ -125,17 +125,33 @@ contract MainTicketSystem {
         return success;
     }
 
-    function drawLotteryWinner(bytes32 keccak256HashNumbers, bytes32 keccak256HashFull) public  
+    function drawLotteryWinner(bytes32 keccak256HashNumbers, bytes32 keccak256HashFull, uint8[6] memory randomNumbers, uint8 strongNumber) public  
     {
-        require(keccak256HashNumbers != bytes32(0), "Ticket hash cannot be empty");
-        require(keccak256HashFull != bytes32(0), "Strong ticket hash cannot be empty");
-        lotteryManager.drawLotteryWinner(keccak256HashNumbers, keccak256HashFull);
+        require(validate(randomNumbers, strongNumber), "Invalid input data");
+        // require(keccak256HashNumbers != bytes32(0), "Ticket hash cannot be empty");
+        // require(keccak256HashFull != bytes32(0), "Strong ticket hash cannot be empty");
+        lotteryManager.drawLotteryWinner(keccak256HashNumbers, keccak256HashFull, randomNumbers, strongNumber);
         startNewLotteryRound();
         emit TicketEnteredLottery(
             lotteryManager.getCurrentRound(), 
             lotteryManager.getCurrentTotalTickets(),
             lotteryManager.getCurrentPrizePool()
         );
+    }
+
+    function validate(
+        uint8[6] memory randomNumbers, 
+        uint8 strongNumber
+    ) private pure returns (bool) {
+        if(strongNumber < 1 || strongNumber > 7) {
+            return false; // Strong number must be between 1 and 7
+        }
+        for (uint8 i = 0; i < 6; i++) {
+            if (randomNumbers[i] < 1 || randomNumbers[i] > 37) {
+                return false; // Each number must be between 1 and 37
+            }
+        }
+        return true; // All numbers are valid
     }
 
     function getActiveTickets() external view returns (uint256[] memory) {
@@ -159,7 +175,9 @@ contract MainTicketSystem {
         uint256 smallPrize,
         uint256 miniPrize,
         uint256 commission,
-        uint256 totalTickets
+        uint256 totalTickets,
+        uint8[6] memory randomNumbers,
+        uint8 strongNumber
     ) {
         return lotteryManager.getLotteryRoundInfo(_index);
     }

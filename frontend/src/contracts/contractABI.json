@@ -124,6 +124,16 @@
                 "internalType": "bytes32",
                 "name": "keccak256HashFull",
                 "type": "bytes32"
+            },
+            {
+                "internalType": "uint8[6]",
+                "name": "randomNumbers",
+                "type": "uint8[6]"
+            },
+            {
+                "internalType": "uint8",
+                "name": "strongNumber",
+                "type": "uint8"
             }
         ],
         "name": "drawLotteryWinner",
@@ -305,6 +315,16 @@
               "internalType": "uint256",
               "name": "totalTickets",
               "type": "uint256"
+          },
+        {       
+              "internalType": "uint8[6]",
+              "name": "randomNumbers",
+              "type": "uint8[6]"
+          },
+        {
+              "internalType": "uint8",
+              "name": "strongNumber",
+              "type": "uint8"
           }
       ],
       "stateMutability": "view",

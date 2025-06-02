@@ -1,6 +1,7 @@
 // Updated contractService.js with Dual Providers (MetaMask + WebSocket)
 import Web3 from 'web3';
 import ABI from '../contracts/contractABI.json';
+const { sha3_256 } = require('js-sha3');  // Note: using sha3_256 instead of keccak_256
 
 // Contract address (update this when moving to testnet/mainnet)
 const CONTRACT_ADDRESS = "0x5FbDB2315678afecb367f032d93F642f64180aa3";
@@ -388,13 +389,20 @@ class ContractService {
             if (blockStatus.blocksUntilDraw === "0") {
                 // Go straight to send when keysUntilClose is 0
                 const response = await fetch("https://h431j7ev85.execute-api.eu-north-1.amazonaws.com/randomNum/random");
+                if (!response.ok) {
+                    throw new Error(`Random number API returned status ${response.status}`);
+                }
                 const data = await response.json();
                 const parsedBody = JSON.parse(data.body);
-        
                 let keccak256HashNumbers = "0x" + parsedBody.keccak256_hash_numbers;
                 let keccak256HashFull = "0x" + parsedBody.keccak256_hash_full;
-                
-                const tx = await contract.methods.drawLotteryWinner(keccak256HashNumbers, keccak256HashFull)
+                let random_numbers = parsedBody.random_numbers;
+                let strong_number = parsedBody.strong_number;
+                // Validate the hashes before sending
+                if (!this.validateHash(keccak256HashNumbers, keccak256HashFull, random_numbers, strong_number)) {
+                    throw new Error("Hash validation failed.");
+                }
+                const tx = await contract.methods.drawLotteryWinner(keccak256HashNumbers, keccak256HashFull, random_numbers, strong_number)
                     .send({ from: this.account });
                 
                 return { success: true, result: tx };
@@ -402,7 +410,9 @@ class ContractService {
             
             // For all other values, do both call and send
             const dummyHash = "0x0000000000000000000000000000000000000000000000000000000000000000";
-            const canDraw = await contract.methods.drawLotteryWinner(dummyHash, dummyHash)
+            const dummyStrongNumber = 7; // Dummy strong number for validation
+            const dummyRandomNumbers = [1, 2, 3, 4, 5, 6]; // Dummy random numbers for validation
+            const canDraw = await contract.methods.drawLotteryWinner(dummyHash, dummyHash, dummyStrongNumber, dummyRandomNumbers)
                 .call({ from: this.account })
                 .then(() => true)
                 .catch(err => {
@@ -415,24 +425,48 @@ class ContractService {
             }
         
             const response = await fetch("https://h431j7ev85.execute-api.eu-north-1.amazonaws.com/randomNum/random");
+            if (!response.ok) {
+                throw new Error(`Random number API returned status ${response.status}`);
+            }        
             const data = await response.json();
             const parsedBody = JSON.parse(data.body);
-        
             let keccak256HashNumbers = "0x" + parsedBody.keccak256_hash_numbers;
             let keccak256HashFull = "0x" + parsedBody.keccak256_hash_full;
-            
-            const tx = await contract.methods.drawLotteryWinner(keccak256HashNumbers, keccak256HashFull)
+            let random_numbers = parsedBody.random_numbers;
+            let strong_number = parsedBody.strong_number;
+            // Validate the hashes before sending
+            if (!this.validateHash(keccak256HashNumbers, keccak256HashFull, random_numbers, strong_number, random_numbers, strong_number)) {
+                throw new Error("Hash validation failed.");
+            }
+            const tx = await contract.methods.drawLotteryWinner(keccak256HashNumbers, keccak256HashFull, random_numbers, strong_number)
                 .send({ from: this.account });
             
             
             return { success: true, result: tx };
         } catch (error) {
-            console.error("Transaction error:", error);
             const revertReason = error.message.match(/reverted with reason string '([^']+)'/)?.[1] || error.message;
             throw new Error(`Failed to draw lottery winner: ${revertReason}`);
         }
     }
-
+    validateHash(keccak256HashNumbers, keccak256HashFull, random_numbers, strong_number)
+    {
+        const numbersString = [...random_numbers.sort((a, b) => a - b)].join('');
+        const numbersHash = sha3_256(numbersString).toString('hex');
+        // Now, include the strongest number in the string for ticketHashWithStrong
+        const ticketNumbersString = [...random_numbers.sort((a, b) => a - b), strong_number].join('');
+        const ticketHashWithStrong = sha3_256(ticketNumbersString).toString('hex');  // Hash the 7 numbers (6 + strongest)
+        // Validate the hashes
+        if (keccak256HashNumbers !== "0x" + numbersHash || keccak256HashFull !== "0x" + ticketHashWithStrong) {
+            console.error("Hash validation failed:", {
+                keccak256HashNumbers,
+                numbersHash: "0x" + numbersHash,
+                keccak256HashFull,
+                ticketHashWithStrong: "0x" + ticketHashWithStrong
+            });
+            return false;
+        }
+        return true;
+    }
     async getPlayerTickets(playerAddress) {
         try {
             const contract = this.getReadContract();
@@ -478,7 +512,9 @@ class ContractService {
             smallPrize: result.smallPrize.toString(),
             miniPrize: result.miniPrize.toString(),
             commission: result.commission.toString(),
-            totalTickets: Number(result.totalTickets)
+            totalTickets: Number(result.totalTickets),
+            randomNumbers: result.randomNumbers || [],
+            strongNumber: Number(result.strongNumber),
           };
         } catch (error) {
           console.error(`Error fetching round ${roundIndex}:`, error);
