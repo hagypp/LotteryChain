@@ -109,6 +109,12 @@ const LotteryRounds = ({ isContractReady }) => {
     return (Number(value) / 1e18).toFixed(2);
   };
 
+  // New helper function to format random numbers
+const formatRandomNumbers = (numbers, strong_number) => {
+  if (!numbers || numbers.length === 0) return 'Not drawn';
+  return `${numbers.join(', ')} | Strong: ${strong_number}`;
+};
+
   const fetchRoundByIndex = async (roundNumberInput) => {
     
     // Make sure we have a valid input to work with
@@ -143,6 +149,8 @@ const LotteryRounds = ({ isContractReady }) => {
         miniPrize,
         commission,
         totalTickets,
+        randomNumbers,
+        strongNumber
       } = data;
   
       const participants = addressArrays[0] || [];
@@ -157,7 +165,7 @@ const LotteryRounds = ({ isContractReady }) => {
       let calculatedSmallPrize = smallPrize;
       let calculatedBigPrize = bigPrize;
       let calculatedMiniPrize = miniPrize;
-  
+      const strongNumberNum = strongNumber ? Number(strongNumber) : null;
       if (numericStatus === 0 || numericStatus === 1) {
         const commissionRate = flexCommission ?? 5; // fallback if not loaded
         const smallPrizePercent = smallPrizePercentage ?? 30; // Use state variable
@@ -183,6 +191,8 @@ const LotteryRounds = ({ isContractReady }) => {
         miniPrize: calculatedMiniPrize,
         commission: calculatedCommission,
         totalTickets,
+        randomNumbers,
+        strongNumberNum
       });
   
       setIsModalOpen(true);
@@ -297,11 +307,18 @@ const LotteryRounds = ({ isContractReady }) => {
 
             <div className="prize-info-section">
               <div className="prize-info-item main-prize">
-                <div className="prize-label">Total Prize Pool</div>
-                <div className="prize-value">{formatEth(roundData.totalPrizePool)} ETH</div>
+                <div className="prize-label">Winning Numbers</div>
+                <div className="prize-value">
+                  {formatRandomNumbers(roundData.randomNumbers,roundData.strongNumberNum)}
+                  </div>
               </div>
               
               <div className="prize-info-grid">
+                <div className="prize-info-item">
+                <div className="prize-label">Total Prize Pool</div>
+                <div className="prize-value">{formatEth(roundData.totalPrizePool)} ETH</div>
+                </div>
+
                 <div className="prize-info-item">
                   <div className="prize-label">Big Prize</div>
                   <div className="prize-value">{formatEth(roundData.bigPrize)} ETH</div>
@@ -326,6 +343,13 @@ const LotteryRounds = ({ isContractReady }) => {
                   <div className="prize-label">Total Tickets</div>
                   <div className="prize-value">{roundData.totalTickets}</div>
                 </div>
+
+                {/* <div className="prize-info-item">
+                  <div className="prize-label">Winning Numbers</div>
+                  <div className="prize-value">
+                  </div>
+                </div> */}
+
               </div>
             </div>
 
