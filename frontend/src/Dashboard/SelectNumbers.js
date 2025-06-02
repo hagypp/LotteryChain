@@ -105,7 +105,6 @@ const SelectNumbers = ({ onClose, ticketId, onTicketAdded }) => {
             }
             
         } catch (error) {
-            console.error('Full error details:', error);
             showNotification(`Failed to enter ticket into lottery: ${error.message}`, 'error');
         } finally {
             setIsSubmitting(false);
