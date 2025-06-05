@@ -1,6 +1,8 @@
 import pytest
-from brownie import MainTicketSystem, accounts, web3, reverts, chain, Wei
-from brownie import exceptions
+from brownie import MainTicketSystem, accounts, web3, reverts, chain, Wei, exceptions, compile_source
+from brownie.network import gas_price
+from eth_account import Account
+import hashlib
 
 
 BLOCKS_TO_WAIT_fOR_CLOSE = 4; # Number of blocks to wait for lottery to close
@@ -262,7 +264,8 @@ def test_draw_lottery_winner(main_ticket_system, owner_account):
     # Draw lottery winner
     tx = main_ticket_system.drawLotteryWinner(
         keccak_hash_numbers, 
-        keccak_hash_full, 
+        keccak_hash_full,
+        [1,2,3,4,5,6],7,
         {'from': owner_account, 'gas_price': 'auto'}
     )
     gas_used = tx.gas_used * tx.gas_price
@@ -271,7 +274,7 @@ def test_draw_lottery_winner(main_ticket_system, owner_account):
     
     print(f"Round info: {round_info}")
     # Unpack returned data
-    round_number, total_prize_pool, addressArrays,  status, big_prize, small_prize, mini_prize, commission, total_tickets = round_info
+    round_number, total_prize_pool, addressArrays,  status, big_prize, small_prize, mini_prize, commission, total_tickets,_,_ = round_info
     participants = addressArrays[0]
     small_prize_winners = addressArrays[1]
     big_prize_winners = addressArrays[2]
@@ -309,19 +312,19 @@ def test_draw_lottery_winner(main_ticket_system, owner_account):
     # Verify total tickets
     assert total_tickets == 2, "Should have 2 tickets total"
     
-    assert main_ticket_system.getPendingPrize({'from': accounts[1]}) == big_prize, f"Account {account} should have pending prize"
-    assert main_ticket_system.getPendingPrize({'from': accounts[2]}) == small_prize, f"Account {account} should have pending prize"
-    assert main_ticket_system.getPendingPrize({'from': owner_account}) == commission, f"Owner should have pending commission"
+    assert main_ticket_system.getPendingPrize(accounts[1],{'from': accounts[1]}) == big_prize, f"Account {account} should have pending prize"
+    assert main_ticket_system.getPendingPrize(accounts[2],{'from': accounts[2]}) == small_prize, f"Account {account} should have pending prize"
+    assert main_ticket_system.getPendingPrize(owner_account,{'from': owner_account}) == commission, f"Owner should have pending commission"
     
-    tx = main_ticket_system.claimPrize({'from': accounts[1], 'gas_price': 'auto'})
+    tx = main_ticket_system.claimPrize(accounts[1],{'from': accounts[1], 'gas_price': 'auto'})
     gas1 = (tx.gas_used * tx.gas_price) 
     assert accounts[1].balance() == player1_blance_before + big_prize - gas1, "Account 1 should receive the big prize"
     
-    tx = main_ticket_system.claimPrize({'from': accounts[2], 'gas_price': 'auto'})
+    tx = main_ticket_system.claimPrize(accounts[2],{'from': accounts[2], 'gas_price': 'auto'})
     gas2 = (tx.gas_used * tx.gas_price)
     assert accounts[2].balance() == player2_blance_before + small_prize - gas2, "Account 2 should receive the small prize"
     
-    tx = main_ticket_system.claimPrize({'from': owner_account, 'gas_price': 'auto'})
+    tx = main_ticket_system.claimPrize(owner_account,{'from': owner_account, 'gas_price': 'auto'})
     gas_used += tx.gas_used * tx.gas_price
 
     assert owener_blance_before + commission - gas_used  == owner_account.balance(), "Owner should receive the commission"
@@ -416,12 +419,12 @@ def test_multiple_lottery_rounds_with_varied_participants(main_ticket_system, ow
         balances_before = {idx: accounts[idx].balance() for idx in participant_indexes}
         owner_balance_before = owner_account.balance()
 
-        tx = main_ticket_system.drawLotteryWinner(draw_hash_1, draw_hash_2, {'from': owner_account, 'gas_price': 'auto'})
+        tx = main_ticket_system.drawLotteryWinner(draw_hash_1, draw_hash_2,[1,2,3,4,5,6],7, {'from': owner_account, 'gas_price': 'auto'})
         gas_used = tx.gas_used * tx.gas_price
 
         # Validate round info
         round_info = main_ticket_system.getLotteryRoundInfo(round_num)
-        round_number, total_prize_pool, addressArrays,  status, big_prize, small_prize, mini_prize, commission, total_tickets = round_info
+        round_number, total_prize_pool, addressArrays,  status, big_prize, small_prize, mini_prize, commission, total_tickets,_,_ = round_info
         participants = addressArrays[0]
         small_prize_winners = addressArrays[1]
         big_prize_winners = addressArrays[2]
@@ -445,25 +448,25 @@ def test_multiple_lottery_rounds_with_varied_participants(main_ticket_system, ow
         for idx in participant_indexes:
             acc = accounts[idx]
             if acc.address in big_prize_winners:
-                assert main_ticket_system.getPendingPrize({'from': acc}) == big_prize
+                assert main_ticket_system.getPendingPrize(acc,{'from': acc}) == big_prize
                 gas = 0
-                if main_ticket_system.getPendingPrize({'from': acc}) > 0:
-                    tx= main_ticket_system.claimPrize({'from': acc, 'gas_price': 'auto'})
+                if main_ticket_system.getPendingPrize(acc,{'from': acc}) > 0:
+                    tx= main_ticket_system.claimPrize(acc,{'from': acc, 'gas_price': 'auto'})
                     gas = tx.gas_used * tx.gas_price
                 assert acc.balance() == balances_before[idx] + big_prize - gas
             elif acc.address in small_prize_winners:
-                assert main_ticket_system.getPendingPrize({'from': acc}) == small_prize
+                assert main_ticket_system.getPendingPrize(acc,{'from': acc}) == small_prize
                 gas = 0
-                if main_ticket_system.getPendingPrize({'from': acc}) > 0:
-                    tx = main_ticket_system.claimPrize({'from': acc, 'gas_price': 'auto'})
+                if main_ticket_system.getPendingPrize(acc,{'from': acc}) > 0:
+                    tx = main_ticket_system.claimPrize(acc,{'from': acc, 'gas_price': 'auto'})
                     gas = tx.gas_used * tx.gas_price
                 assert acc.balance() == balances_before[idx] + small_prize - gas
             else:
                 assert acc.balance() == balances_before[idx]
         
-        assert main_ticket_system.getPendingPrize({'from': owner_account}) == commission
-        if main_ticket_system.getPendingPrize({'from': owner_account}) > 0:
-            tx = main_ticket_system.claimPrize({'from': owner_account, 'gas_price': 'auto'})
+        assert main_ticket_system.getPendingPrize(owner_account,{'from': owner_account}) == commission
+        if main_ticket_system.getPendingPrize(owner_account,{'from': owner_account}) > 0:
+            tx = main_ticket_system.claimPrize(owner_account,{'from': owner_account, 'gas_price': 'auto'})
             gas_used += tx.gas_used * tx.gas_price
         assert owner_account.balance() == owner_balance_before + commission - gas_used
         # New round should start
@@ -498,6 +501,7 @@ def test_draw_lottery_with_no_players(main_ticket_system, owner_account):
     tx = main_ticket_system.drawLotteryWinner(
         keccak_hash_numbers, 
         keccak_hash_full, 
+        [1,2,3,4,5,6],7,
         {'from': owner_account, 'gas_price': 'auto'}
     )
     gas_used = tx.gas_used * tx.gas_price
@@ -507,7 +511,7 @@ def test_draw_lottery_with_no_players(main_ticket_system, owner_account):
     
     print(f"Round info: {round_info}")
     # Unpack returned data
-    round_number, total_prize_pool, addressArrays,  status, big_prize, small_prize, mini_prize, commission, total_tickets = round_info
+    round_number, total_prize_pool, addressArrays,  status, big_prize, small_prize, mini_prize, commission, total_tickets,_,_ = round_info
     participants = addressArrays[0]
     small_prize_winners = addressArrays[1]
     big_prize_winners = addressArrays[2]
@@ -587,6 +591,7 @@ def test_draw_lottery_with_same_hashes(main_ticket_system, owner_account):
     tx = main_ticket_system.drawLotteryWinner(
         keccak_hash_numbers, 
         keccak_hash_full, 
+                [1,2,3,4,5,6],7,
         {'from': owner_account, 'gas_price': 'auto'}
     )
     gas_used = tx.gas_used * tx.gas_price
@@ -596,7 +601,7 @@ def test_draw_lottery_with_same_hashes(main_ticket_system, owner_account):
     
     print(f"Round info: {round_info}")
     # Unpack returned data
-    round_number, total_prize_pool, addressArrays,  status, big_prize, small_prize, mini_prize, commission, total_tickets = round_info
+    round_number, total_prize_pool, addressArrays,  status, big_prize, small_prize, mini_prize, commission, total_tickets,_,_ = round_info
     participants = addressArrays[0]
     small_prize_winners = addressArrays[1]
     big_prize_winners = addressArrays[2]
@@ -629,12 +634,12 @@ def test_draw_lottery_with_same_hashes(main_ticket_system, owner_account):
     # Verify both received big prize (might be split)
     big_prize_per_player = big_prize / len(big_prize_winners)
     
-    assert main_ticket_system.getPendingPrize({'from': accounts[1]}) == big_prize_per_player, f"Account 1 should have pending prize of {big_prize_per_player}"
-    assert main_ticket_system.getPendingPrize({'from': accounts[2]}) == big_prize_per_player, f"Account 2 should have pending prize of {big_prize_per_player}"
+    assert main_ticket_system.getPendingPrize(accounts[1],{'from': accounts[1]}) == big_prize_per_player, f"Account 1 should have pending prize of {big_prize_per_player}"
+    assert main_ticket_system.getPendingPrize(accounts[2],{'from': accounts[2]}) == big_prize_per_player, f"Account 2 should have pending prize of {big_prize_per_player}"
     
-    tx1 = main_ticket_system.claimPrize({'from': accounts[1], 'gas_price': 'auto'})
+    tx1 = main_ticket_system.claimPrize(accounts[1],{'from': accounts[1], 'gas_price': 'auto'})
     gas1 = tx1.gas_used * tx1.gas_price
-    tx2 = main_ticket_system.claimPrize({'from': accounts[2], 'gas_price': 'auto'})
+    tx2 = main_ticket_system.claimPrize(accounts[2],{'from': accounts[2], 'gas_price': 'auto'})
     gas2 = tx2.gas_used * tx2.gas_price
     
     assert player1_balance_before + big_prize_per_player - gas1 == accounts[1].balance(), "Account 1 should receive split big prize"
@@ -655,8 +660,8 @@ def test_draw_lottery_with_same_hashes(main_ticket_system, owner_account):
     assert total_tickets == 2, "Should have 2 tickets total"
     
     # Verify owner commission
-    assert main_ticket_system.getPendingPrize({'from': owner_account}) == commission, f"Owner should have pending commission of {commission}"
-    tx = main_ticket_system.claimPrize({'from': owner_account, 'gas_price': 'auto'})
+    assert main_ticket_system.getPendingPrize(owner_account,{'from': owner_account}) == commission, f"Owner should have pending commission of {commission}"
+    tx = main_ticket_system.claimPrize(owner_account,{'from': owner_account, 'gas_price': 'auto'})
     gas_used += tx.gas_used * tx.gas_price
     assert owner_balance_before + commission - gas_used == owner_account.balance(), "Owner should receive the commission"
     
@@ -724,6 +729,7 @@ def test_purchase_multiple_tickets_same_account(main_ticket_system):
     tx1111=main_ticket_system.drawLotteryWinner(
         web3.keccak(text="draw_hash_1"), 
         web3.keccak(text="draw_strong_hash_1"), 
+                [1,2,3,4,5,6],7,
         {'from': accounts[0]}
     )
     
@@ -851,6 +857,7 @@ def test_mini_prize(main_ticket_system, owner_account):
     tx = main_ticket_system.drawLotteryWinner(
         keccak_hash_numbers, 
         keccak_hash_full, 
+                [1,2,3,4,5,6],7,
         {'from': owner_account, 'gas_price': 'auto'}
     )
     gas_used = tx.gas_used * tx.gas_price
@@ -859,7 +866,7 @@ def test_mini_prize(main_ticket_system, owner_account):
     
     print(f"Round info: {round_info}")
     # Unpack returned data
-    round_number, total_prize_pool, addressArrays,  status, big_prize, small_prize, mini_prize, commission, total_tickets = round_info
+    round_number, total_prize_pool, addressArrays,  status, big_prize, small_prize, mini_prize, commission, total_tickets,_,_ = round_info
     participants = addressArrays[0]
     small_prize_winners = addressArrays[1]
     big_prize_winners = addressArrays[2]
@@ -892,20 +899,20 @@ def test_mini_prize(main_ticket_system, owner_account):
     assert mini_prize > 0, "Mini prize should be greater than 0"
     
     if accounts[1] in mini_prize_winners:
-        assert main_ticket_system.getPendingPrize({'from': accounts[1]}) == mini_prize, f"Account 1 should have pending mini prize of {mini_prize}"
-        tx = main_ticket_system.claimPrize({'from': accounts[1], 'gas_price': 'auto'})
+        assert main_ticket_system.getPendingPrize(accounts[1],{'from': accounts[1]}) == mini_prize, f"Account 1 should have pending mini prize of {mini_prize}"
+        tx = main_ticket_system.claimPrize(accounts[1],{'from': accounts[1], 'gas_price': 'auto'})
         gas1 = tx.gas_used * tx.gas_price
         assert player1_blance_before + mini_prize - gas1 == accounts[1].balance(), "Account 1 should receive the mini prize"
         assert player2_blance_before == accounts[2].balance(), "Account 2 should not receive any prize"
     else:
-        assert main_ticket_system.getPendingPrize({'from': accounts[2]}) == mini_prize, f"Account 2 should have pending mini prize of {mini_prize}"
-        tx = main_ticket_system.claimPrize({'from': accounts[2], 'gas_price': 'auto'})
+        assert main_ticket_system.getPendingPrize(accounts[2],{'from': accounts[2]}) == mini_prize, f"Account 2 should have pending mini prize of {mini_prize}"
+        tx = main_ticket_system.claimPrize(accounts[2],{'from': accounts[2], 'gas_price': 'auto'})
         gas2 = tx.gas_used * tx.gas_price
         assert player2_blance_before + mini_prize - gas2 == accounts[2].balance(), "Account 2 should receive the mini prize"
         assert player1_blance_before == accounts[1].balance(), "Account 1 should not receive any prize"
     
-    assert main_ticket_system.getPendingPrize({'from': owner_account}) == commission, f"Owner should have pending commission of {commission}"
-    tx = main_ticket_system.claimPrize({'from': owner_account, 'gas_price': 'auto'})
+    assert main_ticket_system.getPendingPrize(owner_account,{'from': owner_account}) == commission, f"Owner should have pending commission of {commission}"
+    tx = main_ticket_system.claimPrize(owner_account,{'from': owner_account, 'gas_price': 'auto'})
     gas_used += tx.gas_used * tx.gas_price
     assert owener_blance_before + commission - gas_used  == owner_account.balance(), "Owner should receive the commission"
     # Check lottery status after drawing (new round should be active)
@@ -960,6 +967,7 @@ def test_mini_prize_with_one_player(main_ticket_system, owner_account):
     tx = main_ticket_system.drawLotteryWinner(
         keccak_hash_numbers, 
         keccak_hash_full, 
+                [1,2,3,4,5,6],7,
         {'from': owner_account, 'gas_price': 'auto'}
     )
     gas_used = tx.gas_used * tx.gas_price
@@ -968,7 +976,7 @@ def test_mini_prize_with_one_player(main_ticket_system, owner_account):
     
     print(f"Round info: {round_info}")
     # Unpack returned data
-    round_number, total_prize_pool, addressArrays,  status, big_prize, small_prize, mini_prize, commission, total_tickets = round_info
+    round_number, total_prize_pool, addressArrays,  status, big_prize, small_prize, mini_prize, commission, total_tickets,_,_ = round_info
     participants = addressArrays[0]
     small_prize_winners = addressArrays[1]
     big_prize_winners = addressArrays[2]
@@ -1003,14 +1011,14 @@ def test_mini_prize_with_one_player(main_ticket_system, owner_account):
     
     assert mini_prize > 0, "Mini prize should be greater than 0"
     
-    assert main_ticket_system.getPendingPrize({'from': accounts[1]}) == mini_prize, f"Account 1 should have pending mini prize of {mini_prize}"
-    tx = main_ticket_system.claimPrize({'from': accounts[1], 'gas_price': 'auto'})
+    assert main_ticket_system.getPendingPrize(accounts[1],{'from': accounts[1]}) == mini_prize, f"Account 1 should have pending mini prize of {mini_prize}"
+    tx = main_ticket_system.claimPrize(accounts[1],{'from': accounts[1], 'gas_price': 'auto'})
     gas1 = tx.gas_used * tx.gas_price
     assert player1_blance_before + mini_prize - gas1 == accounts[1].balance(), "Account 1 should receive the mini prize"
     assert player2_blance_before == accounts[2].balance(), "Account 2 should not receive any prize"
     
-    assert main_ticket_system.getPendingPrize({'from': owner_account}) == commission, f"Owner should have pending commission of {commission}"
-    tx = main_ticket_system.claimPrize({'from': owner_account, 'gas_price': 'auto'})
+    assert main_ticket_system.getPendingPrize(owner_account,{'from': owner_account}) == commission, f"Owner should have pending commission of {commission}"
+    tx = main_ticket_system.claimPrize(owner_account,{'from': owner_account, 'gas_price': 'auto'})
     gas_used += tx.gas_used * tx.gas_price
     assert owener_blance_before + commission - gas_used  == owner_account.balance(), "Owner should receive the commission"
     
@@ -1061,6 +1069,7 @@ def test_mini_prize_and_big(main_ticket_system, owner_account):
     tx = main_ticket_system.drawLotteryWinner(
         keccak_hash_numbers, 
         keccak_hash_full, 
+        [1,2,3,4,5,6],7,
         {'from': owner_account, 'gas_price': 'auto'}
     )
     gas_used = tx.gas_used * tx.gas_price
@@ -1068,7 +1077,7 @@ def test_mini_prize_and_big(main_ticket_system, owner_account):
     round_info = main_ticket_system.getLotteryRoundInfo(1)
     
     print(f"Round info: {round_info}")
-    round_number, total_prize_pool, addressArrays,  status, big_prize, small_prize, mini_prize, commission, total_tickets = round_info
+    round_number, total_prize_pool, addressArrays,  status, big_prize, small_prize, mini_prize, commission, total_tickets ,_,_= round_info
     participants = addressArrays[0]
     small_prize_winners = addressArrays[1]
     big_prize_winners = addressArrays[2]
@@ -1124,6 +1133,7 @@ def test_no_win(main_ticket_system, owner_account):
     tx = main_ticket_system.drawLotteryWinner(
         keccak_hash_numbers, 
         keccak_hash_full, 
+        [1,2,3,4,5,6],7,
         {'from': owner_account, 'gas_price': 'auto'}
     )
     gas_used = tx.gas_used * tx.gas_price
@@ -1131,7 +1141,7 @@ def test_no_win(main_ticket_system, owner_account):
     round_info = main_ticket_system.getLotteryRoundInfo(1)
     
     print(f"Round info: {round_info}")
-    round_number, total_prize_pool, addressArrays,  status, big_prize, small_prize, mini_prize, commission, total_tickets = round_info
+    round_number, total_prize_pool, addressArrays,  status, big_prize, small_prize, mini_prize, commission, total_tickets,_,_ = round_info
     participants = addressArrays[0]
     small_prize_winners = addressArrays[1]
     big_prize_winners = addressArrays[2]

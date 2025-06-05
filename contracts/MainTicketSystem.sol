@@ -228,7 +228,10 @@ contract MainTicketSystem {
         return lotteryManager.getBlocksWait();
     }
     
-    receive() external payable {}
+    receive() external payable {
+        (bool success, ) = address(lotteryManager).call{value: msg.value}("");
+        require(success, "Failed to forward Ether to LotteryManager");
+    }
 
     // fallback() external payable {
     // revert("Unsupported function call");
