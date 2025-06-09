@@ -26,19 +26,20 @@ contract TicketManager {
     address[] private players; // Store all addresses
 
     mapping(address => TicketData[]) private playerTickets;
-    uint256 private totalTicketsSold;
+    uint256 private ticketIDCounter; // Counter for ticket IDs
     // address private immutable i_owner;
     uint256 private ticketPrice;
 
     constructor(uint256 _initialTicketPrice) {
         // i_owner = msg.sender;
         ticketPrice = _initialTicketPrice;
+        ticketIDCounter = 1;
     }
 
 
     // Purchase a ticket and store the time of purchase
     function purchaseTicket(address _buyer) external payable returns (uint256) {
-        uint256 ticketId = totalTicketsSold;
+        uint256 ticketId = ticketIDCounter;
 
         if (playerTickets[_buyer].length == 0)
             players.push(_buyer); // Store only new addresses
@@ -53,7 +54,7 @@ contract TicketManager {
             ticketHashWithStrong: 0
         }));
 
-        totalTicketsSold++;
+        ticketIDCounter++;
 
         return ticketId;
     }
