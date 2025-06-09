@@ -412,7 +412,7 @@ class ContractService {
             const dummyHash = "0x0000000000000000000000000000000000000000000000000000000000000000";
             const dummyStrongNumber = 7; // Dummy strong number for validation
             const dummyRandomNumbers = [1, 2, 3, 4, 5, 6]; // Dummy random numbers for validation
-            const canDraw = await contract.methods.drawLotteryWinner(dummyHash, dummyHash, dummyStrongNumber, dummyRandomNumbers)
+            const canDraw = await contract.methods.drawLotteryWinner(dummyHash, dummyHash, dummyRandomNumbers, dummyStrongNumber)
                 .call({ from: this.account })
                 .then(() => true)
                 .catch(err => {
