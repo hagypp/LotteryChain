@@ -29,10 +29,10 @@ jobs:
 
       - name: Tag and push each service
         run: |
-          docker tag lotterychain_hardhat ${{ secrets.DOCKER_USERNAME }}/lotterychain:hardhat
-          docker tag lotterychain_deploy ${{ secrets.DOCKER_USERNAME }}/lotterychain:deploy
-          docker tag lotterychain_react-app ${{ secrets.DOCKER_USERNAME }}/lotterychain:react
+          docker tag lotterychain_hardhat ${{ secrets.DOCKER_USERNAME }}/lotterychain_hardhat
+          docker tag lotterychain_deploy ${{ secrets.DOCKER_USERNAME }}/lotterychain_deploy
+          docker tag lotterychain_react-app ${{ secrets.DOCKER_USERNAME }}/lotterychain_react
 
-          docker push ${{ secrets.DOCKER_USERNAME }}/lotterychain:hardhat
-          docker push ${{ secrets.DOCKER_USERNAME }}/lotterychain:deploy
-          docker push ${{ secrets.DOCKER_USERNAME }}/lotterychain:react
+          docker push ${{ secrets.DOCKER_USERNAME }}/lotterychain_hardhat
+          docker push ${{ secrets.DOCKER_USERNAME }}/lotterychain_deploy
+          docker push ${{ secrets.DOCKER_USERNAME }}/lotterychain_react

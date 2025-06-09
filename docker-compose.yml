@@ -1,7 +1,7 @@
 services:
   hardhat:
     build: .
-    image: hagypp/lotterychain:hardhat
+    image: hagypp/lotterychain_hardhat
     command: npx hardhat node
     ports:
       - "8545:8545"
@@ -10,7 +10,7 @@ services:
 
   deploy:
     build: .
-    image: hagypp/lotterychain:deploy
+    image: hagypp/lotterychain_deploy
     depends_on:
       - hardhat
     volumes:
@@ -22,7 +22,7 @@ services:
 
   react-app:
     build: .
-    image: hagypp/lotterychain:react-app
+    image: hagypp/lotterychain_react
     command: npm start
     ports:
       - "3000:3000"
