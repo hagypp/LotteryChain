@@ -1,0 +1,35 @@
+services:
+  hardhat:
+    build: .
+    image: hagypp/lotterychain:hardhat
+    command: npx hardhat node
+    ports:
+      - "8545:8545"
+    volumes:
+      - .:/app
+
+  deploy:
+    build: .
+    image: hagypp/lotterychain:deploy
+    depends_on:
+      - hardhat
+    volumes:
+      - .:/app
+    environment:
+      - HARDHAT_NODE_URL=http://hardhat:8545
+    entrypoint: /bin/sh
+    command: -c "until nc -z hardhat 8545; do echo waiting for hardhat...; sleep 2; done; npx hardhat run scripts/deploy.js --network localhost"
+
+  react-app:
+    build: .
+    image: hagypp/lotterychain:react-app
+    command: npm start
+    ports:
+      - "3000:3000"
+    depends_on:
+      - deploy
+    volumes:
+      - .:/app
+    environment:
+      - CHOKIDAR_USEPOLLING=true
+      - HARDHAT_URL=http://hardhat:8545

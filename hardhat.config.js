@@ -9,6 +9,11 @@ module.exports = {
       runs: 200, // Balance size and deployment cost
     },
   },
+  networks: {
+  localhost: {
+    url: process.env.HARDHAT_NODE_URL || "http://127.0.0.1:8545",
+  },
+  }
   // networks: {
   //   hardhat: {
   //     gas: 12000000, // Ensure sufficient block gas limit
