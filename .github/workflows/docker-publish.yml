@@ -25,7 +25,8 @@ jobs:
           password: ${{ secrets.DOCKER_PASSWORD }}
 
       - name: Build all images with Compose
-        run: docker-compose build
+        run: docker compose build
+
 
       - name: Tag and push each service
         run: |
