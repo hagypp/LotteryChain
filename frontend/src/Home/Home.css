@@ -20,15 +20,45 @@
   animation: float 10s infinite ease-in-out;
 }
 
+/* Title styling */
 .title {
-  font-size: 3.5rem;
+  font-size: 3.5rem; /* Same font size for icon and text */
   text-align: center;
   margin-bottom: 1rem;
-  background: linear-gradient(45deg, #FF6B6B, #FF8E53);
+  display: flex; /* Ensure inline alignment */
+  align-items: center; /* Vertically align icon and text */
+  justify-content: center; /* Center content */
+  gap: 0.5rem; /* Small gap between icon and text */
+}
+
+.title-text {
+  background: linear-gradient(45deg, #FF6B6B, #FF8E53); /* Gradient for text */
   -webkit-background-clip: text;
   background-clip: text;
   -webkit-text-fill-color: transparent;
-  animation: glow 2s ease-in-out infinite alternate;
+  animation: glow 2s ease-in-out infinite alternate; /* Glow animation */
+}
+
+.title-icon {
+  color: white; /* Plain white, no gradient */
+  line-height: 1; /* Prevent emoji alignment issues */
+  background: none; /* No gradient */
+  text-shadow: none; /* No glow */
+  animation: none; /* No animation */
+  -webkit-text-fill-color: white; /* Ensure no gradient */
+}
+
+/* Media Queries */
+@media (max-width: 768px) {
+  .title {
+    font-size: 2.5rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .title {
+    font-size: 2rem;
+  }
 }
 
 .subtitle {
@@ -54,7 +84,7 @@
 
 .features-grid {
   display: grid;
-  grid-template-columns: repeat(4, 1fr); /* Forces 4 columns */
+  grid-template-columns: repeat(5, 1fr); /* Forces 4 columns */
   gap: 1.5rem;
   margin: 2rem 0;
   padding: 0 1rem;
@@ -71,7 +101,7 @@
   text-align: center;
   backdrop-filter: blur(4px);
   border: 1px solid rgba(255, 255, 255, 0.1);
-  height: 100%; /* Ensures equal height */
+  /* height: 100%; Ensures equal height */
 }
 
 .feature-item:hover {
