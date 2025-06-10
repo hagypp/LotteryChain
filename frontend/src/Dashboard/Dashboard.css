@@ -90,18 +90,19 @@
 /* Block Status Section - More consistent sizing */
 .block-status-consolidated {
   width: 100%;
-  margin-top: 1.25rem;
+  margin-top: 3rem;
+  margin-bottom: 3rem;
 }
 
 .block-status-content {
   display: flex;
   justify-content: center;
-  gap: 1.5rem;
+  gap: 3rem;
 }
 
 .block-metric {
   flex: 1;
-  max-width: 300px;
+  width: 300px;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -123,6 +124,13 @@
   font-size: 1.75rem;
   font-weight: 700;
   color: white;
+}
+
+.block-metric:hover {
+  transform: translateY(-2px); /* Slight upward lift, similar to buttons */
+  background: rgba(255, 255, 255, 0.08); /* Slightly brighter background */
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.15); /* Enhanced shadow */
+  border: 1px solid rgba(37, 99, 235, 0.3); /* Slightly stronger border */
 }
 
 /* Buttons with unified style and consistent sizing */
