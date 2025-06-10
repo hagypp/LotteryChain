@@ -60,28 +60,54 @@ const LotteryHeader = () => {
         </div>
       </div>
 
-      <div className="header-info-row">
-        <div className="header-info-item">
-          <span className="header-info-label">PRIZE POLL</span>
-          <span className="header-info-value">{formatEth(currentPrizePool)} ETH</span>
+<div className="header-info-row">
+        <div className="tooltip-wrapper">
+          <div className="header-info-item">
+            <span className="header-info-label">PRIZE POOL</span>
+            <span className="header-info-value">{formatEth(currentPrizePool)} ETH</span>
+          </div>
+          <span className="tooltip-text">
+            Total ETH collected from ticket for this lottery round.
+          </span>
         </div>
-        <div className="header-info-item">
-          <span className="header-info-label">BIG PRIZE</span>
-          <span className="header-info-value">{formatEth(calculatedBigPrize)} ETH</span>
+        <div className="tooltip-wrapper">
+          <div className="header-info-item">
+            <span className="header-info-label">BIG PRIZE</span>
+            <span className="header-info-value">{formatEth(calculatedBigPrize)} ETH</span>
+          </div>
+          <span className="tooltip-text">
+            guess 6 numbers and the strong number to win the prize
+          </span>
         </div>
-        <div className="header-info-item">
-          <span className="header-info-label">SMALL PRIZE</span>
-          <span className="header-info-value">{formatEth(calculatedSmallPrize)} ETH</span>
+        <div className="tooltip-wrapper">
+          <div className="header-info-item">
+            <span className="header-info-label">SMALL PRIZE</span>
+            <span className="header-info-value">{formatEth(calculatedSmallPrize)} ETH</span>
+          </div>
+          <span className="tooltip-text">
+            guess 6 numbers to win the prize
+          </span>
         </div>
-        <div className="header-info-item">
-          <span className="header-info-label">MINI PRIZE</span>
-          <span className="header-info-value">{formatEth(calculatedMiniPrize)} ETH</span>
+        <div className="tooltip-wrapper">
+          <div className="header-info-item">
+            <span className="header-info-label">MINI PRIZE</span>
+            <span className="header-info-value">{formatEth(calculatedMiniPrize)} ETH</span>
+          </div>
+          <span className="tooltip-text">
+            distributed among non-winners tickets using a softmax function, favoring earlier ticket purchases
+          </span>
         </div>
-        <div className="header-info-item">
-          <span className="header-info-label">COMMISSION</span>
-          <span className="header-info-value">{formatEth(calculatedCommission)} ETH</span>
+        <div className="tooltip-wrapper">
+          <div className="header-info-item">
+            <span className="header-info-label">COMMISSION</span>
+            <span className="header-info-value">{formatEth(calculatedCommission)} ETH</span>
+          </div>
+          <span className="tooltip-text">
+            deducted for the smart contract owner to fund lottery operations
+          </span>
         </div>
       </div>
+      
       
       <div className="block-status-consolidated">
         <div className="block-status-header">
@@ -90,16 +116,26 @@ const LotteryHeader = () => {
           </span>
         </div>
         <div className="block-status-content">
-          <div className="block-metric">
-            <span className="block-metric-label">UNTIL BLOCKS CLOSE</span>
-            <span className="block-metric-value">
-              {blockStatus.blocksUntilClose}
+          <div className="tooltip-wrapper">
+            <div className="block-metric">
+              <span className="block-metric-label">BLOCKS UNTIL CLOSE LOTTERY</span>
+              <span className="block-metric-value">
+                {blockStatus.blocksUntilClose}
+              </span>
+            </div>
+            <span className="tooltip-text">
+              Number of blockchain blocks remaining until the lottery can be closed, reaching 0 allows to close the lottery.
             </span>
           </div>
-          <div className="block-metric">
-            <span className="block-metric-label">UNTIL LOTTERY WINNER</span>
-            <span className="block-metric-value">
-              {blockStatus.blocksUntilDraw}
+          <div className="tooltip-wrapper">
+            <div className="block-metric">
+              <span className="block-metric-label">BLOCKS UNTIL LOTTERY WINNER</span>
+              <span className="block-metric-value">
+                {blockStatus.blocksUntilDraw}
+              </span>
+            </div>
+            <span className="tooltip-text">
+              Number of blockchain blocks remaining until the winner can be drawn, reaching 0 allows to draw lottery winner.
             </span>
           </div>
         </div>
