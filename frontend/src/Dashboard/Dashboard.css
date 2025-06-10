@@ -48,6 +48,19 @@
   text-align: center;
   min-width: 120px;
 }
+/* Make the value text much stronger on hover */
+.header-info-item:hover .header-info-value {
+  color: #FFFFFF; /* Pure white for maximum contrast */
+  text-shadow: 0 0 12px rgba(255, 255, 255, 0.6); /* Stronger glow */
+  font-weight: 900; /* Extra bold */
+}
+
+/* Make the label text much brighter and stronger on hover */
+.header-info-item:hover .header-info-label {
+  color: #FFD700; /* Pure gold */
+  text-shadow: 0 0 8px rgba(255, 215, 0, 0.5); /* Golden glow */
+  font-weight: 700; /* Bold */
+}
 .header-info-row {
   display: flex;
   justify-content: space-between;
