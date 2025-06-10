@@ -9,24 +9,29 @@ import HowToPlay from "./HowToPlay";
 const Home = ({ onConnect }) => {  
   const features = [
     {
-      icon: "🔒",
-      title: "Transparent & Secure",
-      description: "Every transaction is recorded on the blockchain, ensuring complete fairness and security"
-    },
-    {
-      icon: "💎",
-      title: "Easy to Play",
-      description: "Connect your MetaMask wallet and start purchasing tickets instantly using Ethereum (ETH)"
-    },
-    {
-      icon: "🎯",
-      title: "Better Odds",
-      description: "Increase your winning chances by purchasing multiple tickets"
+      icon: "🌐",
+      title: "Fully Decentralized",
+      description: "Powered by a distributed blockchain network, the smart contract allows anyone to play or contribute to managing the lottery, eliminating centralized control."
     },
     {
       icon: "🤖",
-      title: "Smart Contract Powered",
-      description: "Automated, transparent, tamper-proof, and distributed lottery draws guarantee fair and transparent results for all players"
+      title: "Automated & Transparent",
+      description: "Smart contract-driven draws are automated, transparent, and verifiable on the blockchain, guaranteeing fair results for everyone."
+    },
+    {
+      icon: "🔒",
+      title: "Highly Secure Smart Contracts",
+      description: "Tamper-proof smart contracts, secured by blockchain cryptography, resist attacks and ensure funds and gameplay remain safe and fair."
+    },
+    {
+      icon: "💎",
+      title: "Easy & Accessible",
+      description: "Connect your MetaMask wallet to instantly interact with the smart contract. Designed for simplicity and open to all users."
+    },
+    {
+      icon: "🎯",
+      title: "Better Odds with Early Entry",
+      description: "Increase your winning chances by purchasing multiple tickets early for enhanced odds in the lottery draw."
     }
   ];
   // const steps = [
@@ -91,7 +96,10 @@ const Home = ({ onConnect }) => {
   
   return (
     <div className="main">
-      <h1 className="title">🎰 Lottery Chain Game</h1>
+      <h1 className="title">
+        <span className="title-icon">🎰  </span>
+        <span className="title-text"> Lottery Chain Game</span>
+      </h1>
       <p className="subtitle">Experience the Future of Fair Gaming</p>
 
       <div className="explanation-text">
