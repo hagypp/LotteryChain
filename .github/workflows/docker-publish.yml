@@ -32,11 +32,6 @@ jobs:
           npx hardhat --version
           brownie --version
       
-      - name: Start Hardhat node
-        run: |
-          nohup npx hardhat node > hardhat.log 2>&1 &
-          sleep 5
-      
       - name: Run Brownie tests
         run: brownie test
 
