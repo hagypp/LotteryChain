@@ -110,8 +110,11 @@ const LotteryRounds = ({ isContractReady }) => {
   };
 
   // New helper function to format random numbers
-const formatRandomNumbers = (numbers, strong_number) => {
+const formatRandomNumbers = (numbers, strong_number,status) => {
   if (!numbers || numbers.length === 0) return 'Not drawn';
+  if (numbers[0] === '0') return 'Not drawn'; // Handle case where numbers are not set
+    if (numbers[0] === 0) return 'Not drawn'; // Handle case where numbers are not set
+    if (status !== 2) return 'Not drawn'; // Only show numbers if the round is finalized
   return `${numbers.join(', ')} | Strong: ${strong_number}`;
 };
 
@@ -309,7 +312,7 @@ const formatRandomNumbers = (numbers, strong_number) => {
               <div className="prize-info-item main-prize">
                 <div className="prize-label">Winning Numbers</div>
                 <div className="prize-value">
-                  {formatRandomNumbers(roundData.randomNumbers,roundData.strongNumberNum)}
+                  {formatRandomNumbers(roundData.randomNumbers,roundData.strongNumberNum,roundData.status)}
                   </div>
               </div>
               
