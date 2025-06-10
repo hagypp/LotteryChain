@@ -15,17 +15,17 @@ const HowToPlay = () => {
     {
       icon: "🎟️",
       title: "Purchase Tickets",
-      description: "Buy as many tickets as you want using ETH from your wallet"
+      description: "Buy tickets using ETH from your wallet"
     },
     {
       icon: "🔢",
       title: "Pick Your Numbers",
-      description: "Select 6 main numbers (1-37) and 1 power number (1-7)"
+      description: "Select 6 main numbers (1-37) and 1 strong number (1-7)"
     },
     {
       icon: "⏳",
       title: "Wait for Draw",
-      description: "Lottery closes automatically when time limit is reached"
+      description: "Lottery closes automatically/manually when time limit is reached"
     },
     {
       icon: "🎰",
