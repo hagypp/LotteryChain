@@ -101,7 +101,8 @@
   text-align: center;
   backdrop-filter: blur(4px);
   border: 1px solid rgba(255, 255, 255, 0.1);
-  /* height: 100%; Ensures equal height */
+  /* height: 100%; */
+  height: auto;
 }
 
 .feature-item:hover {
@@ -114,7 +115,6 @@
   height: 80px;
   background: rgba(255, 255, 255, 0.1);
   border-radius: 50%;
-  margin-bottom: 0.5rem;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -128,17 +128,17 @@
   transform: scale(1.1);
 }
 
-.feature-title {
+.features-grid .feature-title {
   color: #FFE66D;
   font-size: 1.3rem;
   font-weight: 400;
   margin-bottom: 0.8rem;
 }
 
-.feature-description {
+.features-grid .feature-description {
   color: #e1e1e1;
   line-height: 1.5;
-  font-size: 1rem;
+  font-size: 0.9rem;
   flex-grow: 1;
 }
 
@@ -150,7 +150,6 @@
 .ready-text {
   font-size: 1.5rem;
   text-align: center;
-  margin: 5rem 0;
   color: #FFE66D;
   font-weight: 600;
 }
@@ -303,7 +302,7 @@
   color: #FF8E53;
 }
 
-.step-content {
+.process-step .step-content {
   text-align: center;
   background: rgba(255, 255, 255, 0.05);
   padding: 15px 10px;
@@ -325,7 +324,7 @@
 }
 
 
-.step-description {
+.step-content .step-description {
   color: #e1e1e1;
   font-size: 0.9rem;
   line-height: 1.4;
