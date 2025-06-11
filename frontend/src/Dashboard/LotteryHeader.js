@@ -111,7 +111,7 @@ const LotteryHeader = () => {
       
       <div className="block-status-consolidated">
         <div className="block-status-header">
-          <span className="header-info-label" style={{textAlign: 'center', display: 'block', marginBottom: '0.75rem'}}>
+          <span className="header-info-label" style={{textAlign: 'center', display: 'block', marginBottom: '0.75rem', fontSize: '1.25rem'}}>
             BLOCK STATUS
           </span>
         </div>
@@ -119,8 +119,8 @@ const LotteryHeader = () => {
           <div className="tooltip-wrapper">
             <div className="block-metric">
               <span className="block-metric-label">BLOCKS UNTIL CLOSE LOTTERY</span>
-              <span className="block-metric-value">
-                {blockStatus.blocksUntilClose}
+              <span className={`block-metric-value ${blockStatus.blocksUntilClose === '0' ? 'green-text' : 'red-text'}`}>
+          {blockStatus.blocksUntilClose}
               </span>
             </div>
             <span className="tooltip-text">
@@ -130,7 +130,7 @@ const LotteryHeader = () => {
           <div className="tooltip-wrapper">
             <div className="block-metric">
               <span className="block-metric-label">BLOCKS UNTIL LOTTERY WINNER</span>
-              <span className="block-metric-value">
+              <span className={`block-metric-value ${blockStatus.blocksUntilDraw === '0' ? 'green-text' : 'red-text'}`}>
                 {blockStatus.blocksUntilDraw}
               </span>
             </div>
