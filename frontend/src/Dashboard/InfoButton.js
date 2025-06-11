@@ -81,7 +81,10 @@ const InfoButton = () => {
             </div>
 
             <div className="info-modal-body">
-            <h2 className="section-title">🧾 How to Play</h2>
+              <h2 className="title">
+                <span className="title-icon">🧾  </span>
+                <span className="title-text"> How to Play</span>
+              </h2>
             <div className="explanation-text">
             <p>
               This is a blockchain-based lottery game where the flow of each round is strictly governed by block numbers:
@@ -90,8 +93,8 @@ const InfoButton = () => {
               <li><strong>Lottery Start</strong><br />
                 When a new lottery round begins, the smart contract records the current block number as the starting point.
               </li>
-              <li><strong>Entry Window (BLOCKS_TO_WAIT_FOR_CLOSE)</strong><br />
-                From the starting block, users have a limited number of blocks defined by <strong>BLOCKS_TO_WAIT_FOR_CLOSE {contractData.BLOCKS_TO_WAIT_FOR_CLOSE !== null 
+              <li><strong>Entry Window (BLOCKS UNTIL CLOSE LOTTERY)</strong><br />
+                From the starting block, users have a limited number of blocks defined by <strong>BLOCKS UNTIL CLOSE LOTTERY {contractData.BLOCKS_TO_WAIT_FOR_CLOSE !== null 
                       ? `= ${contractData.BLOCKS_TO_WAIT_FOR_CLOSE}` : ''} </strong>) to enter the lottery by selecting 6 numbers between 1–37 and 1 strong number between 1–7.
               </li>
               <li><strong>Lottery Closing</strong><br />
@@ -101,12 +104,12 @@ const InfoButton = () => {
                   <li>Automatically by the contract, triggered by specific user actions (see below).</li>
                 </ul>
               </li>
-              <li><strong>Draw Window (BLOCKS_TO_WAIT_FOR_DRAW)</strong><br />
-                     After the lottery is closed, there is a second waiting period (defined by <strong>BLOCKS_TO_WAIT_FOR_DRAW {contractData.BLOCKS_TO_WAIT_FOR_DRAW !== null 
+              <li><strong>Draw Window (BLOCKS UNTIL LOTTERY WINNER)</strong><br />
+                     After the lottery is closed, there is a second waiting period (defined by <strong>BLOCKS UNTIL LOTTERY WINNER {contractData.BLOCKS_TO_WAIT_FOR_DRAW !== null 
                       ? `= ${contractData.BLOCKS_TO_WAIT_FOR_DRAW}` : ''}</strong> ) before the draw. Once this period has passed, anyone can trigger the draw to pick the winning numbers.
               </li>
               <li><strong>Prize Distribution</strong><br />
-                Winners are determined based on how many numbers they matched, and prizes are paid automatically by the smart contract. The prize pool is transparent from the start, with a fee deducted for the smart contract owner  
+                Winners are determined based on how many numbers they matched. The prize pool is transparent from the start, with a fee deducted for the smart contract owner  
                 <strong>{contractData.commission !== null ? ` (${(contractData.commission)}% of the prize pool)` : ''}</strong>
                 . Players who correctly guess all 6 numbers and the <strong>strong number</strong> win the <strong>big prize</strong> 
                 <strong>{contractData.percentage_big !== null ? ` (${(contractData.percentage_big)}% of the prize pool)` : ''}</strong>
