@@ -26,9 +26,8 @@ jobs:
       - name: Install Ganache CLI
         run: npm install -g ganache-cli
       
-      - name: Run Brownie tests with parallel execution
-        run: |
-              brownie test -v --tb=short -n auto
+      - name: Run Brownie tests
+        run: brownie test
 
   build-and-push:
     runs-on: ubuntu-latest
