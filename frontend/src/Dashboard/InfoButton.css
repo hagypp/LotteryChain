@@ -89,14 +89,21 @@
     font-family: 'Arial', sans-serif;
 }
 
-.section-title {
-    font-size: 2.2rem;
-    color: #FFE66D;
-    text-align: center;
-    margin: 2.5rem 0 1.5rem;
-    font-weight: bold;
-    text-transform: uppercase;
-    letter-spacing: 1px;
+.title-text {
+  background: linear-gradient(45deg, #FF6B6B, #FF8E53); /* Gradient for text */
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  animation: glow 2s ease-in-out infinite alternate; /* Glow animation */
+}
+
+.title-icon {
+  color: white; /* Plain white, no gradient */
+  line-height: 1; /* Prevent emoji alignment issues */
+  background: none; /* No gradient */
+  text-shadow: none; /* No glow */
+  animation: none; /* No animation */
+  -webkit-text-fill-color: white; /* Ensure no gradient */
 }
 
 .explanation-text {
