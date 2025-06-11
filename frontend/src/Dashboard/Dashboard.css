@@ -493,3 +493,10 @@
   opacity: 0.6;
   cursor: not-allowed;
 }
+
+.block-metric-value.green-text {
+color: #00FF00;
+}
+.block-metric-value.red-text {
+  color: #FF0000;
+}
