@@ -31,7 +31,7 @@ const Home = ({ onConnect }) => {
     {
       icon: "🎯",
       title: "Better Odds with Early Entry",
-      description: "Increase your winning chances by purchasing multiple tickets early for enhanced odds in the lottery draw."
+      description: "Increase your winning chances by purchasing multiple tickets early for enhanced odds in the lottery draw for the mini prize."
     }
   ];
   // const steps = [
