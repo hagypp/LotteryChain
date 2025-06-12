@@ -1,6 +1,6 @@
 // Dashboard integration test
 import React from 'react';
-import { render, screen } from '@testing-library/react';
+import { render, screen, act } from '@testing-library/react';
 import Dashboard from '../Dashboard/Dashboard';
 import { LotteryProvider } from '../contexts/LotteryContext';
 
@@ -43,6 +43,9 @@ jest.mock('../contexts/LotteryContext', () => {
   };
 });
 
+// Mock the InfoButton component to prevent async state updates
+jest.mock('../Dashboard/InfoButton', () => () => <div data-testid="info-button">Info Button</div>);
+
 // Mock child components
 jest.mock('../Dashboard/LotteryHeader', () => () => <div data-testid="lottery-header">Lottery Header</div>);
 jest.mock('../Dashboard/HardLottoGame', () => () => <div data-testid="hard-lotto-game">Hard Lotto Game</div>);
@@ -50,8 +53,10 @@ jest.mock('../Dashboard/WinnerAnnouncement', () => () => <div data-testid="winne
 jest.mock('../Dashboard/Notifications', () => () => <div data-testid="notifications">Notifications</div>);
 
 describe('Dashboard Component', () => {
-  test('renders all child components correctly', () => {
-    render(<Dashboard account="0x123456" />);
+  test('renders all child components correctly', async () => {
+    await act(async () => {
+      render(<Dashboard account="0x123456" />);
+    });
     
     // Check that LotteryProvider wrapper is present
     expect(screen.getByTestId('lottery-provider')).toBeInTheDocument();
