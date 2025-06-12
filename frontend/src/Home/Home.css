@@ -84,48 +84,51 @@
 
 .features-grid {
   display: grid;
-  grid-template-columns: repeat(5, 1fr); /* Forces 4 columns */
+  grid-template-columns: repeat(5, 1fr); /* Forces 5 columns */
   gap: 1.5rem;
   margin: 2rem 0;
   padding: 0 1rem;
 }
 
 .feature-item {
-  background: rgba(255, 255, 255, 0.05);
-  border-radius: 20px;
+  background: rgba(255, 255, 255, 0.04);
+  border-radius: 16px;
   padding: 1.5rem;
-  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  transition: all 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
   display: flex;
   flex-direction: column;
   align-items: center;
   text-align: center;
-  backdrop-filter: blur(4px);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  /* height: 100%; */
+  backdrop-filter: blur(8px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
   height: auto;
 }
 
 .feature-item:hover {
-  transform: translateY(-10px);
-  box-shadow: 0 10px 30px rgba(255, 107, 107, 0.2);
+  background: rgba(255, 255, 255, 0.08);
+  transform: translateY(-6px);
+  box-shadow: 0 15px 40px rgba(255, 107, 107, 0.12);
+  border-color: rgba(255, 142, 83, 0.2);
 }
 
 .feature-icon {
-  width: 80px;
-  height: 80px;
-  background: rgba(255, 255, 255, 0.1);
+  width: 70px;
+  height: 70px;
+  background: rgba(255, 255, 255, 0.08);
   border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 2rem;
+  font-size: 1.8rem;
   color: #FF8E53;
-  transition: all 0.3s ease;
+  transition: all 0.4s ease;
+  margin-bottom: 1rem;
 }
 
 .feature-item:hover .feature-icon {
-  background: rgba(255, 142, 83, 0.2);
-  transform: scale(1.1);
+  background: rgba(255, 142, 83, 0.15);
+  transform: scale(1.05);
+  box-shadow: 0 8px 25px rgba(255, 142, 83, 0.15);
 }
 
 .features-grid .feature-title {
@@ -207,7 +210,6 @@
   50% { transform: translate(30px, 30px) rotate(180deg); }
 }
 
-
 /* Added decorative element similar to main section */
 .how-to-play-section::before {
   content: '';
@@ -215,9 +217,7 @@
   background: radial-gradient(circle, #FF8E53 80%, transparent 100%);
   bottom: -100px;
   left: -80px;
-
 }
-
 
 /* Flow line that connects all steps */
 .flow-line {
@@ -265,9 +265,9 @@
 }
 
 .step-node {
-  width: 60px;
-  height: 60px;
-  background: rgba(255, 255, 255, 0.07);
+  width: 50px;
+  height: 50px;
+  background: rgba(255, 255, 255, 0.06);
   border-radius: 50%;
   display: flex;
   align-items: center;
@@ -275,9 +275,8 @@
   margin-bottom: 15px;
   position: relative;
   z-index: 3;
-  backdrop-filter: blur(4px);
-  border: 2px solid rgba(255, 107, 107, 0.3);
-  box-shadow: 0 0 15px rgba(255, 107, 107, 0.15);
+  backdrop-filter: blur(6px);
+  border: 1px solid rgba(255, 107, 107, 0.2);
   transition: all 0.3s ease;
 }
 
@@ -304,11 +303,11 @@
 
 .process-step .step-content {
   text-align: center;
-  background: rgba(255, 255, 255, 0.05);
+  background: rgba(255, 255, 255, 0.04);
   padding: 15px 10px;
   border-radius: 12px;
   backdrop-filter: blur(4px);
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.08);
   transition: all 0.3s ease;
   height: 120px;
   display: flex;
@@ -323,27 +322,28 @@
   font-weight: 500;
 }
 
-
 .step-content .step-description {
   color: #e1e1e1;
   font-size: 0.9rem;
   line-height: 1.4;
 }
 
-/* Hover effects - matched to feature item hover */
+/* Hover effects - refined */
 .process-step:hover .step-node {
-  transform: translateY(-5px);
-  border-color: rgba(255, 107, 107, 0.7);
-  box-shadow: 0 0 20px rgba(255, 107, 107, 0.3);
+  background: rgba(255, 107, 107, 0.1);
+  border-color: rgba(255, 107, 107, 0.4);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px rgba(255, 107, 107, 0.15);
 }
 
 .process-step:hover .step-content {
   background: rgba(255, 255, 255, 0.08);
-  transform: translateY(-5px);
-  box-shadow: 0 10px 30px rgba(255, 107, 107, 0.1);
+  border-color: rgba(255, 142, 83, 0.2);
+  transform: translateY(-2px);
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
 }
 
-/* Navigation buttons - styled to match overall theme */
+/* Navigation buttons - refined */
 .flow-nav {
   display: flex;
   justify-content: center;
@@ -352,24 +352,31 @@
 
 .nav-button {
   background: rgba(255, 255, 255, 0.05);
-  border: 1px solid rgba(255, 107, 107, 0.2);
-  color: #FFE66D;
-  padding: 8px 20px;
-  margin: 0 15px;
-  border-radius: 20px;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  color: #e1e1e1;
+  padding: 10px 20px;
+  margin: 0 8px;
+  border-radius: 10px;
   cursor: pointer;
   font-size: 0.9rem;
   transition: all 0.3s ease;
   display: flex;
   align-items: center;
-  backdrop-filter: blur(4px);
+  backdrop-filter: blur(8px);
+  font-weight: 400;
 }
 
 .nav-button:hover {
-  background: rgba(255, 107, 107, 0.15);
-  border-color: #FF6B6B;
-  transform: translateY(-2px);
-  box-shadow: 0 5px 15px rgba(255, 107, 107, 0.2);
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(255, 142, 83, 0.3);
+  color: #FFE66D;
+  transform: translateY(-1px);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.1);
+}
+
+.nav-button:active {
+  transform: translateY(0);
+  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.08);
 }
 
 .nav-button svg {
@@ -433,30 +440,153 @@
   font-weight: 600;
 }
 
+/* Refined Start Game Button */
 .start-game-button {
-  background: linear-gradient(135deg, #FF6B6B, #FF8E53);
-  color: white;
-  padding: 1rem 2.5rem;
-  border: none;
-  border-radius: 30px;
-  font-weight: 700;
-  font-size: 1.3rem;
+  background: rgba(255, 107, 107, 0.15);
+  color: #FF6B6B;
+  border: 2px solid rgba(255, 107, 107, 0.3);
+  padding: 16px 32px;
+  border-radius: 16px;
+  font-weight: 600;
+  font-size: 1.1rem;
   cursor: pointer;
-  text-transform: uppercase;
-  letter-spacing: 1px;
-  transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  transition: all 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
   position: relative;
   overflow: hidden;
-  box-shadow: 0 10px 25px rgba(255, 107, 107, 0.35);
-  animation: pulse 2s infinite;
+  backdrop-filter: blur(10px);
+  text-transform: none;
+  letter-spacing: 0.5px;
+  box-shadow: none;
+  animation: none;
+}
+
+.start-game-button::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 0;
+  height: 0;
+  background: radial-gradient(circle, rgba(255, 107, 107, 0.2) 0%, transparent 70%);
+  transition: all 0.4s ease;
+  transform: translate(-50%, -50%);
+  border-radius: 50%;
+}
+
+.start-game-button:hover::after {
+  width: 300px;
+  height: 300px;
 }
 
 .start-game-button:hover {
-  transform: translateY(-5px) scale(1.03);
-  box-shadow: 0 15px 30px rgba(255, 107, 107, 0.45);
+  background: rgba(255, 107, 107, 0.25);
+  border-color: rgba(255, 107, 107, 0.6);
+  color: #fff;
+  transform: translateY(-3px);
+  box-shadow: 0 12px 30px rgba(255, 107, 107, 0.2);
 }
 
 .start-game-button:active {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 20px rgba(255, 107, 107, 0.15);
+}
+
+/* Refined MetaMask Connect Button Styles */
+.metamask-connect-button {
+  background: rgba(255, 255, 255, 0.08);
+  color: #e1e1e1;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  padding: 12px 24px;
+  border-radius: 12px;
+  font-weight: 500;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  backdrop-filter: blur(10px);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  position: relative;
+  overflow: hidden;
+}
+
+.metamask-connect-button::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.1), transparent);
+  transition: left 0.5s ease;
+}
+
+.metamask-connect-button:hover::before {
+  left: 100%;
+}
+
+.metamask-connect-button:hover {
+  background: rgba(255, 255, 255, 0.12);
+  border-color: rgba(255, 142, 83, 0.4);
   transform: translateY(-2px);
-  box-shadow: 0 5px 15px rgba(255, 107, 107, 0.3);
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+  color: #fff;
+}
+
+.metamask-connect-button:active {
+  transform: translateY(0);
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+}
+
+/* Refined Info Button */
+.info-button {
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  color: #e1e1e1;
+  width: 50px;
+  height: 50px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  backdrop-filter: blur(10px);
+  font-size: 1.2rem;
+}
+
+.info-button:hover {
+  background: rgba(255, 255, 255, 0.12);
+  border-color: rgba(255, 142, 83, 0.4);
+  color: #FFE66D;
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+}
+
+/* Subtle Animations */
+@keyframes gentlePulse {
+  0%, 100% {
+    box-shadow: 0 0 0 0 rgba(255, 107, 107, 0.1);
+  }
+  50% {
+    box-shadow: 0 0 0 8px rgba(255, 107, 107, 0);
+  }
+}
+
+.start-game-button:focus {
+  animation: gentlePulse 2s infinite;
+  outline: none;
+}
+
+/* Responsive refinements */
+@media (max-width: 768px) {
+  .start-game-button {
+    padding: 14px 28px;
+    font-size: 1rem;
+  }
+  
+  .metamask-connect-button {
+    padding: 10px 20px;
+    font-size: 0.9rem;
+  }
 }

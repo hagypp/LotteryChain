@@ -103,8 +103,8 @@
 /* Block Status Section - More consistent sizing */
 .block-status-consolidated {
   width: 100%;
-  margin-top: 3rem;
-  margin-bottom: 3rem;
+  margin-top: 2rem;
+  margin-bottom: 2rem
 }
 
 .block-status-content {
@@ -127,7 +127,7 @@
 
 .block-metric-label {
   color: #3B82F6;
-  font-size: 0.75rem;
+  font-size: 1.00rem;
   text-transform: uppercase;
   letter-spacing: 1px;
   margin-bottom: 0.5rem;
@@ -495,8 +495,8 @@
 }
 
 .block-metric-value.green-text {
-color: #00FF00;
+color: #88c888;
 }
 .block-metric-value.red-text {
-  color: #FF0000;
+  color:  #FF6B6B;
 }
