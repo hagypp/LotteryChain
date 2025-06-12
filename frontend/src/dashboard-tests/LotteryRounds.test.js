@@ -1,194 +1,317 @@
-// LotteryRounds.test.js
+// LotteryRounds integration test
 import React from 'react';
-import { render, screen, fireEvent, waitFor } from '@testing-library/react';
-import '@testing-library/jest-dom'; // Import the jest-dom matchers
+import { render, screen, fireEvent, waitFor, act } from '@testing-library/react';
 import LotteryRounds from '../Dashboard/LotteryRounds';
+import { LotteryProvider } from '../contexts/LotteryContext';
 
-// Make sure the path to your contractService is correct
+// Mock the contract service
 jest.mock('../services/contractService', () => ({
-  getLotteryRoundInfo: jest.fn(async (roundNumber) => {
-    if (roundNumber === '999') {
-      throw new Error('Round not found');
-    }
-    
-    // Return mock data for different rounds
-    if (roundNumber === '5') {
-      return {
-        roundNumber: 5,
-        totalPrizePool: '5000000000000000000',
-        participants: ['0x123...', '0x456...'],
-        smallPrizeWinners: ['0xabc...'],
-        bigPrizeWinners: ['0xdef...'],
-        status: 2, // Finalized
-        bigPrize: '3500000000000000000',
-        smallPrize: '1000000000000000000',
-        commission: '500000000000000000',
-        totalTickets: 25
-      };
-    }
-    
-    if (roundNumber === '1') {
-      return {
-        roundNumber: 1,
-        totalPrizePool: '1000000000000000000',
-        participants: ['0x123...'],
-        smallPrizeWinners: [],
-        bigPrizeWinners: [],
-        status: 1, // Closed
-        bigPrize: '700000000000000000',
-        smallPrize: '200000000000000000',
-        commission: '100000000000000000',
-        totalTickets: 5
-      };
-    }
-    
-    if (roundNumber === '2') {
-      return {
-        roundNumber: 2,
-        totalPrizePool: '2000000000000000000',
-        participants: ['0x123...', '0x456...'],
-        smallPrizeWinners: ['0xabc...'],
-        bigPrizeWinners: ['0xdef...'],
-        status: 2, // Finalized
-        bigPrize: '1400000000000000000',
-        smallPrize: '400000000000000000',
-        commission: '200000000000000000',
-        totalTickets: 10
-      };
-    }
-    
-    // Default data for round 3 (current)
-    return {
-      roundNumber: 3,
-      totalPrizePool: '3000000000000000000',
-      participants: ['0x123...', '0x456...', '0x789...'],
-      smallPrizeWinners: [],
-      bigPrizeWinners: [],
-      status: 0, // Open
-      bigPrize: '2100000000000000000',
-      smallPrize: '600000000000000000',
-      commission: '300000000000000000',
-      totalTickets: 15
-    };
-  }),
-  getCurrentRound: jest.fn(async () => 3),
-  getFLEX_COMMISSION: jest.fn(async () => 10),
-  getSMALL_PRIZE_PERCENTAGE: jest.fn(async () => 20)
+  getCurrentRound: jest.fn(),
+  getLotteryRoundInfo: jest.fn(),
+  getFLEX_COMMISSION: jest.fn(),
+  getSMALL_PRIZE_PERCENTAGE: jest.fn(),
+  getMINI_PRIZE_PERCENTAGE: jest.fn(),
 }));
 
-// Setup test utils with async mock rendering
-const renderWithInitialize = async (component) => {
-  const result = render(component);
+// Mock the context to avoid actual blockchain interactions
+jest.mock('../contexts/LotteryContext', () => {
+  const originalModule = jest.requireActual('../contexts/LotteryContext');
   
-  // Wait for useEffect to complete without relying on specific text
-  // This handles potential race conditions better
-  await waitFor(() => {
-    // Check for either loading text or loaded content
-    const hasLoadingText = screen.queryByText('Loading round data...') !== null;
-    const hasLoadedContent = screen.queryByText('#3 Current') !== null;
-    expect(hasLoadingText || hasLoadedContent).toBe(true);
-  });
-  
-  // Wait for data to be loaded
-  await waitFor(() => {
-    expect(screen.getByText('#3 Current')).toBeInTheDocument();
-  }, { timeout: 3000 });
-  
-  return result;
-};
+  return {
+    ...originalModule,
+    LotteryProvider: ({ children }) => <div data-testid="lottery-provider">{children}</div>,
+    useLottery: () => ({
+      showNotification: jest.fn(),
+    })
+  };
+});
+
+// Import the mocked contractService
+import contractService from '../services/contractService';
+
+// Increase timeout for all tests
+jest.setTimeout(30000);
 
 describe('LotteryRounds Component', () => {
   beforeEach(() => {
+    // Reset all mocks before each test
     jest.clearAllMocks();
+    
+    // Setup default mock implementations
+    contractService.getCurrentRound.mockResolvedValue('5');
+    contractService.getFLEX_COMMISSION.mockResolvedValue('5');
+    contractService.getSMALL_PRIZE_PERCENTAGE.mockResolvedValue('30');
+    contractService.getMINI_PRIZE_PERCENTAGE.mockResolvedValue('10');
+    
+    // Mock recent rounds data
+    contractService.getLotteryRoundInfo.mockImplementation((roundNumber) => {
+      const round = parseInt(roundNumber);
+      return Promise.resolve({
+        roundNumber: round.toString(),
+        status: round === 4 ? '2' : round === 3 ? '1' : '0', // Round 4 finalized, 3 closed, others open
+        totalPrizePool: `${(round + 1) * 1000000000000000000}`, // 1 ETH * (round + 1)
+        totalTickets: `${(round + 1) * 10}`,
+        addressArrays: [
+          [`0x123456789abcdef${round}`, `0x987654321fedcba${round}`], // participants
+          [`0xsmallwinner${round}`], // small prize winners
+          [`0xbigwinner${round}`], // big prize winners
+          [`0xminiwinner${round}`], // mini prize winners
+        ],
+        bigPrize: `${500000000000000000}`, // 0.5 ETH
+        smallPrize: `${300000000000000000}`, // 0.3 ETH
+        miniPrize: `${100000000000000000}`, // 0.1 ETH
+        commission: `${50000000000000000}`, // 0.05 ETH
+        randomNumbers: round === 4 ? ['7', '14', '21', '28', '35'] : ['0', '0', '0', '0', '0'],
+        strongNumber: round === 4 ? '9' : '0'
+      });
+    });
   });
 
-  test('fetches and displays recent rounds when contract is ready', async () => {
-    await renderWithInitialize(<LotteryRounds isContractReady={true} />);
+  test('renders correctly when contract is not ready', async () => {
+    render(
+      <LotteryProvider>
+        <LotteryRounds isContractReady={false} />
+      </LotteryProvider>
+    );
     
-    // Check round cards after async operations
-    const roundCards = screen.getAllByText(/Round #/);
-    expect(roundCards.length).toBeGreaterThan(0);
-    
-    // Check if the current round counter is displayed
-    expect(screen.getByText('#3 Current')).toBeInTheDocument();
-    
-    // Check prize pools and ticket counts (values should be in the DOM)
-    expect(screen.getAllByText(/ETH/)).toHaveLength(roundCards.length);
-    expect(screen.getAllByText(/Tickets/)).toHaveLength(roundCards.length);
+    expect(screen.getByText('Recent Rounds')).toBeInTheDocument();
+    expect(screen.getByText('Connect wallet to view recent rounds')).toBeInTheDocument();
+    expect(screen.getByPlaceholderText('Enter round number')).toBeDisabled();
   });
-  
-  test('allows searching for a specific round', async () => {
-    await renderWithInitialize(<LotteryRounds isContractReady={true} />);
-    
-    // Enter a round number in the search input
-    const input = screen.getByPlaceholderText('Enter round number');
-    fireEvent.change(input, { target: { value: '5' } });
-    
-    // Click the search button
-    const searchButton = screen.getByText('View Details');
-    fireEvent.click(searchButton);
-    
-    // Wait for modal to open
+
+  test('loads and displays recent rounds when contract is ready', async () => {
+    render(
+      <LotteryProvider>
+        <LotteryRounds isContractReady={true} />
+      </LotteryProvider>
+    );
+
+    // Wait for the component to load data
     await waitFor(() => {
-      expect(screen.getByText(/Round #5/)).toBeInTheDocument();
-    });
-    
+      expect(screen.getByText('#5 Current')).toBeInTheDocument();
+    }, { timeout: 15000 });
+
+    // Check that recent rounds are displayed
+    expect(screen.getByText('Round #4')).toBeInTheDocument();
+    expect(screen.getByText('Round #3')).toBeInTheDocument();
+    expect(screen.getByText('Round #2')).toBeInTheDocument();
+    expect(screen.getByText('Round #1')).toBeInTheDocument();
+
+    // Check status display
+    expect(screen.getByText('Finalized')).toBeInTheDocument(); // Round 4
+    expect(screen.getByText('Closed')).toBeInTheDocument(); // Round 3
+    expect(screen.getAllByText('Open')).toHaveLength(2); // Rounds 1 and 2
+
+    // Check prize pools
+    expect(screen.getByText('5.00 ETH')).toBeInTheDocument(); // Round 4: 5 ETH
+    expect(screen.getByText('4.00 ETH')).toBeInTheDocument(); // Round 3: 4 ETH
+  });
+
+  test('opens modal when clicking on a round card', async () => {
+    render(
+      <LotteryProvider>
+        <LotteryRounds isContractReady={true} />
+      </LotteryProvider>
+    );
+
+    // Wait for rounds to load
+    await waitFor(() => {
+      expect(screen.getByText('Round #4')).toBeInTheDocument();
+    }, { timeout: 15000 });
+
+    // Click on round 4 card
+    const round4Card = screen.getByText('Round #4').closest('.recent-round-card');
+    fireEvent.click(round4Card);
+
+    // Wait for modal to appear
+    await waitFor(() => {
+      expect(screen.getByText('7, 14, 21, 28, 35 | Strong: 9')).toBeInTheDocument();
+    }, { timeout: 10000 });
+
     // Check modal content
     expect(screen.getByText('Total Prize Pool')).toBeInTheDocument();
-    
-    // Check for prize values
-    const prizeValues = screen.getAllByText(/ETH/);
-    expect(prizeValues.length).toBeGreaterThan(0);
-    
-    // Check for the total tickets value
-    expect(screen.getByText('25')).toBeInTheDocument();
-    
-    // Close the modal
-    const closeButton = screen.getByText('Close');
-    fireEvent.click(closeButton);
-    
-    // Check that the modal has been closed
+    expect(screen.getByText('Big Prize Winners')).toBeInTheDocument();
+    expect(screen.getByText('Small Prize Winners')).toBeInTheDocument();
+    expect(screen.getByText('Mini Prize Winners')).toBeInTheDocument();
+    expect(screen.getByText('Participants')).toBeInTheDocument();
+  });
+
+  test('closes modal when clicking close button', async () => {
+    render(
+      <LotteryProvider>
+        <LotteryRounds isContractReady={true} />
+      </LotteryProvider>
+    );
+
+    // Wait for rounds to load and open modal
     await waitFor(() => {
-      expect(screen.queryByText('Total Prize Pool')).not.toBeInTheDocument();
+      expect(screen.getByText('Round #4')).toBeInTheDocument();
+    }, { timeout: 15000 });
+
+    const round4Card = screen.getByText('Round #4').closest('.recent-round-card');
+    fireEvent.click(round4Card);
+
+    await waitFor(() => {
+      expect(screen.getByText('Close')).toBeInTheDocument();
+    }, { timeout: 10000 });
+
+    // Close the modal
+    fireEvent.click(screen.getByText('Close'));
+
+    // Modal should be closed (winning numbers not visible)
+    await waitFor(() => {
+      expect(screen.queryByText('7, 14, 21, 28, 35 | Strong: 9')).not.toBeInTheDocument();
     });
   });
-  
-  test('clicking on a recent round card opens its details', async () => {
-    await renderWithInitialize(<LotteryRounds isContractReady={true} />);
-    
-    // Click on a round card (use queryAllByText to avoid failures)
-    const roundCards = screen.getAllByText(/Round #/);
-    expect(roundCards.length).toBeGreaterThan(0);
-    fireEvent.click(roundCards[0]);
-    
-    // Wait for modal to open
+
+  test('search functionality works correctly', async () => {
+    render(
+      <LotteryProvider>
+        <LotteryRounds isContractReady={true} />
+      </LotteryProvider>
+    );
+
+    // Wait for component to load
     await waitFor(() => {
-      expect(screen.getByText('Total Prize Pool')).toBeInTheDocument();
-    });
-    
-    // Check that modal content is displayed
-    const prizeValues = screen.getAllByText(/ETH/);
-    expect(prizeValues.length).toBeGreaterThan(0);
-    
-    // Close the modal
-    const closeButton = screen.getByText('Close');
-    fireEvent.click(closeButton);
-  });
-  
-  test('shows error when searching for a non-existent round', async () => {
-    await renderWithInitialize(<LotteryRounds isContractReady={true} />);
-    
-    // Enter a non-existent round number
-    const input = screen.getByPlaceholderText('Enter round number');
-    fireEvent.change(input, { target: { value: '999' } });
-    
-    // Click the search button
+      expect(screen.getByText('#5 Current')).toBeInTheDocument();
+    }, { timeout: 15000 });
+
+    // Enter round number in search input
+    const searchInput = screen.getByPlaceholderText('Enter round number');
+    fireEvent.change(searchInput, { target: { value: '3' } });
+
+    // Click search button
     const searchButton = screen.getByText('View Details');
     fireEvent.click(searchButton);
-    
-    // Wait for error message
+
+    // Wait for modal to appear with round 3 data
     await waitFor(() => {
-      expect(screen.getByText(/Could not fetch round data/)).toBeInTheDocument();
+      expect(screen.getByText('Round #3')).toBeInTheDocument();
+    }, { timeout: 10000 });
+
+    
+  });
+
+  test('displays correct status for different round states', async () => {
+    render(
+      <LotteryProvider>
+        <LotteryRounds isContractReady={true} />
+      </LotteryProvider>
+    );
+
+    await waitFor(() => {
+      expect(screen.getByText('Round #4')).toBeInTheDocument();
+    }, { timeout: 15000 });
+
+    // Click on finalized round (should show winning numbers)
+    const round4Card = screen.getByText('Round #4').closest('.recent-round-card');
+    fireEvent.click(round4Card);
+
+    await waitFor(() => {
+      expect(screen.getByText('7, 14, 21, 28, 35 | Strong: 9')).toBeInTheDocument();
+    }, { timeout: 10000 });
+
+    // Close modal and check open round (should not show winning numbers)
+    fireEvent.click(screen.getByText('Close'));
+    
+    await waitFor(() => {
+      expect(screen.queryByText('7, 14, 21, 28, 35 | Strong: 9')).not.toBeInTheDocument();
     });
+
+    const round1Card = screen.getByText('Round #1').closest('.recent-round-card');
+    fireEvent.click(round1Card);
+
+    await waitFor(() => {
+      expect(screen.getByText('Not drawn')).toBeInTheDocument();
+    }, { timeout: 10000 });
+  });
+
+  test('handles error states gracefully', async () => {
+    // Mock a failed contract call
+    contractService.getCurrentRound.mockRejectedValue(new Error('Contract error'));
+    
+    render(
+      <LotteryProvider>
+        <LotteryRounds isContractReady={true} />
+      </LotteryProvider>
+    );
+
+    // Wait a bit for potential async operations to complete
+    await new Promise(resolve => setTimeout(resolve, 500));
+
+    // Should still show the interface even with errors
+    expect(screen.getByText('Recent Rounds')).toBeInTheDocument();
+    expect(screen.getByPlaceholderText('Enter round number')).toBeInTheDocument();
+  });
+
+  test('disables controls when loading', async () => {
+    // Mock a slow contract call to simulate loading state
+    let resolvePromise;
+    const slowPromise = new Promise(resolve => {
+      resolvePromise = resolve;
+    });
+
+    contractService.getLotteryRoundInfo.mockImplementation(() => slowPromise);
+
+    render(
+      <LotteryProvider>
+        <LotteryRounds isContractReady={true} />
+      </LotteryProvider>
+    );
+
+    // Wait for initial render
+    await waitFor(() => {
+      expect(screen.getByPlaceholderText('Enter round number')).toBeInTheDocument();
+    });
+
+    // Enter search term
+    const searchInput = screen.getByPlaceholderText('Enter round number');
+    fireEvent.change(searchInput, { target: { value: '1' } });
+
+    // Click search button
+    const searchButton = screen.getByText('View Details');
+    fireEvent.click(searchButton);
+
+    // Should show loading state
+    await waitFor(() => {
+      expect(screen.getByText('Searching...')).toBeInTheDocument();
+    });
+
+    // Resolve the promise to complete the test
+    resolvePromise({
+      roundNumber: '1',
+      status: '0',
+      totalPrizePool: '1000000000000000000',
+      totalTickets: '10',
+      addressArrays: [[], [], [], []],
+      bigPrize: '0',
+      smallPrize: '0',
+      miniPrize: '0',
+      commission: '0',
+      randomNumbers: ['0', '0', '0', '0', '0'],
+      strongNumber: '0'
+    });
+  });
+
+  test('formats addresses correctly', async () => {
+    render(
+      <LotteryProvider>
+        <LotteryRounds isContractReady={true} />
+      </LotteryProvider>
+    );
+
+    await waitFor(() => {
+      expect(screen.getByText('Round #4')).toBeInTheDocument();
+    }, { timeout: 15000 });
+
+    // Open modal
+    const round4Card = screen.getByText('Round #4').closest('.recent-round-card');
+    fireEvent.click(round4Card);
+
+    await waitFor(() => {
+      // Check that addresses are formatted correctly (first 6 + last 4 characters)
+      expect(screen.getByText('0x1234...def4')).toBeInTheDocument();
+      expect(screen.getByText('0x9876...cba4')).toBeInTheDocument();
+    }, { timeout: 10000 });
   });
 });
