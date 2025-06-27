@@ -68,7 +68,7 @@ We have implemented **extensive unit, integration, and security tests**, coverin
 - MetaMask
 - An Ethereum provider (Hardhat)
 
-### Installation (Local)
+### Installation
 
 ```bash
 git clone https://github.com/hagypp/LotteryChain.git
@@ -77,7 +77,11 @@ cd LotteryChain
 # Install frontend dependencies
 cd frontend
 npm install
+```
 
+### Run
+
+```bash
 # In a separate terminal, run a local Hardhat node:
 npx hardhat node
 
@@ -87,6 +91,7 @@ npx hardhat run scripts/deploy.js --network localhost
 # Start the frontend:
 npm start 
 ```
+
 ### 🐳 Running with Docker
 
 If you prefer an **easy, consistent setup using Docker Compose**:
@@ -101,3 +106,16 @@ This will:
 ✅ Spin up a local Ethereum node (Hardhat)  
 ✅ Deploy your LotteryChain contract automatically  
 ✅ Launch the frontend on http://localhost:3000  
+
+### One-Command Run
+
+If you prefer **running everything locally without Docker**, you can use the included script:
+
+```bash
+  node start-all.js
+```
+This will:  
+✅ Launch your Hardhat local node  
+✅ Deploy contracts automatically  
+✅ Start your frontend on http://localhost:3000  
+
