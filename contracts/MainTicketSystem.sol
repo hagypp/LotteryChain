@@ -7,7 +7,6 @@ import "./LotteryManager.sol";
 contract MainTicketSystem {
     TicketManager private ticketManager;
     LotteryManager private lotteryManager;
-    // address private immutable i_owner;
 
     event LotteryRoundStatusChanged(bool isOpen);
     event BlockStatusUpdated(uint256 blocksUntilClose, uint256 blocksUntilDraw);
@@ -19,7 +18,6 @@ contract MainTicketSystem {
 
     constructor() {
         // Deploy sub-contracts
-        // i_owner = msg.sender;
         ticketManager = new TicketManager(1 ether);
         lotteryManager = new LotteryManager(address(ticketManager));
     }
@@ -50,13 +48,6 @@ contract MainTicketSystem {
     }
 
 
-    // function canDrawWinner() private {
-    //     if (lotteryManager.canDrawWinner()){
-    //         // drawLotteryWinner(0,0);
-    //         return; // Placeholder for drawing winner logic
-    //     } 
-    // }
-
     // Ticket Purchase Functions
     function purchaseTicket() external payable returns (uint256) {        
         uint256 ticketPrice = ticketManager.getTicketPrice();
@@ -76,9 +67,6 @@ contract MainTicketSystem {
         if (isLotteryActive()) {
             canCloseLottery();
         } 
-        // else {
-        //     canDrawWinner();
-        // }
            
         updateBlockStatus();
         return ticketId;
@@ -100,10 +88,6 @@ contract MainTicketSystem {
                 return false;
             } 
         } 
-        // else {
-        //     canDrawWinner();
-        // }
-
         // Verify ticket status is ACTIVE before entering lottery
         require( ticketManager.getTicketData(msg.sender, _ticketId).status == TicketStatus.ACTIVE,
             "Invalid ticket status"
@@ -128,8 +112,6 @@ contract MainTicketSystem {
     function drawLotteryWinner(bytes32 keccak256HashNumbers, bytes32 keccak256HashFull, uint8[6] memory randomNumbers, uint8 strongNumber) public  
     {
         require(validate(randomNumbers, strongNumber), "Invalid input data");
-        // require(keccak256HashNumbers != bytes32(0), "Ticket hash cannot be empty");
-        // require(keccak256HashFull != bytes32(0), "Strong ticket hash cannot be empty");
         lotteryManager.drawLotteryWinner(keccak256HashNumbers, keccak256HashFull, randomNumbers, strongNumber);
         startNewLotteryRound();
         emit TicketEnteredLottery(
@@ -232,10 +214,6 @@ contract MainTicketSystem {
         (bool success, ) = address(lotteryManager).call{value: msg.value}("");
         require(success, "Failed to forward Ether to LotteryManager");
     }
-
-    // fallback() external payable {
-    // revert("Unsupported function call");
-    // }
 
     // Function to claimPrize from the contract
     function claimPrize(address user) external {
